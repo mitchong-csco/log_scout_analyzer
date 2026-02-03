@@ -1,0 +1,14 @@
+{
+  "name": "log_scout_analyzer",
+  "main": "__init__.py",
+  "inputs": [],
+  "author": "mitchong",
+  "description": "vscode extension for log analysis of collaboration app logs",
+  "entitlements": [],
+  "groups": [],
+  "contributors": [],
+  "minutes_saved": 0,
+  "labels": [],
+  "service": "python3.13",
+  "timeOut": 60000
+}
