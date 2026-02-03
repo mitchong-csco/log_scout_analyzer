@@ -18,3 +18,6 @@ def task(env: 'bdblib.Env') -> str:
 
     return 'something useful here'
 
+
+test
+
