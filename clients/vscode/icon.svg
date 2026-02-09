@@ -1,0 +1,48 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="128" height="128" rx="24" fill="url(#bgGradient)"/>
+
+  <!-- Gradient definitions -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0" y1="0" x2="128" y2="128">
+      <stop offset="0%" style="stop-color:#1a237e;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0d47a1;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="docGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:0.95" />
+      <stop offset="100%" style="stop-color:#e3f2fd;stop-opacity:0.95" />
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Document/Log file -->
+  <g filter="url(#shadow)">
+    <path d="M32 20 L76 20 L92 36 L92 92 C92 96 89 99 85 99 L32 99 C28 99 25 96 25 92 L25 27 C25 23 28 20 32 20 Z"
+          fill="url(#docGradient)" stroke="#1976d2" stroke-width="2"/>
+    <path d="M76 20 L76 36 L92 36" fill="#bbdefb" stroke="#1976d2" stroke-width="2" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Log lines -->
+  <line x1="35" y1="48" x2="70" y2="48" stroke="#1976d2" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <line x1="35" y1="58" x2="78" y2="58" stroke="#1976d2" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <line x1="35" y1="68" x2="65" y2="68" stroke="#1976d2" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <line x1="35" y1="78" x2="75" y2="78" stroke="#1976d2" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <line x1="35" y1="88" x2="60" y2="88" stroke="#1976d2" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+
+  <!-- Magnifying glass (Scout) -->
+  <g filter="url(#shadow)">
+    <circle cx="80" cy="72" r="22" fill="#4caf50" stroke="#2e7d32" stroke-width="3"/>
+    <circle cx="80" cy="72" r="15" fill="none" stroke="#ffffff" stroke-width="3"/>
+    <line x1="94" y1="86" x2="107" y2="99" stroke="#2e7d32" stroke-width="6" stroke-linecap="round"/>
+  </g>
+
+  <!-- Tag/Label accent inside magnifying glass -->
+  <path d="M77 69 L80 66 L83 69 L80 72 Z" fill="#ffffff" opacity="0.9"/>
+  <circle cx="80" cy="69" r="1.5" fill="#4caf50"/>
+
+  <!-- Error/Warning indicators (small dots) -->
+  <circle cx="42" cy="48" r="2.5" fill="#f44336"/>
+  <circle cx="42" cy="68" r="2.5" fill="#ff9800"/>
+</svg>

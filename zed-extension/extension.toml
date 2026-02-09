@@ -1,0 +1,7 @@
+id = "log-scout-analyzer"
+name = "Log Scout Analyzer"
+version = "0.0.3"
+schema_version = 1
+description = "Advanced log analysis extension with pattern recognition and diagnostics"
+authors = ["Log Scout Team"]
+repository = "https://github.com/log-scout/analyzer"

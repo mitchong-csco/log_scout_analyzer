@@ -1,0 +1,204 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Log",
+  "scopeName": "text.log",
+  "patterns": [
+    {
+      "include": "#timestamps"
+    },
+    {
+      "include": "#log-levels"
+    },
+    {
+      "include": "#sip-messages"
+    },
+    {
+      "include": "#ip-addresses"
+    },
+    {
+      "include": "#urls"
+    },
+    {
+      "include": "#error-keywords"
+    },
+    {
+      "include": "#warning-keywords"
+    },
+    {
+      "include": "#success-keywords"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#call-ids"
+    }
+  ],
+  "repository": {
+    "timestamps": {
+      "patterns": [
+        {
+          "name": "constant.numeric.timestamp.log",
+          "match": "\\b\\d{4}[-/]\\d{2}[-/]\\d{2}[T\\s]\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3,6})?(?:Z|[+-]\\d{2}:?\\d{2})?\\b"
+        },
+        {
+          "name": "constant.numeric.timestamp.log",
+          "match": "\\b\\d{2}:\\d{2}:\\d{2}(?:\\.\\d{3,6})?\\b"
+        },
+        {
+          "name": "constant.numeric.timestamp.log",
+          "match": "\\b\\d{13}\\b"
+        }
+      ]
+    },
+    "log-levels": {
+      "patterns": [
+        {
+          "name": "keyword.control.error.log",
+          "match": "\\b(?i)(FATAL|CRITICAL|SEVERE)\\b"
+        },
+        {
+          "name": "invalid.illegal.error.log",
+          "match": "\\b(?i)ERROR\\b"
+        },
+        {
+          "name": "keyword.control.warning.log",
+          "match": "\\b(?i)(WARN(?:ING)?|CAUTION)\\b"
+        },
+        {
+          "name": "string.info.log",
+          "match": "\\b(?i)(INFO|INFORMATION|NOTICE)\\b"
+        },
+        {
+          "name": "comment.debug.log",
+          "match": "\\b(?i)(DEBUG|TRACE|VERBOSE)\\b"
+        }
+      ]
+    },
+    "sip-messages": {
+      "patterns": [
+        {
+          "name": "keyword.control.sip-method.log",
+          "match": "\\b(INVITE|ACK|BYE|CANCEL|REGISTER|OPTIONS|PRACK|UPDATE|REFER|SUBSCRIBE|NOTIFY|INFO|MESSAGE)\\b"
+        },
+        {
+          "name": "constant.numeric.sip-response.success.log",
+          "match": "\\b(2[0-9]{2})\\s+(OK|Accepted)\\b"
+        },
+        {
+          "name": "constant.numeric.sip-response.provisional.log",
+          "match": "\\b(1[0-9]{2})\\s+(Trying|Ringing|Session\\s+Progress|Call\\s+Is\\s+Being\\s+Forwarded|Queued)\\b"
+        },
+        {
+          "name": "constant.numeric.sip-response.redirect.log",
+          "match": "\\b(3[0-9]{2})\\s+(Multiple\\s+Choices|Moved\\s+(?:Permanently|Temporarily)|Use\\s+Proxy|Alternative\\s+Service)\\b"
+        },
+        {
+          "name": "invalid.illegal.sip-response.client-error.log",
+          "match": "\\b(4[0-9]{2})\\s+\\w[\\w\\s]*\\b"
+        },
+        {
+          "name": "invalid.illegal.sip-response.server-error.log",
+          "match": "\\b(5[0-9]{2})\\s+\\w[\\w\\s]*\\b"
+        },
+        {
+          "name": "invalid.illegal.sip-response.global-failure.log",
+          "match": "\\b(6[0-9]{2})\\s+\\w[\\w\\s]*\\b"
+        },
+        {
+          "name": "entity.name.tag.sip-uri.log",
+          "match": "\\b(?:sips?:)?[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+(?::[0-9]+)?\\b"
+        }
+      ]
+    },
+    "ip-addresses": {
+      "patterns": [
+        {
+          "name": "constant.numeric.ip.log",
+          "match": "\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}(?::[0-9]+)?\\b"
+        },
+        {
+          "name": "constant.numeric.ipv6.log",
+          "match": "\\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\\b|\\b(?:[0-9a-fA-F]{1,4}:){1,7}:\\b|\\b(?:[0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}\\b"
+        }
+      ]
+    },
+    "urls": {
+      "name": "string.other.url.log",
+      "match": "\\b(?:https?|ftp|file)://[^\\s<>\"{}|\\\\^`\\[\\]]+\\b"
+    },
+    "error-keywords": {
+      "patterns": [
+        {
+          "name": "invalid.illegal.log",
+          "match": "\\b(?i)(exception|error|fail(?:ed|ure)?|fatal|critical|abort(?:ed)?|crash(?:ed)?|panic|refused|denied|rejected|invalid|illegal|forbidden|timeout|timed\\s+out)\\b"
+        }
+      ]
+    },
+    "warning-keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.warning.log",
+          "match": "\\b(?i)(warn(?:ing)?|caution|deprecat(?:ed|ion)?|obsolete|slow|retry|retrying|attempt(?:ing)?|backoff)\\b"
+        }
+      ]
+    },
+    "success-keywords": {
+      "patterns": [
+        {
+          "name": "string.success.log",
+          "match": "\\b(?i)(success(?:ful)?|ok(?:ay)?|complete(?:d)?|done|passed|accepted|connected|established|authenticated|authorized|valid)\\b"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.log",
+          "match": "\\b-?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?\\b"
+        },
+        {
+          "name": "constant.numeric.hex.log",
+          "match": "\\b0[xX][0-9a-fA-F]+\\b"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.log",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.log",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.log",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.log",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "call-ids": {
+      "patterns": [
+        {
+          "name": "entity.name.function.call-id.log",
+          "match": "(?i)\\b(?:call-id|callid|session-id|sessionid|transaction-id|txid)[:=]?\\s*([a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+|[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}|[a-zA-Z0-9._-]{20,})\\b"
+        }
+      ]
+    }
+  }
+}

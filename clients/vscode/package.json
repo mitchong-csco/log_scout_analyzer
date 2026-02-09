@@ -1,0 +1,251 @@
+{
+    "name": "log-scout-analyzer",
+    "displayName": "Log Scout Analyzer",
+    "description": "Advanced log file analysis with SIP/VoIP pattern matching and RFC annotations",
+    "version": "0.0.6",
+    "publisher": "log-scout",
+    "engines": {
+        "vscode": "^1.75.0"
+    },
+    "categories": [
+        "Programming Languages",
+        "Linters",
+        "Other"
+    ],
+    "keywords": [
+        "log",
+        "sip",
+        "voip",
+        "telecom",
+        "cucm",
+        "cisco",
+        "analyzer",
+        "diagnostics"
+    ],
+    "activationEvents": [
+        "onLanguage:log",
+        "workspaceContains:**/*.log",
+        "onView:tagscoutFileAnalyzer"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "languages": [
+            {
+                "id": "log",
+                "aliases": [
+                    "Log",
+                    "log"
+                ],
+                "extensions": [
+                    ".log",
+                    ".txt"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "log",
+                "scopeName": "text.log",
+                "path": "./syntaxes/log.tmLanguage.json"
+            }
+        ],
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "tagscout-analyzer",
+                    "title": "TagScout Analyzer",
+                    "icon": "media/tagscout-icon.svg"
+                }
+            ]
+        },
+        "views": {
+            "tagscout-analyzer": [
+                {
+                    "id": "tagscoutFileAnalyzer",
+                    "name": "File Analyzer",
+                    "contextualTitle": "TagScout File Analyzer"
+                }
+            ]
+        },
+        "configuration": {
+            "type": "object",
+            "title": "Log Scout Analyzer",
+            "properties": {
+                "logScoutAnalyzer.serverPath": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Custom path to LSP server binary (leave empty to use bundled)"
+                },
+                "logScoutAnalyzer.serverHost": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Remote LSP server host (leave empty to use local binary)"
+                },
+                "logScoutAnalyzer.serverPort": {
+                    "type": "number",
+                    "default": 8080,
+                    "description": "Remote LSP server port"
+                },
+                "logScoutAnalyzer.trace.server": {
+                    "type": "string",
+                    "enum": [
+                        "off",
+                        "messages",
+                        "verbose"
+                    ],
+                    "default": "off",
+                    "description": "Traces the communication between VS Code and the language server"
+                },
+                "logScoutAnalyzer.patterns.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable pattern matching"
+                },
+                "logScoutAnalyzer.patterns.customFile": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Path to custom patterns file (JSON)"
+                },
+                "logScoutAnalyzer.diagnostics.maxProblems": {
+                    "type": "number",
+                    "default": 1000,
+                    "description": "Maximum number of problems to report"
+                },
+                "logScoutAnalyzer.rfcAnnotations.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show RFC annotations in hover tooltips"
+                }
+            }
+        },
+        "commands": [
+            {
+                "command": "logScoutAnalyzer.analyze",
+                "title": "Analyze Current Log File",
+                "category": "Log Scout"
+            },
+            {
+                "command": "logScoutAnalyzer.showTimeline",
+                "title": "Show Timeline Visualization",
+                "category": "Log Scout"
+            },
+            {
+                "command": "logScoutAnalyzer.exportResults",
+                "title": "Export Analysis Results",
+                "category": "Log Scout"
+            },
+            {
+                "command": "logScoutAnalyzer.restartServer",
+                "title": "Restart LSP Server",
+                "category": "Log Scout"
+            },
+            {
+                "command": "tagscout.selectFile",
+                "title": "Select Log File",
+                "category": "TagScout",
+                "icon": "$(folder-opened)"
+            },
+            {
+                "command": "tagscout.changeFile",
+                "title": "Change File",
+                "category": "TagScout",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "tagscout.analyzeFile",
+                "title": "Analyze File",
+                "category": "TagScout",
+                "icon": "$(play)"
+            },
+            {
+                "command": "tagscout.analyzeFileFromExplorer",
+                "title": "Analyze with TagScout",
+                "category": "TagScout"
+            },
+            {
+                "command": "tagscout.viewResults",
+                "title": "View Results",
+                "category": "TagScout",
+                "icon": "$(eye)"
+            }
+        ],
+        "menus": {
+            "editor/context": [
+                {
+                    "when": "resourceLangId == log",
+                    "command": "logScoutAnalyzer.analyze",
+                    "group": "logscout@1"
+                },
+                {
+                    "when": "resourceLangId == log",
+                    "command": "logScoutAnalyzer.showTimeline",
+                    "group": "logscout@2"
+                },
+                {
+                    "when": "resourceLangId == log",
+                    "command": "logScoutAnalyzer.exportResults",
+                    "group": "logscout@3"
+                }
+            ],
+            "commandPalette": [
+                {
+                    "command": "logScoutAnalyzer.analyze",
+                    "when": "resourceLangId == log"
+                },
+                {
+                    "command": "logScoutAnalyzer.showTimeline",
+                    "when": "resourceLangId == log"
+                },
+                {
+                    "command": "logScoutAnalyzer.exportResults",
+                    "when": "resourceLangId == log"
+                }
+            ],
+            "explorer/context": [
+                {
+                    "command": "tagscout.analyzeFileFromExplorer",
+                    "when": "resourceExtname =~ /\\.(zip|7z|tar|gz|tgz|log|txt)$/",
+                    "group": "2_workspace"
+                }
+            ]
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "pretest": "npm run compile && npm run lint",
+        "lint": "eslint src --ext ts",
+        "test": "node ./out/test/runTest.js",
+        "version:increment": "npm version patch --no-git-tag-version",
+        "prepackage": "npm run version:increment",
+        "package": "vsce package",
+        "postpackage": "mkdir -p /mnt/c/Users/mitchong/Downloads/vscode-extensions && cp *.vsix /mnt/c/Users/mitchong/Downloads/vscode-extensions/ && echo \"📦 Version $(node -p \"require('./package.json').version\") packaged and copied to Downloads!\"",
+        "deploy": "vsce publish"
+    },
+    "devDependencies": {
+        "@types/adm-zip": "^0.5.7",
+        "@types/node": "^18.x",
+        "@types/vscode": "^1.75.0",
+        "@typescript-eslint/eslint-plugin": "^6.0.0",
+        "@typescript-eslint/parser": "^6.0.0",
+        "@vscode/test-electron": "^2.3.0",
+        "@vscode/vsce": "^2.19.0",
+        "eslint": "^8.40.0",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "adm-zip": "^0.5.10",
+        "vscode-languageclient": "^9.0.1"
+    },
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/yourusername/log-scout-analyzer"
+    },
+    "bugs": {
+        "url": "https://github.com/yourusername/log-scout-analyzer/issues"
+    },
+    "homepage": "https://github.com/yourusername/log-scout-analyzer#readme"
+}

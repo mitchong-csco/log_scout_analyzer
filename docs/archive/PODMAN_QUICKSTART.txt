@@ -1,0 +1,165 @@
+╔═══════════════════════════════════════════════════════════════╗
+║  LOG SCOUT ANALYZER - PODMAN AUTOMATED BUILD SETUP           ║
+╚═══════════════════════════════════════════════════════════════╝
+
+✨ BUILD WITH PODMAN - MORE SECURE THAN DOCKER! ✨
+
+══════════════════════════════════════════════════════════
+WHY PODMAN INSTEAD OF DOCKER?
+══════════════════════════════════════════════════════════
+
+✅ NO background daemon eating resources
+✅ Runs WITHOUT root privileges (more secure)
+✅ Same commands as Docker (easy switch)
+✅ Better process isolation
+✅ Completely open source
+✅ Native Linux integration
+
+══════════════════════════════════════════════════════════
+SUPER EASY SETUP (3 STEPS):
+══════════════════════════════════════════════════════════
+
+1. Install Podman:
+   Windows:  winget install RedHat.Podman
+   Mac:      brew install podman
+   Linux:    sudo apt install podman
+
+2. Run ONE command:
+   ./jenkins-quick-start.sh
+
+3. Open browser:
+   http://localhost:8080
+
+That's it! Jenkins + Podman builds everything for you! 🎉
+
+══════════════════════════════════════════════════════════
+WHAT YOU GET:
+══════════════════════════════════════════════════════════
+
+✅ Automated Rust installation
+✅ Automatic dependency downloads
+✅ Tests run automatically
+✅ Extension built automatically
+✅ Ready-to-install package created
+✅ No manual setup needed
+✅ Rootless and secure
+
+══════════════════════════════════════════════════════════
+FILES WE CREATED FOR YOU:
+══════════════════════════════════════════════════════════
+
+📄 podman-compose.yml          - Container configuration
+📄 jenkins-quick-start.sh      - One-command setup
+📄 Jenkinsfile                 - Build instructions
+📖 PODMAN_SETUP.md            - Complete guide (863 lines!)
+
+══════════════════════════════════════════════════════════
+USEFUL COMMANDS:
+══════════════════════════════════════════════════════════
+
+Start Jenkins:    ./jenkins-quick-start.sh start
+Stop Jenkins:     ./jenkins-quick-start.sh stop
+View logs:        ./jenkins-quick-start.sh logs
+Restart:          ./jenkins-quick-start.sh restart
+List containers:  ./jenkins-quick-start.sh ps
+Clean all:        ./jenkins-quick-start.sh clean
+
+══════════════════════════════════════════════════════════
+PODMAN QUICK REFERENCE:
+══════════════════════════════════════════════════════════
+
+podman ps                    - List running containers
+podman images                - List images
+podman logs NAME             - View logs
+podman exec -it NAME bash    - Shell into container
+podman stats                 - Resource usage
+podman system prune -a       - Clean everything
+
+══════════════════════════════════════════════════════════
+MAC/WINDOWS SPECIFIC:
+══════════════════════════════════════════════════════════
+
+# Podman needs a machine on Mac/Windows
+podman machine init          - Create machine
+podman machine start         - Start machine
+podman machine stop          - Stop machine
+podman machine list          - List machines
+
+# Or use the script:
+./jenkins-quick-start.sh machine-start
+./jenkins-quick-start.sh machine-stop
+
+══════════════════════════════════════════════════════════
+AFTER BUILD COMPLETES:
+══════════════════════════════════════════════════════════
+
+1. Go to: http://localhost:8080
+2. Click on your build
+3. Click "Artifacts"
+4. Download: log-scout-analyzer-X.tar.gz
+5. Extract to Zed extensions folder
+6. Restart Zed
+7. Done! 🚀
+
+══════════════════════════════════════════════════════════
+TROUBLESHOOTING:
+══════════════════════════════════════════════════════════
+
+Problem: Podman not found
+Solution: Add to PATH or reinstall
+
+Problem: Permission denied
+Solution: Run without sudo (rootless mode)
+         or: sudo podman-compose up -d
+
+Problem: Port 8080 in use
+Solution: Edit podman-compose.yml
+         Change "8080:8080" to "8081:8080"
+
+Problem: Machine not starting (Mac/Windows)
+Solution: podman machine rm podman-machine-default
+         podman machine init
+         podman machine start
+
+══════════════════════════════════════════════════════════
+PODMAN VS DOCKER:
+══════════════════════════════════════════════════════════
+
+All Docker commands work with Podman!
+Just replace "docker" with "podman":
+
+docker ps      →  podman ps
+docker run     →  podman run
+docker logs    →  podman logs
+
+Optional: Create alias
+  alias docker=podman
+  alias docker-compose=podman-compose
+
+══════════════════════════════════════════════════════════
+BENEFITS FOR YOU:
+══════════════════════════════════════════════════════════
+
+✅ No complex Rust setup needed
+✅ Click button, get built extension
+✅ Runs without administrator rights
+✅ More secure than Docker
+✅ Team can use same setup
+✅ Automatic builds on git push
+✅ Build history tracking
+
+══════════════════════════════════════════════════════════
+MORE INFO:
+══════════════════════════════════════════════════════════
+
+PODMAN_SETUP.md       - Complete setup guide (863 lines)
+JENKINS_SETUP.md      - Jenkins configuration
+TESTING.md            - Testing guide
+README.md             - Full documentation
+
+══════════════════════════════════════════════════════════
+
+🚀 READY TO START? Run: ./jenkins-quick-start.sh
+
+NEED HELP? Read PODMAN_SETUP.md for detailed guide!
+

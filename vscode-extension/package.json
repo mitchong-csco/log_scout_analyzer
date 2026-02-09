@@ -1,0 +1,499 @@
+{
+    "name": "log-scout-analyzer",
+    "displayName": "Log Scout Analyzer - DevTools Edition",
+    "description": "Professional log analysis workbench with DevTools-style interface, pattern recognition, and real-time diagnostics",
+    "version": "0.0.18",
+    "publisher": "log-scout-team",
+    "engines": {
+        "vscode": "^1.75.0"
+    },
+    "categories": [
+        "Programming Languages",
+        "Linters",
+        "Other"
+    ],
+    "keywords": [
+        "log",
+        "logs",
+        "log-analysis",
+        "diagnostics",
+        "pattern-matching",
+        "error-detection"
+    ],
+    "activationEvents": [
+        "onCommand:logScoutAnalyzer.analyzeFile",
+        "onCommand:logScoutAnalyzer.clearDiagnostics",
+        "onCommand:logScoutAnalyzer.showPatterns",
+        "onCommand:logScoutAnalyzer.showVersion",
+        "onCommand:logScoutAnalyzer.openAnalyzerPanel",
+        "onLanguage:log",
+        "onView:scoutCategories",
+        "onView:scoutResults",
+        "onView:scoutTimeline",
+        "*"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "scout-analyzer",
+                    "title": "Scout Analyzer",
+                    "icon": "$(telescope)"
+                }
+            ]
+        },
+        "views": {
+            "scout-analyzer": [
+                {
+                    "id": "scoutResults",
+                    "name": "Results",
+                    "icon": "$(list-tree)",
+                    "contextualTitle": "Scout Results",
+                    "visibility": "visible"
+                },
+                {
+                    "id": "scoutCategories",
+                    "name": "Categories",
+                    "icon": "$(symbol-folder)",
+                    "contextualTitle": "Scout Categories",
+                    "visibility": "visible"
+                },
+                {
+                    "id": "scoutTimeline",
+                    "name": "Timeline",
+                    "icon": "$(clock)",
+                    "contextualTitle": "Scout Timeline",
+                    "visibility": "visible"
+                },
+                {
+                    "id": "scoutAnalyzer",
+                    "name": "Analyzer",
+                    "icon": "$(play-circle)",
+                    "contextualTitle": "Scout Analyzer",
+                    "visibility": "visible"
+                }
+            ]
+        },
+        "languages": [
+            {
+                "id": "log",
+                "aliases": [
+                    "Log File",
+                    "log"
+                ],
+                "extensions": [
+                    ".log",
+                    ".txt",
+                    ".out"
+                ],
+                "configuration": "./language-configuration/log.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "log",
+                "scopeName": "text.log",
+                "path": "./syntaxes/log.tmLanguage.json"
+            }
+        ],
+        "configuration": {
+            "type": "object",
+            "title": "Log Scout Analyzer",
+            "properties": {
+                "logScoutAnalyzer.enableDiagnostics": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable diagnostic messages for log files"
+                },
+                "logScoutAnalyzer.patterns.errors": {
+                    "type": "array",
+                    "default": [
+                        "(?i)(error|fail|fatal|exception|panic|crash|abort):\\s*(.+)",
+                        "(?i)(stack\\s+trace|traceback):",
+                        "(?i)Exception in thread",
+                        "(?i)Caused by:",
+                        "\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2},\\d{3}\\s+ERROR\\s+\\[.*?\\]\\s+\\[.*?\\]\\s+\\[.*?\\]\\s+\\[.*?\\]\\s+-\\s+(.+)",
+                        "(?i)No Interface available",
+                        "(?i)queryNetwork.*?failed",
+                        "(?i)connection\\s+(failed|timeout|refused|reset)",
+                        "(?i)authentication\\s+(failed|error)",
+                        "(?i)certificate\\s+(error|invalid|expired)",
+                        "(?i)CUCM.*?(unreachable|failed|error)",
+                        "(?i)SIP.*?(error|failed)",
+                        "(?i)registration\\s+failed",
+                        "(?i)unable to (connect|register|authenticate)",
+                        "(?i)network.*?unavailable",
+                        "(?i)device not found",
+                        "(?i)service.*?(unavailable|failed)",
+                        "(?i)media.*?(failed|error)",
+                        "(?i)call.*?failed",
+                        "(?i)voicemail.*?(error|failed)"
+                    ],
+                    "description": "Regular expressions for error patterns"
+                },
+                "logScoutAnalyzer.patterns.warnings": {
+                    "type": "array",
+                    "default": [
+                        "(?i)(warning|warn|caution):\\s*(.+)",
+                        "(?i)deprecated:",
+                        "(?i)(timeout|timed out)",
+                        "(?i)retry",
+                        "\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2},\\d{3}\\s+WARN\\s+\\[.*?\\]\\s+\\[.*?\\]\\s+\\[.*?\\]\\s+\\[.*?\\]\\s+-\\s+(.+)",
+                        "(?i)retrying connection",
+                        "(?i)slow response",
+                        "(?i)performance degraded",
+                        "(?i)high latency",
+                        "(?i)packet loss",
+                        "(?i)quality.*?(degraded|poor|low)",
+                        "(?i)bandwidth.*?(low|insufficient)",
+                        "(?i)certificate.*?expiring",
+                        "(?i)token.*?expires",
+                        "(?i)fallback to",
+                        "(?i)switching to backup",
+                        "(?i)attempting reconnect",
+                        "(?i)network change detected",
+                        "(?i)dns.*?timeout",
+                        "(?i)TLS.*?version",
+                        "(?i)cipher.*?weak"
+                    ],
+                    "description": "Regular expressions for warning patterns"
+                },
+                "logScoutAnalyzer.patterns.info": {
+                    "type": "array",
+                    "default": [
+                        "(?i)(info|information):\\s*(.+)",
+                        "(?i)(success|successful|completed):",
+                        "(?i)started",
+                        "(?i)initialized",
+                        "\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2},\\d{3}\\s+INFO\\s+\\[.*?\\]\\s+\\[.*?\\]\\s+\\[.*?\\]\\s+\\[.*?\\]\\s+-\\s+(.+)",
+                        "(?i)registration\\s+(successful|complete)",
+                        "(?i)connected to CUCM",
+                        "(?i)authenticated successfully",
+                        "(?i)call\\s+(established|connected|completed)",
+                        "(?i)service.*?(started|running|ready)",
+                        "(?i)device.*?(registered|active)",
+                        "(?i)user.*?(logged in|signed in)",
+                        "(?i)presence.*?updated",
+                        "(?i)status.*?changed",
+                        "(?i)configuration.*?(loaded|updated)",
+                        "(?i)certificate.*?validated",
+                        "(?i)network.*?available",
+                        "(?i)quality.*?(good|excellent)"
+                    ],
+                    "description": "Regular expressions for info patterns"
+                },
+                "logScoutAnalyzer.patterns.debug": {
+                    "type": "array",
+                    "default": [
+                        "(?i)(debug|trace):\\s*(.+)",
+                        "(?i)verbose:",
+                        "\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2},\\d{3}\\s+DEBUG\\s+\\[.*?\\]\\s+\\[.*?\\]\\s+\\[.*?\\]\\s+\\[.*?\\]\\s+-\\s+(.+)",
+                        "\\d{4}-\\d{2}-\\d{2}\\s+\\d{2}:\\d{2}:\\d{2},\\d{3}\\s+TRACE\\s+\\[.*?\\]\\s+\\[.*?\\]\\s+\\[.*?\\]\\s+\\[.*?\\]\\s+-\\s+(.+)",
+                        "(?i)entering (method|function)",
+                        "(?i)exiting (method|function)",
+                        "(?i)parameter:",
+                        "(?i)variable:",
+                        "(?i)state:",
+                        "(?i)step \\d+",
+                        "(?i)processing:",
+                        "(?i)received data",
+                        "(?i)sending data",
+                        "(?i)cache (hit|miss)",
+                        "(?i)query executed",
+                        "(?i)request received",
+                        "(?i)response sent"
+                    ],
+                    "description": "Regular expressions for debug patterns"
+                },
+                "logScoutAnalyzer.maxFileSize": {
+                    "type": "number",
+                    "default": 10485760,
+                    "description": "Maximum file size in bytes to analyze (default: 10MB)"
+                },
+                "logScoutAnalyzer.contextLines": {
+                    "type": "number",
+                    "default": 5,
+                    "description": "Number of context lines to show for multi-line patterns"
+                },
+                "logScoutAnalyzer.autoPromptOnOpen": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show a prompt to analyze log files when they are opened"
+                },
+                "logScoutAnalyzer.showStatusBarButton": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show the Scout analyze button in the status bar"
+                },
+                "logScoutAnalyzer.showResultsPanel": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Show the Results Panel when analysis is complete"
+                },
+                "logScoutAnalyzer.autoOpenAnalyzerPanel": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Automatically open Scout Analyzer Panel when a log file is opened"
+                },
+                "logScoutAnalyzer.consoleOutputLocation": {
+                    "type": "string",
+                    "enum": [
+                        "outputPanel",
+                        "terminal"
+                    ],
+                    "default": "outputPanel",
+                    "description": "Where to show Scout Console output: Output Panel (sidebar) or Terminal",
+                    "enumDescriptions": [
+                        "Show console output in the Output panel (sidebar)",
+                        "Show console output in a dedicated terminal"
+                    ]
+                },
+                "logScoutAnalyzer.useEnhancedTreeView": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Use enhanced tree view with rich visual styling (colored icons, detailed tooltips, badges)"
+                },
+                "logScoutAnalyzer.highlightDuration": {
+                    "type": "number",
+                    "default": 2000,
+                    "minimum": 500,
+                    "maximum": 10000,
+                    "description": "Duration in milliseconds to highlight a line when clicked from tree view (500-10000ms)"
+                },
+                "logScoutAnalyzer.splitView.enabled": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable split view with annotated log display"
+                },
+                "logScoutAnalyzer.splitView.cursorSync": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Synchronize cursor position between original log and annotated split view"
+                },
+                "logScoutAnalyzer.splitView.scrollSync": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Synchronize scrolling between original log and annotated split view"
+                },
+                "logScoutAnalyzer.splitView.selectionSync": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Synchronize text selection between original log and annotated split view"
+                },
+                "logScoutAnalyzer.splitView.highlightSync": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Highlight corresponding lines when hovering between original log and annotated split view"
+                },
+                "logScoutAnalyzer.timeline.showSignificantEvents": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show significant lifecycle events (signin, logout, calls, connections) in Timeline view instead of just errors"
+                },
+                "logScoutAnalyzer.timeline.intervalMinutes": {
+                    "type": "number",
+                    "default": 15,
+                    "minimum": 1,
+                    "maximum": 1440,
+                    "description": "Time interval in minutes for grouping timeline events (1-1440)"
+                }
+            }
+        },
+        "commands": [
+            {
+                "command": "logScoutAnalyzer.analyzeFile",
+                "title": "Scout: Analyze Current File"
+            },
+            {
+                "command": "logScoutAnalyzer.clearDiagnostics",
+                "title": "Scout: Clear Diagnostics"
+            },
+            {
+                "command": "logScoutAnalyzer.showPatterns",
+                "title": "Scout: Show Configured Patterns"
+            },
+            {
+                "command": "logScoutAnalyzer.showVersion",
+                "title": "Scout: Show Version Info"
+            },
+            {
+                "command": "logScoutAnalyzer.refreshResults",
+                "title": "Scout: Refresh Results",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "logScoutAnalyzer.jumpToLine",
+                "title": "Scout: Jump to Line"
+            },
+            {
+                "command": "logScoutAnalyzer.showConsole",
+                "title": "Scout: Show Console",
+                "icon": "$(terminal)"
+            },
+            {
+                "command": "logScoutAnalyzer.clearConsole",
+                "title": "Scout: Clear Console"
+            },
+            {
+                "command": "logScoutAnalyzer.groupBySeverity",
+                "title": "Scout: Group by Severity",
+                "icon": "$(symbol-event)"
+            },
+            {
+                "command": "logScoutAnalyzer.groupByCategory",
+                "title": "Scout: Group by Category",
+                "icon": "$(symbol-folder)"
+            },
+            {
+                "command": "logScoutAnalyzer.groupByFile",
+                "title": "Scout: Group by File",
+                "icon": "$(file)"
+            },
+            {
+                "command": "logScoutAnalyzer.resetView",
+                "title": "Scout: Reset View",
+                "icon": "$(clear-all)"
+            },
+            {
+                "command": "logScoutAnalyzer.exportResults",
+                "title": "Scout: Export Results",
+                "icon": "$(save)"
+            },
+            {
+                "command": "logScoutAnalyzer.openAnalyzerPanel",
+                "title": "Scout: Open Analyzer Panel",
+                "icon": "$(search)"
+            },
+            {
+                "command": "logScoutAnalyzer.analyzeDirectory",
+                "title": "Scout: Analyze Directory",
+                "icon": "$(folder)"
+            },
+            {
+                "command": "logScoutAnalyzer.analyzeAllBelow",
+                "title": "Scout: Analyze Recursively",
+                "icon": "$(folder-library)"
+            },
+            {
+                "command": "logScoutAnalyzer.toggleConsoleLocation",
+                "title": "Scout: Toggle Console Location",
+                "icon": "$(arrow-swap)"
+            },
+            {
+                "command": "logScoutAnalyzer.setTimeframe",
+                "title": "Scout: Set Timeframe Filter"
+            },
+            {
+                "command": "logScoutAnalyzer.toggleSignificantEvents",
+                "title": "Scout: Toggle Significant Events",
+                "icon": "$(eye)"
+            },
+            {
+                "command": "logScoutAnalyzer.openSplitView",
+                "title": "Scout: Open Split View (Annotated)",
+                "icon": "$(split-horizontal)"
+            },
+            {
+                "command": "logScoutAnalyzer.closeSplitView",
+                "title": "Scout: Close Split View",
+                "icon": "$(close)"
+            },
+            {
+                "command": "logScoutAnalyzer.showTimelineVisualization",
+                "title": "Scout: Show Timeline Visualization",
+                "icon": "$(graph-line)"
+            },
+            {
+                "command": "logScoutAnalyzer.showLadderDiagram",
+                "title": "Scout: Show SIP Ladder Diagram",
+                "icon": "$(type-hierarchy)"
+            }
+        ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "logScoutAnalyzer.refreshResults",
+                    "when": "view == scoutResults",
+                    "group": "navigation"
+                },
+                {
+                    "command": "logScoutAnalyzer.groupBySeverity",
+                    "when": "view == scoutResults",
+                    "group": "1_grouping@1"
+                },
+                {
+                    "command": "logScoutAnalyzer.groupByCategory",
+                    "when": "view == scoutResults",
+                    "group": "1_grouping@2"
+                },
+                {
+                    "command": "logScoutAnalyzer.groupByFile",
+                    "when": "view == scoutResults",
+                    "group": "1_grouping@3"
+                },
+                {
+                    "command": "logScoutAnalyzer.resetView",
+                    "when": "view == scoutResults",
+                    "group": "1_grouping@4"
+                },
+                {
+                    "command": "logScoutAnalyzer.exportResults",
+                    "when": "view == scoutResults || view == scoutCategories || view == scoutTimeline",
+                    "group": "navigation"
+                },
+                {
+                    "command": "logScoutAnalyzer.showConsole",
+                    "when": "view == scoutResults || view == scoutCategories || view == scoutTimeline",
+                    "group": "navigation"
+                },
+                {
+                    "command": "logScoutAnalyzer.toggleSignificantEvents",
+                    "when": "view == scoutTimeline",
+                    "group": "navigation"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "logScoutAnalyzer.jumpToLine",
+                    "when": "viewItem == result"
+                }
+            ]
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "echo \"Skipping build - using existing compiled code\"",
+        "build": "node generate-build-info.js && npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "pretest": "npm run compile && npm run lint",
+        "lint": "eslint src --ext ts",
+        "test": "node ./out/test/runTest.js",
+        "version:increment": "node increment-version.js",
+        "package": "npm run version:increment && npm run build && vsce package --allow-star-activation --out log-scout-analyzer.vsix",
+        "postpackage": "node copy-to-windows.js",
+        "publish": "vsce publish"
+    },
+    "devDependencies": {
+        "@types/node": "^18.0.0",
+        "@types/vscode": "^1.75.0",
+        "@typescript-eslint/eslint-plugin": "^6.0.0",
+        "@typescript-eslint/parser": "^6.0.0",
+        "eslint": "^8.45.0",
+        "typescript": "^5.1.0",
+        "@vscode/test-electron": "^2.3.0",
+        "@vscode/vsce": "^2.19.0"
+    },
+    "dependencies": {
+        "js-yaml": "^4.1.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/log-scout/analyzer"
+    },
+    "license": "MIT",
+    "homepage": "https://github.com/log-scout/analyzer#readme",
+    "bugs": {
+        "url": "https://github.com/log-scout/analyzer/issues"
+    }
+}

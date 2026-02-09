@@ -1,0 +1,4 @@
+Jabber Version: 14.3.0.308392
+Hvd Agent Version: 14.3.0.58378
+Thin Client Version: 14.3.0.308378
+JVDI Client Platform: 64Bit

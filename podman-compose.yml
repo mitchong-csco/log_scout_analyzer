@@ -1,0 +1,118 @@
+version: "3.8"
+
+services:
+    # Jenkins server with Podman-compatible configuration
+    jenkins:
+        image: docker.io/jenkins/jenkins:lts
+        container_name: log-scout-jenkins
+        restart: unless-stopped
+        userns_mode: keep-id
+        ports:
+            - "8080:8080" # Jenkins web interface
+            - "50000:50000" # Jenkins agent port
+        volumes:
+            - jenkins_home:/var/jenkins_home:Z
+            - jenkins_cargo:/usr/local/cargo:Z
+            - ./:/workspace/log-scout-analyzer:ro,Z
+        environment:
+            - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+            - JENKINS_ADMIN_ID=admin
+            - JENKINS_ADMIN_PASSWORD=admin123
+            - CARGO_HOME=/usr/local/cargo
+            - RUSTUP_HOME=/usr/local/rustup
+            - JENKINS_OPTS=--prefix=/jenkins
+        networks:
+            - jenkins-network
+        security_opt:
+            - label=disable
+
+    # Jenkins agent for running builds
+    jenkins-agent:
+        image: docker.io/jenkins/inbound-agent:latest
+        container_name: log-scout-jenkins-agent
+        restart: unless-stopped
+        depends_on:
+            - jenkins
+        environment:
+            - JENKINS_URL=http://jenkins:8080
+            - JENKINS_AGENT_NAME=rust-builder
+            - JENKINS_AGENT_WORKDIR=/home/jenkins/agent
+        volumes:
+            - jenkins_agent:/home/jenkins/agent:Z
+            - jenkins_cargo:/usr/local/cargo:Z
+        networks:
+            - jenkins-network
+        security_opt:
+            - label=disable
+
+    # Nginx reverse proxy (optional, for SSL/custom domain)
+    nginx:
+        image: docker.io/nginx:alpine
+        container_name: log-scout-nginx
+        restart: unless-stopped
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - ./nginx.conf:/etc/nginx/nginx.conf:ro,Z
+            - ./ssl:/etc/nginx/ssl:ro,Z
+        depends_on:
+            - jenkins
+        networks:
+            - jenkins-network
+        security_opt:
+            - label=disable
+        profiles:
+            - production
+
+    # PostgreSQL for Jenkins (optional, better than built-in)
+    postgres:
+        image: docker.io/postgres:15-alpine
+        container_name: log-scout-postgres
+        restart: unless-stopped
+        environment:
+            - POSTGRES_DB=jenkins
+            - POSTGRES_USER=jenkins
+            - POSTGRES_PASSWORD=jenkins_password
+        volumes:
+            - postgres_data:/var/lib/postgresql/data:Z
+        networks:
+            - jenkins-network
+        security_opt:
+            - label=disable
+        profiles:
+            - database
+
+    # Portainer for container management (optional)
+    portainer:
+        image: docker.io/portainer/portainer-ce:latest
+        container_name: log-scout-portainer
+        restart: unless-stopped
+        ports:
+            - "9000:9000"
+        volumes:
+            - /run/podman/podman.sock:/var/run/docker.sock:Z
+            - portainer_data:/data:Z
+        networks:
+            - jenkins-network
+        security_opt:
+            - label=disable
+        profiles:
+            - management
+
+volumes:
+    jenkins_home:
+        name: log-scout-jenkins-home
+    jenkins_cargo:
+        name: log-scout-cargo-cache
+    jenkins_agent:
+        name: log-scout-jenkins-agent
+    postgres_data:
+        name: log-scout-postgres-data
+    portainer_data:
+        name: log-scout-portainer-data
+
+networks:
+    jenkins-network:
+        name: log-scout-network
+        driver: bridge

@@ -1,0 +1,92 @@
+[2025-12-10 17:30:33,696] CDataUploader is created, m_evntComplete=000003EC
+[2025-12-10 17:30:33,713] Launch Cisco Jabber Problem Reporting
+[2025-12-10 17:30:33,714] Reading report ini...
+[2025-12-10 17:30:33,715] Initialization file path: C:\Users\spuente\AppData\Local\Temp\JabberPRT.ini
+[2025-12-10 17:30:33,715] Log Server URL: 
+[2025-12-10 17:30:33,715] RemotePRTServer: 
+[2025-12-10 17:30:33,716] ProblemReportToolOnPrem: True
+[2025-12-10 17:30:33,718] AutoUploadPRT: True
+[2025-12-10 17:30:33,720] DisableCreateDumpFile: 
+[2025-12-10 17:30:33,720] EnableForensicsContactData: True
+[2025-12-10 17:30:33,721] Jabber Log Path: C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Jabber\CSF\Logs\
+[2025-12-10 17:30:33,721] Comment file: C:\Users\spuente\AppData\Local\Temp\user-comment.txt
+[2025-12-10 17:30:33,722] Metadata File Path: C:\Users\spuente\AppData\Local\Temp\metadata.txt
+[2025-12-10 17:30:33,722] GDI File Path: C:\Users\spuente\AppData\Local\Temp\gdi.txt
+[2025-12-10 17:30:33,723] wbxcOIEx.exe Dump File Path: C:\Users\spuente\AppData\Local\Temp\wbxcOIEx.dmp
+[2025-12-10 17:30:33,723] wbxcOIEx64.exe Dump File Path: C:\Users\spuente\AppData\Local\Temp\wbxcOIEx64.dmp
+[2025-12-10 17:30:33,723] ProcessID: 65f4
+[2025-12-10 17:30:33,724] Exception pointer: 0
+[2025-12-10 17:30:33,724] ExceptionThreadID: 5398
+[2025-12-10 17:30:33,725] ProductMode: default
+[2025-12-10 17:30:33,725] ProductName: Cisco Jabber
+[2025-12-10 17:30:33,725] Language ID from JabberPRT.ini: 1033
+[2025-12-10 17:30:33,727] Delete Logs: 0
+[2025-12-10 17:30:33,728] Enable PRT Encryption: 0
+[2025-12-10 17:30:33,728] Prt Certificate Name: 
+[2025-12-10 17:30:33,729] Finished reading report ini
+[2025-12-10 17:30:33,832] System info file: C:\Users\spuente\AppData\Local\Temp\SystemInfo.txt
+[2025-12-10 17:30:33,859] writeEnvironmentalVars Entered
+[2025-12-10 17:30:33,888] writeIpConfig Entered
+[2025-12-10 17:30:37,937] writeTaskList Entered
+[2025-12-10 17:30:40,620] writeWindowSystemInfo Entered
+[2025-12-10 17:30:46,187] CDataUploader is created, m_evntComplete=000003A0
+[2025-12-10 17:30:46,190] CDataUploader is destroied.
+[2025-12-10 17:30:48,487] writeMonitorResolution Entered
+[2025-12-10 17:30:48,542] writeSystemDevices Entered
+[2025-12-10 17:30:48,543] Failed to locate WMI. Error code = 0x800401f0
+[2025-12-10 17:31:05,119] CDataUploader is created, m_evntComplete=000003EC
+[2025-12-10 17:31:05,119] CDataUploader is destroied.
+[2025-12-10 17:34:04,848] Manual report being saved...
+[2025-12-10 17:34:04,851] Waiting for system info thread to finish.
+[2025-12-10 17:34:04,854] IsVirtualisedEnv() returning 0
+[2025-12-10 17:34:04,869] Adding C:\ProgramData\Cisco Systems\Cisco Jabber\BootstrapInstallation.log to zip stream.
+[2025-12-10 17:34:04,892] Adding C:\ProgramData\Cisco Systems\Cisco Jabber\Click2XRegistration.txt to zip stream.
+[2025-12-10 17:34:04,893] Adding C:\ProgramData\Cisco Systems\Cisco Jabber\jabber-bootstrap.properties to zip stream.
+[2025-12-10 17:34:04,912] Adding C:\ProgramData\Cisco Systems\Cisco Jabber\Setup.txt to zip stream.
+[2025-12-10 17:34:04,912] Copying contacts cache from ContactService.
+[2025-12-10 17:34:04,912] Adding jabberAllContacts.xml from memory to zip stream.
+[2025-12-10 17:34:04,915] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Jabber\CSF\Diagnostics\\DiagnosticsContent.html to zip stream.
+[2025-12-10 17:34:04,919] Adding C:\Users\spuente\AppData\Local\JabberWerxCpp\jwx-20251108-170745.wbt to zip stream.
+[2025-12-10 17:34:04,934] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Virtualisation\clientSideDumps.7z to zip stream.
+[2025-12-10 17:34:04,957] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Virtualisation\clientSideLogs-Part-1.7z to zip stream.
+[2025-12-10 17:34:05,016] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Virtualisation\clientSideLogs-Part-2.7z to zip stream.
+[2025-12-10 17:34:05,064] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Virtualisation\clientSideLogs-Part-3.7z to zip stream.
+[2025-12-10 17:34:05,117] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Virtualisation\clientSideLogs-Part-4.7z to zip stream.
+[2025-12-10 17:34:05,218] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Virtualisation\clientSideLogs-Part-5.7z to zip stream.
+[2025-12-10 17:34:05,231] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Jabber\CSF\Logs\Virtualisation\clientinfo.txt to zip stream.
+[2025-12-10 17:34:05,247] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Jabber\CSF\Logs\Virtualisation\LogCollection\LogCollection.text to zip stream.
+[2025-12-10 17:34:05,253] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Jabber\CSF\Logs\Virtualisation\VirtualChannel\VirtualChannel.log to zip stream.
+[2025-12-10 17:34:05,284] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Jabber\CSF\Logs\Virtualisation\VirtualChannel\VirtualChannel.log.1 to zip stream.
+[2025-12-10 17:34:05,381] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Jabber\CSF\Logs\Virtualisation\VXCSettings.log to zip stream.
+[2025-12-10 17:34:05,385] Copying configs from ConfigService.
+[2025-12-10 17:34:05,386] Adding jabberAllConfig.xml from memory to zip stream.
+[2025-12-10 17:34:05,389] Copying Config directory from C:\Users\spuente\AppData\Roaming\Cisco\Unified Communications\Jabber\CSF\Config\\* .
+[2025-12-10 17:34:05,391] Adding bandwidth.properties from memory to zip stream.
+[2025-12-10 17:34:05,391] Adding C:\Users\spuente\AppData\Roaming\Cisco\Unified Communications\Jabber\CSF\Config\\bandwidth.properties to zip.
+[2025-12-10 17:34:05,405] Adding deviceData4.properties from memory to zip stream.
+[2025-12-10 17:34:05,406] Adding C:\Users\spuente\AppData\Roaming\Cisco\Unified Communications\Jabber\CSF\Config\\deviceData4.properties to zip.
+[2025-12-10 17:34:05,406] IsVirtualisedEnv() returning 0
+[2025-12-10 17:34:05,406] IsVirtualisedEnv() returning 0
+[2025-12-10 17:34:05,409] Could not read from RawStackTrace.dat
+[2025-12-10 17:34:05,411] Adding C:\Users\spuente\AppData\Local\Temp\SystemInfo.txt to zip stream.
+[2025-12-10 17:34:05,412] Adding C:\Users\spuente\AppData\Local\Temp\user-comment.txt to zip stream.
+[2025-12-10 17:34:05,428] Adding C:\Users\spuente\AppData\Local\Temp\metadata.txt to zip stream.
+[2025-12-10 17:34:05,429] Adding C:\Users\spuente\AppData\Local\Temp\gdi.txt to zip stream.
+[2025-12-10 17:34:05,430] IsVirtualisedEnv() returning 0
+[2025-12-10 17:34:05,430] headset is not cisco product.
+[2025-12-10 17:34:05,430] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Jabber\CSF\Logs\jabber.log to zip stream.
+[2025-12-10 17:34:05,568] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Jabber\CSF\Logs\jabber.log.1 to zip stream.
+[2025-12-10 17:34:05,764] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Jabber\CSF\Logs\jabber.log.10 to zip stream.
+[2025-12-10 17:34:05,972] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Jabber\CSF\Logs\jabber.log.2 to zip stream.
+[2025-12-10 17:34:06,155] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Jabber\CSF\Logs\jabber.log.3 to zip stream.
+[2025-12-10 17:34:06,333] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Jabber\CSF\Logs\jabber.log.4 to zip stream.
+[2025-12-10 17:34:06,512] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Jabber\CSF\Logs\jabber.log.5 to zip stream.
+[2025-12-10 17:34:06,687] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Jabber\CSF\Logs\jabber.log.6 to zip stream.
+[2025-12-10 17:34:06,880] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Jabber\CSF\Logs\jabber.log.7 to zip stream.
+[2025-12-10 17:34:07,068] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Jabber\CSF\Logs\jabber.log.8 to zip stream.
+[2025-12-10 17:34:07,243] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Jabber\CSF\Logs\jabber.log.9 to zip stream.
+[2025-12-10 17:34:07,416] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Jabber\CSF\Logs\jabber.log.cef to zip stream.
+[2025-12-10 17:34:07,417] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Jabber\CSF\Logs\jabber_ui.log to zip stream.
+[2025-12-10 17:34:07,437] Adding C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Jabber\CSF\Logs\krb5.log to zip stream.
+[2025-12-10 17:34:11,773] Adding C:\Users\spuente\AppData\Local\Temp\MSI32be.LOG to zip stream.
+[2025-12-10 17:34:11,788] Adding C:\Users\spuente\AppData\Local\Temp\PRT.txt to zip stream.

@@ -1,0 +1,10 @@
+
+*** Arguments received, install detected ***
+Failed to read the file. File doesn't exist!
+Writing to file.
+Attempting to transport shipment
+About to execute access token request
+Access token request succeeded
+About to execute post request
+Finished executing post request
+Finished transporting shipment...

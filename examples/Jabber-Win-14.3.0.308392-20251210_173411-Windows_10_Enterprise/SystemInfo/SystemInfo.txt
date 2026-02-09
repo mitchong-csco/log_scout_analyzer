@@ -1,0 +1,519 @@
+
+
+Environment Variables
+
+=::=::\
+ALLUSERSPROFILE=C:\ProgramData
+APPDATA=C:\Users\spuente\AppData\Roaming
+CommonProgramFiles=C:\Program Files (x86)\Common Files
+CommonProgramFiles(x86)=C:\Program Files (x86)\Common Files
+CommonProgramW6432=C:\Program Files\Common Files
+COMPUTERNAME=UAT1TPNGPPU005
+ComSpec=C:\Windows\system32\cmd.exe
+DriverData=C:\Windows\System32\Drivers\DriverData
+EFC_11208=1
+GST_PLUGIN_PATH=
+GST_REGISTRY=
+HOMEDRIVE=C:
+HOMEPATH=\Users\spuente
+JAVA_HOME=C:\Program Files\Zulu\zulu-21\
+KRB5_CONFIG=C:\Users\spuente\AppData\Roaming\Cisco\Unified Communications\Jabber\CSF\Config\krb5.ini
+KRB5_TRACE=C:\Users\spuente\AppData\Local\Cisco\Unified Communications\Jabber\CSF\Logs\krb5.log
+LOCALAPPDATA=C:\Users\spuente\AppData\Local
+LOGONSERVER=\\LADC07-SOPV
+NUMBER_OF_PROCESSORS=4
+OneDrive=C:\Users\spuente\OneDrive - Lord Abbett & Co. LLC
+OneDriveCommercial=C:\Users\spuente\OneDrive - Lord Abbett & Co. LLC
+OS=Windows_NT
+Path=C:\Program Files\Zulu\zulu-21\bin\;C:\ProgramData\Oracle\Java\javapath;C:\Program Files\Microsoft\jdk-17.0.14.7-hotspot\bin;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\PuTTY\;C:\Program Files\dotnet\;C:\Program Files\PowerShell\7\;C:\Program Files\Box\Box Edit\;C:\Users\spuente\AppData\Local\Microsoft\WindowsApps;
+PATHEXT=.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC
+POWERSHELL_DISTRIBUTION_CHANNEL=MSI:Windows 10 Enterprise
+PROCESSOR_ARCHITECTURE=x86
+PROCESSOR_ARCHITEW6432=AMD64
+PROCESSOR_IDENTIFIER=Intel64 Family 6 Model 143 Stepping 8, GenuineIntel
+PROCESSOR_LEVEL=6
+PROCESSOR_REVISION=8f08
+ProgramData=C:\ProgramData
+ProgramFiles=C:\Program Files (x86)
+ProgramFiles(x86)=C:\Program Files (x86)
+ProgramW6432=C:\Program Files
+PSModulePath=C:\Program Files\WindowsPowerShell\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules;C:\Program Files\FSLogix\Apps\Modules;C:\Program Files (x86)\Microsoft Purview Information Protection\Powershell
+PUBLIC=C:\Users\Public
+SESSIONNAME=Console
+SystemDrive=C:
+SystemRoot=C:\Windows
+TEMP=C:\Users\spuente\AppData\Local\Temp
+TMP=C:\Users\spuente\AppData\Local\Temp
+UATDATA=C:\Windows\CCM\UATData\D9F8C395-CAB8-491d-B8AC-179A1FE1BE77
+USERDNSDOMAIN=LORDABBETT.COM
+USERDOMAIN=LORD_ABBETT
+USERDOMAIN_ROAMINGPROFILE=LORD_ABBETT
+USERNAME=SPuente
+USERPROFILE=C:\Users\spuente
+ViewClient_Agent_ConnectTicks=1765381469
+ViewClient_Broker_DNS_Name=vdicbuatb2-sopv.lordabbett.com
+ViewClient_Broker_DomainName=LORD_ABBETT
+ViewClient_Broker_Farm_ID=win11_uat
+ViewClient_Broker_GatewayHost=vdiuat.lordabbett.com
+ViewClient_Broker_GatewayLocation=Internal
+ViewClient_Broker_GatewayName=vdiuat.lordabbett.com
+ViewClient_Broker_GatewayType=SG-cohosted
+ViewClient_Broker_Gateway_IP_Address=10.5.66.196
+ViewClient_Broker_Remote_IP_Address=10.30.2.72
+ViewClient_Broker_Request_Path=10.30.2.72, 10.5.66.196
+ViewClient_Broker_Tunneled=false
+ViewClient_Broker_URL=https://vdiuat.lordabbett.com:443
+ViewClient_Broker_UserName=spuente
+ViewClient_Client_ID=MjA4ODEwRTlFODI0
+ViewClient_Client_Version=1.8.12.1.5
+ViewClient_Device_UUID=20:88:10:e9:e8:24
+ViewClient_Displays.Number=2
+ViewClient_Displays.Topology={2560, 1440, 0, 0, 32, 1},{2560, 1440, 2560, 0, 32, 0}
+ViewClient_IP_Address=10.30.2.72
+ViewClient_Keyboard.KeyDelayToRepeat=1
+ViewClient_Keyboard.KeyRepeatRate=31
+ViewClient_Keyboard.Language=1033
+ViewClient_Keyboard.Layout=00000409
+ViewClient_Keyboard.NumFuncKeys=12
+ViewClient_Keyboard.NumIndicators=3
+ViewClient_Keyboard.NumKeys=101
+ViewClient_Keyboard.ScanCodeMode=1
+ViewClient_Keyboard.SubType=0
+ViewClient_Keyboard.Type=4
+ViewClient_Launch_ID=WIN11_UAT
+ViewClient_Launch_SessionType=DESKTOP
+ViewClient_LoggedOn_Domainname=undefined
+ViewClient_LoggedOn_Username=spuente
+ViewClient_Machine_Domain=undefined
+ViewClient_Machine_Name=WT208810E9E824
+ViewClient_MAC_Address=20:88:10:e9:e8:24
+ViewClient_Protocol=BLAST
+ViewClient_TrueSSOUnlock=false
+ViewClient_Type=Linux
+ViewClient_TZID=America/New_York
+ViewClient_Windows_Timezone=Eastern Standard Time
+windir=C:\Windows
+
+Windows IP Configuration
+
+   Host Name . . . . . . . . . . . . : UAT1TPNGPPU005
+   Primary Dns Suffix  . . . . . . . : lordabbett.com
+   Node Type . . . . . . . . . . . . : Hybrid
+   IP Routing Enabled. . . . . . . . : No
+   WINS Proxy Enabled. . . . . . . . : No
+   DNS Suffix Search List. . . . . . : lordabbett.com
+
+Ethernet adapter Ethernet0 2:
+
+   Connection-specific DNS Suffix  . : lordabbett.com
+   Description . . . . . . . . . . . : vmxnet3 Ethernet Adapter #2
+   Physical Address. . . . . . . . . : 00-50-56-92-54-88
+   DHCP Enabled. . . . . . . . . . . : Yes
+   Autoconfiguration Enabled . . . . : Yes
+   IPv4 Address. . . . . . . . . . . : 10.3.120.50(Preferred) 
+   Subnet Mask . . . . . . . . . . . : 255.255.255.0
+   Lease Obtained. . . . . . . . . . : Sunday, December 7, 2025 2:02:39 AM
+   Lease Expires . . . . . . . . . . : Monday, December 15, 2025 2:02:39 AM
+   Default Gateway . . . . . . . . . : 10.3.120.1
+   DHCP Server . . . . . . . . . . . : 10.3.24.20
+   DNS Servers . . . . . . . . . . . : 10.3.24.20
+                                       10.5.8.20
+   NetBIOS over Tcpip. . . . . . . . : Enabled
+
+Image Name                     PID Session Name        Session#    Mem Usage
+========================= ======== ================ =========== ============
+System Idle Process              0 Services                   0          8 K
+System                           4 Services                   0         12 K
+Secure System                   76 Services                   0     44,040 K
+Registry                       136 Services                   0     33,292 K
+smss.exe                       488 Services                   0        512 K
+csrss.exe                      624 Services                   0      3,908 K
+csrss.exe                      728 Console                    1      3,552 K
+wininit.exe                    752 Services                   0      1,436 K
+winlogon.exe                   800 Console                    1      7,884 K
+services.exe                   872 Services                   0     10,988 K
+LsaIso.exe                     892 Services                   0      2,512 K
+lsass.exe                      904 Services                   0     25,160 K
+svchost.exe                    568 Services                   0     20,028 K
+WUDFHost.exe                   584 Services                   0     64,116 K
+fontdrvhost.exe               1052 Console                    1     15,544 K
+fontdrvhost.exe               1060 Services                   0      2,172 K
+svchost.exe                   1100 Services                   0     19,872 K
+svchost.exe                   1180 Services                   0      7,368 K
+WUDFHost.exe                  1304 Services                   0      3,272 K
+svchost.exe                   1408 Services                   0      2,660 K
+svchost.exe                   1416 Services                   0      6,252 K
+svchost.exe                   1476 Services                   0      3,972 K
+svchost.exe                   1504 Services                   0      4,212 K
+svchost.exe                   1628 Services                   0      5,236 K
+svchost.exe                   1672 Services                   0     11,224 K
+dwm.exe                       1808 Console                    1    753,284 K
+svchost.exe                   1956 Services                   0      5,952 K
+svchost.exe                   1388 Services                   0      4,208 K
+svchost.exe                   2056 Services                   0      4,808 K
+svchost.exe                   2132 Services                   0      3,400 K
+svchost.exe                   2152 Services                   0      2,632 K
+svchost.exe                   2240 Services                   0     10,544 K
+svchost.exe                   2388 Services                   0     14,724 K
+svchost.exe                   2456 Services                   0      4,528 K
+svchost.exe                   2520 Services                   0      4,088 K
+svchost.exe                   2616 Services                   0      3,608 K
+svchost.exe                   2744 Services                   0      3,664 K
+svchost.exe                   2824 Services                   0      6,340 K
+svchost.exe                   2864 Services                   0      8,800 K
+svchost.exe                   2064 Services                   0     18,760 K
+svchost.exe                   1696 Services                   0      2,968 K
+svchost.exe                   1588 Services                   0      6,068 K
+svchost.exe                   1700 Services                   0      5,612 K
+v4v_agent.exe                 1708 Services                   0      5,852 K
+svchost.exe                   2872 Services                   0      6,072 K
+Memory Compression            2996 Services                   0    550,960 K
+svchost.exe                   2372 Services                   0      4,812 K
+svchost.exe                   3088 Services                   0     10,712 K
+svchost.exe                   3128 Services                   0      3,672 K
+wsnm.exe                      3168 Services                   0     21,264 K
+ksmNotifier.exe               3176 Services                   0      3,228 K
+svchost.exe                   3376 Services                   0      4,460 K
+svchost.exe                   3428 Services                   0      3,880 K
+svchost.exe                   3780 Services                   0      3,812 K
+svchost.exe                   3808 Services                   0      3,560 K
+spoolsv.exe                   4088 Services                   0     13,592 K
+VMBlastS.exe                  3096 Services                   0      9,220 K
+svchost.exe                   3404 Services                   0      9,556 K
+svchost.exe                   3136 Services                   0     12,596 K
+svchost.exe                   3756 Services                   0     25,468 K
+svchost.exe                   4156 Services                   0      4,116 K
+svchost.exe                   4164 Services                   0      3,132 K
+BoxEditUpgradeService.exe     4196 Services                   0      5,480 K
+Box.Desktop.UpdateService     4228 Services                   0      9,584 K
+Box Local Com Windows Ser     4296 Services                   0     12,308 K
+frxccds.exe                   4316 Services                   0      3,832 K
+svchost.exe                   4332 Services                   0     25,924 K
+vmtoolsd.exe                  4340 Services                   0     13,124 K
+cuAgent.exe                   4348 Services                   0     66,668 K
+frxsvc.exe                    4420 Services                   0     12,324 K
+ftnlsv.exe                    4428 Services                   0      8,724 K
+MicrosoftSearchInBing.exe     4436 Services                   0      8,328 K
+perfhost.exe                  4444 Services                   0      4,336 K
+ftscanmgrhv.exe               4456 Services                   0      7,932 K
+hzMonService.exe              4464 Services                   0     19,872 K
+vm3dservice.exe               4480 Services                   0      5,508 K
+horizon_client_service.ex     4488 Services                   0     13,004 K
+vmware-print-redir-servic     4496 Services                   0     15,004 K
+armsvc.exe                    4520 Services                   0      9,584 K
+VGAuthService.exe             4528 Services                   0      9,456 K
+CptService.exe                4544 Services                   0      8,928 K
+vmwsprrdpwks.exe              4556 Services                   0      9,260 K
+vmwrxgservice.exe             4572 Services                   0     13,684 K
+MsSense.exe                   4580 Services                   0    169,020 K
+svchost.exe                   4588 Services                   0     11,716 K
+vmwetlm.exe                   4604 Services                   0     14,624 K
+svchost.exe                   4656 Services                   0      7,356 K
+GovAgentx64.exe               4768 Services                   0     16,532 K
+vm3dservice.exe               5072 Console                    1     10,232 K
+vmware-usbarbitrator64.ex     5132 Services                   0     12,132 K
+dllhost.exe                   6060 Services                   0     14,528 K
+svchost.exe                   5776 Services                   0      7,348 K
+wsnm_jms.exe                  6040 Services                   0     18,080 K
+conhost.exe                   7032 Services                   0      9,016 K
+WmiPrvSE.exe                  7748 Services                   0     29,208 K
+svchost.exe                   7124 Services                   0      9,336 K
+msdtc.exe                     6412 Services                   0      9,956 K
+AggregatorHost.exe            7448 Services                   0     10,000 K
+MpDefenderCoreService.exe     8356 Services                   0      8,980 K
+MsMpEng.exe                   8504 Services                   0    259,556 K
+WmiPrvSE.exe                  8980 Services                   0     17,860 K
+svchost.exe                   6848 Services                   0     11,420 K
+SenseDlpProcessor.exe         8768 Services                   0      9,328 K
+SenseTVM.exe                  8952 Services                   0     14,084 K
+SenseNdr.exe                  9368 Services                   0     34,568 K
+MpDlpService.exe             10012 Services                   0     21,668 K
+NisSrv.exe                    9748 Services                   0     25,124 K
+svchost.exe                   7148 Services                   0      8,244 K
+CcmExec.exe                   3400 Services                   0     30,068 K
+WmiPrvSE.exe                 10228 Services                   0     11,284 K
+svchost.exe                   9804 Services                   0      9,840 K
+svchost.exe                   3192 Services                   0     10,908 K
+uhssvc.exe                    7392 Services                   0     12,156 K
+WmiPrvSE.exe                  7760 Services                   0      5,956 K
+svchost.exe                   6404 Services                   0      6,936 K
+svchost.exe                   3688 Services                   0     16,956 K
+WmiPrvSE.exe                  3920 Services                   0     33,892 K
+AppLoadTimeTracer.exe         6952 Services                   0     21,016 K
+conhost.exe                   9664 Services                   0      4,920 K
+svchost.exe                   1316 Services                   0     13,952 K
+OfficeClickToRun.exe          6084 Services                   0     12,220 K
+conhost.exe                   8892 Services                   0      3,112 K
+SenseCE.exe                   9584 Services                   0     89,296 K
+SenseCE.exe                   6032 Services                   0      3,280 K
+SenseCE.exe                   9400 Services                   0      3,320 K
+SecurityHealthService.exe     7864 Services                   0      6,316 K
+VMBlastW.exe                  6804 Console                    1    209,496 K
+svchost.exe                   4644 Services                   0      9,988 K
+html5Server.exe               9456 Console                    1     18,076 K
+svchost.exe                  10184 Services                   0     10,996 K
+DlpUserAgent.exe               156 Console                    1      4,708 K
+sihost.exe                    9604 Console                    1     20,440 K
+svchost.exe                   7600 Console                    1     15,952 K
+svchost.exe                   8536 Console                    1      3,156 K
+svchost.exe                  10248 Console                    1     25,676 K
+taskhostw.exe                10444 Console                    1     11,788 K
+svchost.exe                  10584 Services                   0      6,336 K
+wssm.exe                     11124 Console                    1     13,636 K
+explorer.exe                 11208 Console                    1    307,440 K
+WmiPrvSE.exe                 11388 Services                   0      8,504 K
+svchost.exe                  11504 Console                    1     14,152 K
+cuAgentHelper.exe            11652 Console                    1     14,072 K
+svchost.exe                  11868 Services                   0      5,776 K
+SearchHost.exe               12252 Console                    1      1,248 K
+StartMenuExperienceHost.e    11284 Console                    1     30,988 K
+RuntimeBroker.exe            11808 Console                    1     20,604 K
+svchost.exe                   4056 Console                    1     10,492 K
+RuntimeBroker.exe            12200 Console                    1     15,544 K
+ctfmon.exe                   12632 Console                    1     18,992 K
+dllhost.exe                  13276 Console                    1      7,564 K
+svchost.exe                  14836 Services                   0      5,640 K
+SCNotification.exe           15124 Console                    1     11,224 K
+TextInputHost.exe            15328 Console                    1     24,556 K
+vmtoolsd.exe                 14076 Console                    1     15,324 K
+VMwareViewClipboard.exe      13868 Console                    1     11,492 K
+Zoom.exe                     13516 Console                    1    189,004 K
+CiscoTSPNotifier.exe         14172 Console                    1     10,312 K
+zWebview2Agent.exe           14156 Console                    1     17,508 K
+msedgewebview2.exe            9316 Console                    1     44,412 K
+msedgewebview2.exe            1776 Console                    1      9,180 K
+msedgewebview2.exe           15344 Console                    1     61,036 K
+msedgewebview2.exe           12068 Console                    1     13,736 K
+msedgewebview2.exe           13272 Console                    1     12,956 K
+msedgewebview2.exe           14220 Console                    1    141,580 K
+msedgewebview2.exe           14284 Console                    1     69,760 K
+msedgewebview2.exe           12108 Console                    1     32,392 K
+msedgewebview2.exe           15460 Console                    1     21,968 K
+msedgewebview2.exe           16080 Console                    1     10,724 K
+chrome.exe                   12456 Console                    1    170,972 K
+chrome.exe                   12896 Console                    1     10,920 K
+chrome.exe                    5488 Console                    1    142,316 K
+chrome.exe                   13936 Console                    1     38,744 K
+chrome.exe                   12904 Console                    1      8,520 K
+chrome.exe                   16036 Console                    1     20,388 K
+cmd.exe                      16800 Console                    1      1,484 K
+conhost.exe                  16816 Console                    1     15,412 K
+mpextms.exe                  16868 Console                    1      7,684 K
+Box Edit.exe                 17236 Console                    1     26,112 K
+OneDrive.exe                 17144 Console                    1     34,740 K
+FileCoAuth.exe               17120 Console                    1     20,040 K
+FileSyncHelper.exe           16580 Services                   0     13,676 K
+msedge.exe                   16196 Console                    1    162,264 K
+msedge.exe                   13420 Console                    1     11,056 K
+msedge.exe                   13240 Console                    1     91,896 K
+msedge.exe                   15060 Console                    1     31,064 K
+msedge.exe                   16932 Console                    1      6,916 K
+msedge.exe                   17380 Console                    1      8,328 K
+ms-teams.exe                 15936 Console                    1     17,336 K
+RuntimeBroker.exe            16076 Console                    1      9,684 K
+msedgewebview2.exe           17424 Console                    1     53,952 K
+msedgewebview2.exe           17764 Console                    1     12,644 K
+msedgewebview2.exe           14788 Console                    1     91,320 K
+msedgewebview2.exe           16768 Console                    1     18,020 K
+msedgewebview2.exe           15164 Console                    1      5,540 K
+msedgewebview2.exe           18688 Console                    1    296,600 K
+msedgewebview2.exe           19172 Console                    1      1,400 K
+svchost.exe                  19308 Services                   0      7,632 K
+WebexHost.exe                19008 Console                    1     12,740 K
+RuntimeBroker.exe            16844 Console                    1     18,484 K
+svchost.exe                  17980 Console                    1     13,980 K
+WINWORD.EXE                  13604 Console                    1    231,096 K
+ai.exe                        1296 Console                    1      3,604 K
+msedgewebview2.exe           10004 Console                    1     77,076 K
+msedgewebview2.exe           16888 Console                    1     12,312 K
+msedgewebview2.exe           19264 Console                    1     34,912 K
+msedgewebview2.exe           14044 Console                    1     14,964 K
+msedgewebview2.exe            2560 Console                    1      8,976 K
+svchost.exe                   3840 Services                   0      5,236 K
+ai.exe                        6012 Console                    1      2,992 K
+msedgewebview2.exe           14868 Console                    1     67,780 K
+msedgewebview2.exe           19132 Console                    1     61,536 K
+msedgewebview2.exe           13920 Console                    1  1,771,284 K
+msedgewebview2.exe           19024 Console                    1    153,052 K
+msedgewebview2.exe            9712 Console                    1     56,288 K
+msedgewebview2.exe           13004 Console                    1     59,572 K
+msedgewebview2.exe            9540 Console                    1     65,004 K
+msedgewebview2.exe            6540 Console                    1     57,260 K
+msedgewebview2.exe           13536 Console                    1     74,544 K
+msedgewebview2.exe           19484 Console                    1  1,779,592 K
+msedgewebview2.exe           19644 Console                    1     62,112 K
+msedgewebview2.exe            1940 Console                    1     58,032 K
+chrome.exe                    5500 Console                    1     14,544 K
+ai.exe                       10372 Console                    1      3,864 K
+ShellExperienceHost.exe       4564 Console                    1     46,544 K
+svchost.exe                  12780 Console                    1      9,520 K
+RuntimeBroker.exe            11224 Console                    1     29,988 K
+SystemSettingsBroker.exe     16716 Console                    1      7,276 K
+svchost.exe                  18648 Services                   0      5,472 K
+svchost.exe                  20368 Services                   0     11,488 K
+svchost.exe                   8776 Services                   0      8,996 K
+svchost.exe                  12672 Services                   0      4,420 K
+OUTLOOK.EXE                  17744 Console                    1    251,548 K
+ai.exe                       11552 Console                    1      3,872 K
+msedgewebview2.exe           16832 Console                    1     54,572 K
+chrome.exe                   13800 Console                    1     81,232 K
+chrome.exe                   16176 Console                    1     14,340 K
+msedge.exe                    1540 Console                    1      9,248 K
+svchost.exe                  20048 Console                    1     10,128 K
+msedge.exe                    5632 Console                    1     14,864 K
+msedge.exe                   13052 Console                    1      6,932 K
+msedge.exe                   11436 Console                    1      8,616 K
+msedge.exe                   13384 Console                    1      6,200 K
+msedge.exe                    9268 Console                    1      5,216 K
+msedge.exe                     952 Console                    1      3,732 K
+ApplicationFrameHost.exe     13196 Console                    1     27,364 K
+CalculatorApp.exe            20384 Console                    1      9,100 K
+RuntimeBroker.exe            21332 Console                    1     17,580 K
+CalculatorApp.exe             7948 Console                    1      7,772 K
+chrome.exe                   22352 Console                    1     17,492 K
+msedge.exe                    7536 Console                    1     10,232 K
+chrome.exe                   17020 Console                    1     26,408 K
+ai.exe                       13496 Console                    1     10,128 K
+ai.exe                       14800 Console                    1      5,612 K
+SnippingTool.exe             11316 Console                    1     25,656 K
+Notepad.exe                  18992 Console                    1    308,540 K
+SearchIndexer.exe             1896 Services                   0     11,764 K
+VISIO.EXE                    23080 Console                    1    120,392 K
+msedge.exe                   21120 Console                    1     11,404 K
+msedge.exe                   23016 Console                    1      5,260 K
+msedge.exe                   22640 Console                    1     12,868 K
+msedge.exe                   22484 Console                    1     20,944 K
+chrome.exe                   22180 Console                    1    138,424 K
+chrome.exe                    4404 Console                    1     13,488 K
+chrome.exe                   21032 Console                    1     10,772 K
+msedge.exe                    6240 Console                    1     10,772 K
+msedge.exe                   11012 Console                    1     17,400 K
+msedge.exe                   12120 Console                    1     20,032 K
+EXCEL.EXE                    15152 Console                    1    107,328 K
+splwow64.exe                  8420 Console                    1     13,552 K
+msedge.exe                   11268 Console                    1      6,476 K
+Acrobat.exe                  23712 Console                    1      8,664 K
+Acrobat.exe                  20592 Console                    1     76,284 K
+AcroCEF.exe                  19088 Console                    1     15,936 K
+AcroCEF.exe                   3044 Console                    1      6,292 K
+AcroCEF.exe                  22520 Console                    1      9,244 K
+AcroCEF.exe                   9036 Console                    1     15,296 K
+AcroCEF.exe                  22652 Console                    1     17,364 K
+AcroCEF.exe                  20548 Console                    1      9,468 K
+AcroCEF.exe                  23460 Console                    1     10,856 K
+AcroCEF.exe                  23596 Console                    1      9,812 K
+AcroCEF.exe                  22076 Console                    1      7,260 K
+AdobeCollabSync.exe          17204 Console                    1     10,076 K
+AdobeCollabSync.exe          15080 Console                    1     16,824 K
+svchost.exe                  21212 Services                   0     20,692 K
+Microsoft.Management.Serv    17728 Services                   0     30,880 K
+chrome.exe                   25008 Console                    1     10,768 K
+CiscoJabber.exe              26100 Console                    1    173,448 K
+CiscoJabber.exe              13488 Console                    1     13,696 K
+CiscoJabber.exe              23052 Console                    1      8,456 K
+CiscoJabber.exe               8568 Console                    1     23,684 K
+CiscoJabber.exe              11096 Console                    1     17,068 K
+hvdagent.exe                 25908 Console                    1     12,488 K
+vxcsettings.exe              24228 Console                    1     13,564 K
+wbxcOIEx64.exe               26308 Console                    1      8,288 K
+CiscoJabber.exe              21996 Console                    1     14,952 K
+chrome.exe                   21684 Console                    1     50,400 K
+chrome.exe                   12584 Console                    1     10,724 K
+chrome.exe                   12168 Console                    1    233,500 K
+chrome.exe                   23548 Console                    1     13,980 K
+chrome.exe                   27572 Console                    1     26,924 K
+msedgewebview2.exe           28120 Console                    1     41,120 K
+svchost.exe                  28780 Services                   0     11,504 K
+VISIO.EXE                    10764 Console                    1     88,308 K
+cmd.exe                      18624 Console                    1      4,268 K
+conhost.exe                  27536 Console                    1      7,720 K
+OpenConsole.exe               8040 Console                    1     17,132 K
+WindowsTerminal.exe          26672 Console                    1     21,132 K
+RuntimeBroker.exe             7220 Console                    1     10,460 K
+Solar-PuTTY.exe              28856 Console                    1    106,516 K
+pageant.exe                  26908 Console                    1      8,716 K
+putty.exe                    27432 Console                    1     21,076 K
+putty.exe                    29144 Console                    1     13,548 K
+putty.exe                    27784 Console                    1     13,464 K
+putty.exe                    25276 Console                    1     13,376 K
+Wireshark.exe                23212 Console                    1     12,908 K
+chrome.exe                   27564 Console                    1     35,852 K
+chrome.exe                   14796 Console                    1    182,844 K
+chrome.exe                   29548 Console                    1     10,784 K
+putty.exe                    24368 Console                    1    117,008 K
+chrome.exe                   29352 Console                    1     40,748 K
+Zoom.exe                     24088 Console                    1     35,344 K
+VMwareView-RdeServer.exe      4400 Console                    1     23,840 K
+vmware-print-redir-server    26172 Services                   0     20,204 K
+conhost.exe                  27580 Services                   0      5,224 K
+msedge.exe                    9180 Console                    1     14,576 K
+msedge.exe                   26656 Console                    1     12,640 K
+CiscoCollabHost.exe          30048 Console                    1    907,432 K
+msedge.exe                   23108 Console                    1     29,300 K
+CiscoCollabHost.exe          24792 Console                    1    628,552 K
+CiscoCollabHost.exe          20680 Console                    1      7,576 K
+wmlhost.exe                  29344 Console                    1    206,996 K
+washost.exe                  14072 Console                    1    197,092 K
+Wireshark.exe                28516 Console                    1    187,124 K
+Wireshark.exe                10592 Console                    1    270,828 K
+dumpcap.exe                   7540 Console                    1     10,804 K
+conhost.exe                  29464 Console                    1     21,540 K
+svchost.exe                  23192 Services                   0     10,980 K
+svchost.exe                  22792 Services                   0      9,340 K
+chrome.exe                   17532 Console                    1    339,132 K
+CiscoJabberPrt.exe           26364 Console                    1     36,768 K
+cmd.exe                      20128 Console                    1      5,636 K
+conhost.exe                  28488 Console                    1     12,512 K
+tasklist.exe                 21092 Console                    1     10,932 K
+
+Host Name:                 UAT1TPNGPPU005
+OS Name:                   Microsoft Windows 11 Enterprise
+OS Version:                10.0.22631 N/A Build 22631
+OS Manufacturer:           Microsoft Corporation
+OS Configuration:          Member Workstation
+OS Build Type:             Multiprocessor Free
+Registered Owner:          Lord Abbett
+Registered Organization:   Lord Abbett
+Product ID:                00329-00000-00003-AA839
+Original Install Date:     3/12/2025, 4:45:23 PM
+System Boot Time:          12/7/2025, 2:01:20 AM
+System Manufacturer:       VMware, Inc.
+System Model:              VMware7,1
+System Type:               x64-based PC
+Processor(s):              4 Processor(s) Installed.
+                           [01]: Intel64 Family 6 Model 143 Stepping 8 GenuineIntel ~2700 Mhz
+                           [02]: Intel64 Family 6 Model 143 Stepping 8 GenuineIntel ~2700 Mhz
+                           [03]: Intel64 Family 6 Model 143 Stepping 8 GenuineIntel ~2700 Mhz
+                           [04]: Intel64 Family 6 Model 143 Stepping 8 GenuineIntel ~2700 Mhz
+BIOS Version:              VMware, Inc. VMW71.00V.24224532.B64.2408191458, 8/19/2024
+Windows Directory:         C:\Windows
+System Directory:          C:\Windows\system32
+Boot Device:               \Device\HarddiskVolume1
+System Locale:             en-us;English (United States)
+Input Locale:              en-us;English (United States)
+Time Zone:                 (UTC-05:00) Eastern Time (US & Canada)
+Total Physical Memory:     16,383 MB
+Available Physical Memory: 740 MB
+Virtual Memory: Max Size:  52,480 MB
+Virtual Memory: Available: 6,154 MB
+Virtual Memory: In Use:    46,326 MB
+Page File Location(s):     C:\pagefile.sys
+Domain:                    lordabbett.com
+Logon Server:              \\LADC07-SOPV
+Hotfix(s):                 6 Hotfix(s) Installed.
+                           [01]: KB5066133
+                           [02]: KB5027397
+                           [03]: KB5033204
+                           [04]: KB5041655
+                           [05]: KB5068865
+                           [06]: KB5068070
+Network Card(s):           1 NIC(s) Installed.
+                           [01]: vmxnet3 Ethernet Adapter
+                                 Connection Name: Ethernet0 2
+                                 DHCP Enabled:    Yes
+                                 DHCP Server:     10.3.24.20
+                                 IP address(es)
+                                 [01]: 10.3.120.50
+Hyper-V Requirements:      A hypervisor has been detected. Features required for Hyper-V will not be displayed.
+
+Monitor Resolution: {Width=1710, Height=1140} DPI: 120

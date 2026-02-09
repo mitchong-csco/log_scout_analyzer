@@ -1,0 +1,19 @@
+[package]
+name = "log-scout-analyzer"
+version = "0.0.3"
+edition = "2021"
+authors = ["Log Scout Team"]
+description = "A comprehensive log analysis extension for Zed editor"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+zed_extension_api = "0.0.6"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true

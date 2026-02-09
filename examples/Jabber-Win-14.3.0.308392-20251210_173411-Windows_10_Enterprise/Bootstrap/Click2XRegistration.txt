@@ -1,0 +1,291 @@
+Attempting to retrieve active session ID
+Deleting Legacy Keys
+Failed to open AppID\{41C52555-91CF-4F4D-A9CB-04F3BF2B49AE} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open AppID\{41C52555-91CF-4F4D-A9CB-04F3BF2B49AE} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open AppID\ICUCExtensionProvider.DLL in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open AppID\ICUCExtensionProvider.DLL in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.Contact in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.Contact in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.Contact.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.Contact.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.ContactGroup in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.ContactGroup in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.ContactGroup.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.ContactGroup.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.ContactGroups in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.ContactGroups in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.ContactGroups.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.ContactGroups.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.Contacts in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.Contacts in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.Contacts.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.Contacts.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.Conversation in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.Conversation in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.Conversation.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.Conversation.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.EventListenerMana in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.EventListenerMana in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.EventListenerMa.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.EventListenerMa.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.IMAndPresence in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.IMAndPresence in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.IMAndPresence.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.IMAndPresence.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.Log in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.Log in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.Log.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.Log.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.Phone in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.Phone in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.Phone.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.Phone.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.PresenceState in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.PresenceState in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.PresenceState.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.PresenceState.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.ProviderManagemen in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.ProviderManagemen in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.ProviderManagem.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.ProviderManagem.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.RecentCallHistory in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.RecentCallHistory in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open ICUCExtensionProvider.RecentCallHisto.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open ICUCExtensionProvider.RecentCallHisto.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{0389FBBA-6E36-4F5D-9B9D-C702E3807B7F} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{0389FBBA-6E36-4F5D-9B9D-C702E3807B7F} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{0B1024B4-72D1-4BB1-BB9A-FFE122345D1A} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{0B1024B4-72D1-4BB1-BB9A-FFE122345D1A} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{1CE8C877-FDC3-40BA-AAA2-9EFA875BACD1} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{1CE8C877-FDC3-40BA-AAA2-9EFA875BACD1} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{227BBF36-4F34-4E34-84B8-F9F66F84E1EF} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{227BBF36-4F34-4E34-84B8-F9F66F84E1EF} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{268D867E-BAB0-4D08-8555-0C279B372757} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{268D867E-BAB0-4D08-8555-0C279B372757} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{29EB2E1F-C77E-4A3D-A2B9-954393082E35} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{29EB2E1F-C77E-4A3D-A2B9-954393082E35} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{4AD75AC6-F0B9-40E1-B886-8ADB6BB97328} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{4AD75AC6-F0B9-40E1-B886-8ADB6BB97328} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{61B881E4-4AB4-45F6-A9A7-40AD064C1212} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{61B881E4-4AB4-45F6-A9A7-40AD064C1212} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{6616B9CC-12A7-48DC-AF28-BE7BD79CD579} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{6616B9CC-12A7-48DC-AF28-BE7BD79CD579} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{885DDD1C-CD59-4EC3-A470-D766C5765AC7} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{885DDD1C-CD59-4EC3-A470-D766C5765AC7} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{A0301EF2-B63D-4620-AFB1-161AD3271070} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{A0301EF2-B63D-4620-AFB1-161AD3271070} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{D7EC3ED3-BD58-4D67-8111-7FC1385F00D7} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{D7EC3ED3-BD58-4D67-8111-7FC1385F00D7} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{E7F27F09-3F9A-4FE9-AA4C-CD2CBD50C3E0} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{E7F27F09-3F9A-4FE9-AA4C-CD2CBD50C3E0} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{EEC5CE10-45CD-4BFD-86E4-5A2F6ACE7E0A} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{EEC5CE10-45CD-4BFD-86E4-5A2F6ACE7E0A} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{FDCBE325-6701-4E92-BCF5-FCAC8D480638} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{FDCBE325-6701-4E92-BCF5-FCAC8D480638} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open Interface\{29D646D7-F42C-4260-B277-61CC75F10848} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open Interface\{29D646D7-F42C-4260-B277-61CC75F10848} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open Interface\{4D113314-4E67-4007-BD23-04EB76C64031} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open Interface\{4D113314-4E67-4007-BD23-04EB76C64031} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open Interface\{4F16EBB3-6222-4461-A53F-9490E526048A} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open Interface\{4F16EBB3-6222-4461-A53F-9490E526048A} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open Interface\{DD6227FC-3F9E-410F-8FE5-C2793EB03D27} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open Interface\{DD6227FC-3F9E-410F-8FE5-C2793EB03D27} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open TypeLib\{F4383303-C29F-4449-A1AF-54C1AE2725D1} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open TypeLib\{F4383303-C29F-4449-A1AF-54C1AE2725D1} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCExtensionProvider.ContactGroupImpl in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCExtensionProvider.ContactGroupImpl in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCExtensionProvider.ContactGroupImpl.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCExtensionProvider.ContactGroupImpl.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCExtensionProvider.ContactGroupsImpl in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCExtensionProvider.ContactGroupsImpl in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCExtensionProvider.ContactGroupsImp.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCExtensionProvider.ContactGroupsImp.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCExtensionProvider.PresenceStateImpl in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCExtensionProvider.PresenceStateImpl in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCExtensionProvider.PresenceStateImp.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCExtensionProvider.PresenceStateImp.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCExtensionProvider.ContactImpl in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCExtensionProvider.ContactImpl in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCExtensionProvider.ContactImpl.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCExtensionProvider.ContactImpl.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCExtensionProvider.ContactsImpl in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCExtensionProvider.ContactsImpl in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCExtensionProvider.ContactsImpl.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCExtensionProvider.ContactsImpl.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCExtensionProvider.ConversationImpl in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCExtensionProvider.ConversationImpl in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCExtensionProvider.ConversationImpl.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCExtensionProvider.ConversationImpl.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCExtensionProvider.CUCExtensionProvid in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCExtensionProvider.CUCExtensionProvid in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCExtensionProvider.CUCExtensionProv.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCExtensionProvider.CUCExtensionProv.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{0BB8FC9E-794C-4E13-B84A-AA7A28B9B87A} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{0BB8FC9E-794C-4E13-B84A-AA7A28B9B87A} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{A4A3B99C-9BC6-4D15-A402-26EFEC43CB2E} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{A4A3B99C-9BC6-4D15-A402-26EFEC43CB2E} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{17D7D252-A34E-498B-B15C-72A44E27F34B} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{17D7D252-A34E-498B-B15C-72A44E27F34B} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{569EC51C-02A6-4BE6-B712-F1F84111F43C} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{569EC51C-02A6-4BE6-B712-F1F84111F43C} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{A4138D71-D650-4576-A3BD-4A851188A315} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{A4138D71-D650-4576-A3BD-4A851188A315} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{0599DD09-7857-4348-B8A9-908F95CCFDF9} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{0599DD09-7857-4348-B8A9-908F95CCFDF9} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{156A7CCD-C3E0-48B5-A8C3-60A68DA8D22A} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{156A7CCD-C3E0-48B5-A8C3-60A68DA8D22A} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{9B9C9713-50C3-4722-8298-0CD525EA503E} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{9B9C9713-50C3-4722-8298-0CD525EA503E} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCExtensionConversationEv in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCExtensionConversationEv in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCExtensionConversation.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCExtensionConversation.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCExtensionUserUtility in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCExtensionUserUtility in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCExtensionUserUtility.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCExtensionUserUtility.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerExtensionBroke in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerExtensionBroke in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerExtensionBro.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerExtensionBro.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerService in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerService in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerService.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerService.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerServices in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerServices in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerServices.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerServices.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCExtensionProviderManage in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCExtensionProviderManage in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCExtensionProviderMana.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCExtensionProviderMana.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCExtensionIMAndPresenceE in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCExtensionIMAndPresenceE in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCExtensionIMAndPresenc.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCExtensionIMAndPresenc.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCExtensionEventManager in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCExtensionEventManager in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCExtensionEventManager.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCExtensionEventManager.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerContact in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerContact in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerContact.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerContact.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerAdvanced in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerAdvanced in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerAdvanced.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerAdvanced.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerClassFactory in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerClassFactory in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerClassFactory.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerClassFactory.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerContacts in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerContacts in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerContacts.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerContacts.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerContactResolut in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerContactResolut in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerContactResol.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerContactResol.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerWindow in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerWindow in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerWindow.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerWindow.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerGroup in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerGroup in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerGroup.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerGroup.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerGroups in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerGroups in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerGroups.1 in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CUCMessenger.CUCMessengerGroups.1 in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{693CAA5D-F422-4B9D-929A-AB858C14B9F1} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{693CAA5D-F422-4B9D-929A-AB858C14B9F1} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{55E8EC00-F52C-4F27-9A19-F4E92C650933} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{55E8EC00-F52C-4F27-9A19-F4E92C650933} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{941D10A6-5B60-48B6-9E37-3D1EF34E53E1} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{941D10A6-5B60-48B6-9E37-3D1EF34E53E1} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{EBAE0BE8-5206-4EE2-B3C4-79F5F7870064} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{EBAE0BE8-5206-4EE2-B3C4-79F5F7870064} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{67D4EF51-09AD-4474-B37E-0AE1D269E4ED} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{67D4EF51-09AD-4474-B37E-0AE1D269E4ED} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{1E03CD3F-E25A-4B69-83D0-2F063B365FBA} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{1E03CD3F-E25A-4B69-83D0-2F063B365FBA} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{AF21D94B-5D8E-4522-8067-624AF1572411} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{AF21D94B-5D8E-4522-8067-624AF1572411} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{7D12ADDA-EAA9-4251-A1CC-000969D5826A} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{7D12ADDA-EAA9-4251-A1CC-000969D5826A} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{5AE3BCDD-DD8A-416C-AAF3-AFE008E416E8} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{5AE3BCDD-DD8A-416C-AAF3-AFE008E416E8} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{83CE44B6-A512-4199-9766-38357A9108E8} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{83CE44B6-A512-4199-9766-38357A9108E8} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{AD11F859-AF47-41D9-ACB2-B477FD89DED0} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{AD11F859-AF47-41D9-ACB2-B477FD89DED0} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{22195258-C0D6-4C0C-B049-BCC6DACA6A6F} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{22195258-C0D6-4C0C-B049-BCC6DACA6A6F} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{074D4B8A-A4EA-46E5-BEC9-EC879BB05728} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{074D4B8A-A4EA-46E5-BEC9-EC879BB05728} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{E7D6B85F-4B92-43B1-9897-DF879FA8DEED} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{E7D6B85F-4B92-43B1-9897-DF879FA8DEED} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{3230D760-31E7-4C0D-AE5B-5DCA6CE98457} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{3230D760-31E7-4C0D-AE5B-5DCA6CE98457} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{59C42D55-0E72-4979-82F8-60A365BDAA7F} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{59C42D55-0E72-4979-82F8-60A365BDAA7F} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{A9F47C06-AECA-4D05-A0E3-E778923C7921} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{A9F47C06-AECA-4D05-A0E3-E778923C7921} in 80000000 use64BitRegistry: 1 Registry Error 2
+Failed to open CLSID\{E7479A0D-BB19-44A5-968F-6F41D93EE0BC} in 80000000 use64BitRegistry: 0 Registry Error 2
+Failed to open CLSID\{E7479A0D-BB19-44A5-968F-6F41D93EE0BC} in 80000000 use64BitRegistry: 1 Registry Error 2
+Adding keys for IM Providers
+Failed to open SOFTWARE\IM Providers\Cisco Jabber in 80000002 use64BitRegistry: 0 Registry Error 2
+Created write handle to SOFTWARE\IM Providers\Cisco Jabber\FriendlyName
+Editing current string value...
+Successfully modified SOFTWARE\IM Providers\Cisco Jabber\FriendlyName with new value of: Cisco Jabber
+Created write handle to SOFTWARE\IM Providers\Cisco Jabber\GUID
+Editing current string value...
+Successfully modified SOFTWARE\IM Providers\Cisco Jabber\GUID with new value of: {83CE44B6-A512-4199-9766-38357A9108E8}
+Created write handle to SOFTWARE\IM Providers\Cisco Jabber\ProcessName
+Editing current string value...
+Successfully modified SOFTWARE\IM Providers\Cisco Jabber\ProcessName with new value of: CiscoJabber.exe
+Failed to open SOFTWARE\IM Providers\Cisco Jabber in 80000002 use64BitRegistry: 1 Registry Error 2
+Created write handle to SOFTWARE\IM Providers\Cisco Jabber\FriendlyName
+Editing current string value...
+Successfully modified SOFTWARE\IM Providers\Cisco Jabber\FriendlyName with new value of: Cisco Jabber
+Created write handle to SOFTWARE\IM Providers\Cisco Jabber\GUID
+Editing current string value...
+Successfully modified SOFTWARE\IM Providers\Cisco Jabber\GUID with new value of: {83CE44B6-A512-4199-9766-38357A9108E8}
+Created write handle to SOFTWARE\IM Providers\Cisco Jabber\ProcessName
+Editing current string value...
+Successfully modified SOFTWARE\IM Providers\Cisco Jabber\ProcessName with new value of: CiscoJabber.exe
+Failed to open SOFTWARE\IM Providers in 80000003 use64BitRegistry: 0 Registry Error 2
+Failed to create SOFTWARE\IM Providers in 80000003 use64BitRegistry: 0 Registry Error 87
+Unable to create SOFTWARE\IM Providers\DefaultIMApp with new value of: Cisco Jabber but error notification will not be shown
+Setting up registry: Found version OFFICE_2016 of Office application
+Failed to open SOFTWARE\Microsoft\Office\Outlook\Call Integration in 80000002 use64BitRegistry: 1 Registry Error 2
+Created write handle to SOFTWARE\Microsoft\Office\Outlook\Call Integration\IMApplication
+Editing current string value...
+Successfully modified SOFTWARE\Microsoft\Office\Outlook\Call Integration\IMApplication with new value of: CiscoJabber.exe
+Failed to open SOFTWARE\Microsoft\Office\Outlook\Call Integration in 80000002 use64BitRegistry: 0 Registry Error 2
+Created write handle to SOFTWARE\Microsoft\Office\Outlook\Call Integration\IMApplication
+Editing current string value...
+Successfully modified SOFTWARE\Microsoft\Office\Outlook\Call Integration\IMApplication with new value of: CiscoJabber.exe
+Failed to open CLSID\{8885370D-B33E-44B7-875D-28E403CF9270}\TreatAs in 80000000 use64BitRegistry: 1 Registry Error 2
+Created write handle to CLSID\{8885370D-B33E-44B7-875D-28E403CF9270}\TreatAs\
+Editing current string value...
+Successfully modified CLSID\{8885370D-B33E-44B7-875D-28E403CF9270}\TreatAs\ with new value of: {83CE44B6-A512-4199-9766-38357A9108E8}
+Failed to open CLSID\{8885370D-B33E-44B7-875D-28E403CF9270}\TreatAs in 80000000 use64BitRegistry: 0 Registry Error 2
+Created write handle to CLSID\{8885370D-B33E-44B7-875D-28E403CF9270}\TreatAs\
+Editing current string value...
+Successfully modified CLSID\{8885370D-B33E-44B7-875D-28E403CF9270}\TreatAs\ with new value of: {83CE44B6-A512-4199-9766-38357A9108E8}
+Failed to open Software\Microsoft\Office\16.0\Common\PersonaMenu in 80000003 use64BitRegistry: 0 Registry Error 2
+Failed to create Software\Microsoft\Office\16.0\Common\PersonaMenu in 80000003 use64BitRegistry: 0 Registry Error 87
+Unable to create Software\Microsoft\Office\16.0\Common\PersonaMenu\TagContact with new value of: 0 but error notification will not be shown
+Failed to open Software\Microsoft\Office\16.0\Common\PersonaMenu in 80000003 use64BitRegistry: 0 Registry Error 2
+Failed to create Software\Microsoft\Office\16.0\Common\PersonaMenu in 80000003 use64BitRegistry: 0 Registry Error 87
+Unable to create Software\Microsoft\Office\16.0\Common\PersonaMenu\Enabled with new value of: 1 but error notification will not be shown
+Failed to open Software\Microsoft\Office\16.0\Common\PersonaMenu in 80000003 use64BitRegistry: 0 Registry Error 2
+Failed to create Software\Microsoft\Office\16.0\Common\PersonaMenu in 80000003 use64BitRegistry: 0 Registry Error 87
+Unable to create Software\Microsoft\Office\16.0\Common\PersonaMenu\SetOnlineStatusLevel with new value of: 2 but error notification will not be shown
+Failed to open Software\Microsoft\Office\16.0\Common\PersonaMenu in 80000003 use64BitRegistry: 0 Registry Error 2
+Failed to create Software\Microsoft\Office\16.0\Common\PersonaMenu in 80000003 use64BitRegistry: 0 Registry Error 87
+Unable to create Software\Microsoft\Office\16.0\Common\PersonaMenu\EnablePresence with new value of: 2 but error notification will not be shown
