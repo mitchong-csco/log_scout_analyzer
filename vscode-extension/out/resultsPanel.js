@@ -63,7 +63,7 @@ class ResultsPanel {
         this.panel.onDidDispose(() => this.dispose(), null, this.disposables);
     }
     static createOrShow(extensionUri, document) {
-        const column = vscode.ViewColumn.Two;
+        const column = vscode.ViewColumn.One;
         // If we already have a panel, show it
         if (ResultsPanel.currentPanel) {
             ResultsPanel.currentPanel.panel.reveal(column);
@@ -112,7 +112,8 @@ class ResultsPanel {
             filtered = filtered.filter((r) => {
                 if (!r.timestamp)
                     return true;
-                const resultTime = r.timestamp.getTime();
+                const timestamp = r.timestamp instanceof Date ? r.timestamp : new Date(r.timestamp);
+                const resultTime = timestamp.getTime();
                 if (filters.startDate &&
                     resultTime < new Date(filters.startDate).getTime()) {
                     return false;

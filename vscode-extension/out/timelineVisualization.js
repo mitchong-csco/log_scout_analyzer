@@ -51,10 +51,10 @@ class TimelineVisualizationProvider {
      */
     showTimelinePanel(events, document) {
         if (this.panel) {
-            this.panel.reveal(vscode.ViewColumn.Beside);
+            this.panel.reveal(vscode.ViewColumn.One);
         }
         else {
-            this.panel = vscode.window.createWebviewPanel("scoutTimeline", "📊 Timeline Visualization", vscode.ViewColumn.Beside, {
+            this.panel = vscode.window.createWebviewPanel("scoutTimeline", "📊 Timeline Visualization", vscode.ViewColumn.One, {
                 enableScripts: true,
                 retainContextWhenHidden: true,
             });
@@ -87,10 +87,10 @@ class TimelineVisualizationProvider {
             return;
         }
         if (this.panel) {
-            this.panel.reveal(vscode.ViewColumn.Beside);
+            this.panel.reveal(vscode.ViewColumn.One);
         }
         else {
-            this.panel = vscode.window.createWebviewPanel("scoutLadder", "📞 SIP Ladder Diagram", vscode.ViewColumn.Beside, {
+            this.panel = vscode.window.createWebviewPanel("scoutLadder", "📞 SIP Ladder Diagram", vscode.ViewColumn.One, {
                 enableScripts: true,
                 retainContextWhenHidden: true,
             });
@@ -123,8 +123,13 @@ class TimelineVisualizationProvider {
      */
     getTimelineHtml(events, document) {
         const fileName = document.fileName.split(/[\\/]/).pop() || "Log File";
+        // Normalize timestamps to Date objects
+        const normalizedEvents = events.map(e => ({
+            ...e,
+            timestamp: e.timestamp instanceof Date ? e.timestamp : new Date(e.timestamp)
+        }));
         // Sort events by timestamp
-        const sortedEvents = [...events].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+        const sortedEvents = [...normalizedEvents].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
         // Calculate time range
         const startTime = sortedEvents[0]?.timestamp;
         const endTime = sortedEvents[sortedEvents.length - 1]?.timestamp;
@@ -528,9 +533,10 @@ class TimelineVisualizationProvider {
             const direction = fromIndex < toIndex ? "right" : "left";
             const color = this.getSipMessageColor(event.method, event.responseCode);
             const label = event.method || `${event.responseCode}` || event.message;
+            const timestamp = event.timestamp instanceof Date ? event.timestamp : new Date(event.timestamp);
             return `
                 <div class="ladder-row" data-line="${event.line}">
-                    <div class="ladder-time">${event.timestamp.toLocaleTimeString()}</div>
+                    <div class="ladder-time">${timestamp.toLocaleTimeString()}</div>
                     <div class="ladder-diagram">
                         <div class="ladder-arrow"
                              data-from="${fromIndex}"

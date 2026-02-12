@@ -304,6 +304,7 @@ impl SyncService {
         Ok(cache.get_all_patterns().into_iter().cloned().collect())
     }
 
+    /* Product-based filtering no longer supported -  collections are product-specific
     /// Get patterns by product
     pub async fn get_patterns_by_product(
         &self,
@@ -320,6 +321,7 @@ impl SyncService {
             .cloned()
             .collect())
     }
+    */
 
     /// Get patterns by category
     pub async fn get_patterns_by_category(

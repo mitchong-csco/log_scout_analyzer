@@ -165,9 +165,9 @@ class SplitViewProvider {
         this.annotations.set(originalUri, annotations);
         // Create split view URI
         const splitViewUri = this.createSplitViewUri(originalUri);
-        // Open split view to the right
+        // Open in the main editor window
         const splitViewEditor = await vscode.window.showTextDocument(splitViewUri, {
-            viewColumn: vscode.ViewColumn.Beside,
+            viewColumn: vscode.ViewColumn.Active,
             preserveFocus: false,
             preview: false,
         });

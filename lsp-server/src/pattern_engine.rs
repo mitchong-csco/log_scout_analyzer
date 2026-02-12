@@ -38,6 +38,77 @@ pub enum Severity {
     Hint,
 }
 
+/// Log level detected in the log line
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum LogLevel {
+    FATAL,
+    ERROR,
+    WARN,
+    WARNING,
+    INFO,
+    DEBUG,
+    TRACE,
+    VERBOSE,
+}
+
+impl LogLevel {
+    /// Parse log level from string
+    pub fn from_str(s: &str) -> Option<Self> {
+        match s.to_uppercase().as_str() {
+            "FATAL" | "CRITICAL" | "CRIT" => Some(LogLevel::FATAL),
+            "ERROR" | "ERR" => Some(LogLevel::ERROR),
+            "WARN" | "WARNING" => Some(LogLevel::WARN),
+            "INFO" | "INFORMATION" => Some(LogLevel::INFO),
+            "DEBUG" | "DBG" => Some(LogLevel::DEBUG),
+            "TRACE" | "TRC" => Some(LogLevel::TRACE),
+            "VERBOSE" | "VERB" | "V" => Some(LogLevel::VERBOSE),
+            _ => None,
+        }
+    }
+
+    /// Convert log level to severity
+    pub fn to_severity(&self) -> Severity {
+        match self {
+            LogLevel::FATAL | LogLevel::ERROR => Severity::Error,
+            LogLevel::WARN | LogLevel::WARNING => Severity::Warning,
+            LogLevel::INFO => Severity::Info,
+            LogLevel::DEBUG | LogLevel::TRACE | LogLevel::VERBOSE => Severity::Hint,
+        }
+    }
+}
+
+/// Condition operator for severity triggers
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ConditionOperator {
+    Equals,
+    Contains,
+    Regex,
+    GreaterThan,
+    LessThan,
+}
+
+/// Severity trigger based on extracted values or log level
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SeverityTrigger {
+    /// Field name to check (e.g., "state", "status", "code")
+    pub field: String,
+    
+    /// Operator to use for comparison
+    pub operator: ConditionOperator,
+    
+    /// Expected value to match
+    pub value: String,
+    
+    /// Severity to use when condition matches
+    pub severity: Severity,
+    
+    /// Description of why this trigger exists
+    #[serde(default)]
+    pub description: Option<String>,
+}
+
 /// Pattern matching mode
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -95,6 +166,29 @@ pub struct Pattern {
     /// Whether this pattern is enabled
     #[serde(default = "default_true")]
     pub enabled: bool,
+
+    /// Severity overrides based on detected log level
+    #[serde(default)]
+    pub log_level_triggers: std::collections::HashMap<LogLevel, Severity>,
+
+    /// Conditional severity triggers based on extracted values
+    #[serde(default)]
+    pub condition_triggers: Vec<SeverityTrigger>,
+
+    /// Named capture groups in the regex for extracting values
+    #[serde(default)]
+    pub capture_fields: Vec<String>,
+
+    /// Parameter extraction regexes (from TagScout)
+    #[serde(default)]
+    pub parameter_extractors: Vec<ParameterExtractor>,
+}
+
+/// Parameter extractor for field extraction (from TagScout parameters)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ParameterExtractor {
+    pub name: String,
+    pub regex: String,
 }
 
 fn default_pattern_mode() -> PatternMode {
@@ -122,6 +216,7 @@ pub struct FrequencyBaseline {
 pub struct CompiledPattern {
     pub pattern: Pattern,
     regex: Regex,
+    parameter_regexes: Vec<(String, Regex)>,
 }
 
 impl CompiledPattern {
@@ -130,7 +225,25 @@ impl CompiledPattern {
         let regex = Regex::new(&pattern.pattern)
             .map_err(|e| PatternError::InvalidRegex(format!("{}: {}", pattern.id, e)))?;
 
-        Ok(CompiledPattern { pattern, regex })
+        // Compile parameter extraction regexes
+        let mut parameter_regexes = Vec::new();
+        for extractor in &pattern.parameter_extractors {
+            match Regex::new(&extractor.regex) {
+                Ok(re) => parameter_regexes.push((extractor.name.clone(), re)),
+                Err(e) => {
+                    tracing::warn!(
+                        "Failed to compile parameter regex '{}' for {}: {}",
+                        extractor.name, pattern.id, e
+                    );
+                }
+            }
+        }
+
+        Ok(CompiledPattern {
+            pattern,
+            regex,
+            parameter_regexes,
+        })
     }
 
     /// Check if this pattern matches a single line
@@ -157,6 +270,101 @@ impl CompiledPattern {
                 }
             })
             .collect()
+    }
+
+    /// Detect log level from a line
+    pub fn detect_log_level(line: &str) -> Option<LogLevel> {
+        // Common log level patterns
+        let level_patterns = [
+            "FATAL", "CRITICAL", "CRIT", "ERROR", "ERR", 
+            "WARN", "WARNING", "INFO", "INFORMATION",
+            "DEBUG", "DBG", "TRACE", "TRC", "VERBOSE", "VERB"
+        ];
+
+        for level_str in &level_patterns {
+            if line.contains(level_str) {
+                return LogLevel::from_str(level_str);
+            }
+        }
+
+        None
+    }
+
+    /// Extract named capture group values and apply parameter extractors
+    pub fn extract_fields(&self, captures: &regex::Captures) -> HashMap<String, String> {
+        let mut fields = HashMap::new();
+        
+        // First, extract named capture groups from main regex
+        for name in self.regex.capture_names().flatten() {
+            if let Some(value) = captures.name(name) {
+                fields.insert(name.to_string(), value.as_str().to_string());
+            }
+        }
+
+        // Then, apply parameter extractors to the matched text
+        let matched_text = captures.get(0).unwrap().as_str();
+        for (param_name, param_regex) in &self.parameter_regexes {
+            if let Some(cap) = param_regex.captures(matched_text) {
+                // Get first capture group (the extracted value)
+                if let Some(value) = cap.get(1) {
+                    fields.insert(param_name.clone(), value.as_str().to_string());
+                }
+            }
+        }
+
+        fields
+    }
+
+    /// Evaluate severity based on log level and condition triggers
+    pub fn evaluate_severity(
+        &self,
+        log_level: Option<LogLevel>,
+        field_values: &HashMap<String, String>,
+    ) -> Severity {
+        // Check log level triggers first
+        if let Some(level) = log_level {
+            if let Some(severity) = self.pattern.log_level_triggers.get(&level) {
+                return *severity;
+            }
+        }
+
+        // Check condition triggers
+        for trigger in &self.pattern.condition_triggers {
+            if let Some(value) = field_values.get(&trigger.field) {
+                let matches = match trigger.operator {
+                    ConditionOperator::Equals => value == &trigger.value,
+                    ConditionOperator::Contains => value.contains(&trigger.value),
+                    ConditionOperator::Regex => {
+                        if let Ok(re) = Regex::new(&trigger.value) {
+                            re.is_match(value)
+                        } else {
+                            false
+                        }
+                    }
+                    ConditionOperator::GreaterThan => {
+                        if let (Ok(v), Ok(threshold)) = (value.parse::<f64>(), trigger.value.parse::<f64>()) {
+                            v > threshold
+                        } else {
+                            false
+                        }
+                    }
+                    ConditionOperator::LessThan => {
+                        if let (Ok(v), Ok(threshold)) = (value.parse::<f64>(), trigger.value.parse::<f64>()) {
+                            v < threshold
+                        } else {
+                            false
+                        }
+                    }
+                };
+
+                if matches {
+                    return trigger.severity;
+                }
+            }
+        }
+
+        // Default to pattern severity
+        self.pattern.severity
     }
 }
 
@@ -193,6 +401,15 @@ pub struct Detection {
 
     /// Timestamp if parsed from log
     pub timestamp: Option<String>,
+
+    /// Detected log level from the line
+    pub log_level: Option<LogLevel>,
+
+    /// Final severity (after evaluating triggers)
+    pub final_severity: Severity,
+
+    /// Extracted field values from named captures
+    pub field_values: HashMap<String, String>,
 }
 
 /// Pattern engine for log analysis
@@ -238,19 +455,40 @@ impl PatternEngine {
     pub fn process_line(&self, line: &str, line_number: usize) -> Vec<Detection> {
         let mut detections = Vec::new();
 
+        // Detect log level once for the entire line
+        let log_level = CompiledPattern::detect_log_level(line);
+
         for compiled_pattern in &self.patterns {
             match compiled_pattern.pattern.mode {
                 PatternMode::SingleLine => {
-                    let matches = compiled_pattern.find_matches(line);
-                    for m in matches {
+                    // Get all regex captures for this pattern
+                    for cap in compiled_pattern.regex.captures_iter(line) {
+                        let full_match = cap.get(0).unwrap();
+                        
+                        // Extract named field values
+                        let field_values = compiled_pattern.extract_fields(&cap);
+                        
+                        // Evaluate final severity based on log level and conditions
+                        let final_severity = compiled_pattern.evaluate_severity(log_level, &field_values);
+                        
+                        // Extract all capture groups as strings
+                        let captures: Vec<String> = cap
+                            .iter()
+                            .skip(1)
+                            .filter_map(|m| m.map(|m| m.as_str().to_string()))
+                            .collect();
+                        
                         detections.push(Detection {
                             pattern: Arc::new(compiled_pattern.pattern.clone()),
                             line_number,
-                            column_range: (m.start, m.end),
-                            matched_text: m.text,
-                            captures: m.captures,
+                            column_range: (full_match.start(), full_match.end()),
+                            matched_text: full_match.as_str().to_string(),
+                            captures,
                             context: vec![line.to_string()],
                             timestamp: None, // TODO: Parse timestamp
+                            log_level,
+                            final_severity,
+                            field_values,
                         });
                     }
                 }
@@ -348,16 +586,37 @@ impl ContextProcessor {
                 let context = self.get_context(context_lines);
                 let combined = context.join("\n");
 
-                let matches = pattern.find_matches(&combined);
-                for m in matches {
+                // Detect log level from the combined text
+                let log_level = CompiledPattern::detect_log_level(&combined);
+
+                // Get all regex captures
+                for cap in pattern.regex.captures_iter(&combined) {
+                    let full_match = cap.get(0).unwrap();
+                    
+                    // Extract named field values
+                    let field_values = pattern.extract_fields(&cap);
+                    
+                    // Evaluate final severity
+                    let final_severity = pattern.evaluate_severity(log_level, &field_values);
+                    
+                    // Extract capture groups
+                    let captures: Vec<String> = cap
+                        .iter()
+                        .skip(1)
+                        .filter_map(|m| m.map(|m| m.as_str().to_string()))
+                        .collect();
+                    
                     detections.push(Detection {
                         pattern: Arc::new(pattern.pattern.clone()),
                         line_number: self.current_line,
-                        column_range: (m.start, m.end),
-                        matched_text: m.text,
-                        captures: m.captures,
+                        column_range: (full_match.start(), full_match.end()),
+                        matched_text: full_match.as_str().to_string(),
+                        captures,
                         context: context.clone(),
                         timestamp: None,
+                        log_level,
+                        final_severity,
+                        field_values,
                     });
                 }
             }
@@ -392,6 +651,10 @@ mod tests {
             action: None,
             expected_frequency: None,
             enabled: true,
+            log_level_triggers: std::collections::HashMap::new(),
+            condition_triggers: Vec::new(),
+            capture_fields: Vec::new(),
+            parameter_extractors: Vec::new(),
         };
 
         let compiled = CompiledPattern::new(pattern);
@@ -413,6 +676,10 @@ mod tests {
             action: None,
             expected_frequency: None,
             enabled: true,
+            log_level_triggers: std::collections::HashMap::new(),
+            condition_triggers: Vec::new(),
+            capture_fields: Vec::new(),
+            parameter_extractors: Vec::new(),
         };
 
         let compiled = CompiledPattern::new(pattern).unwrap();
@@ -436,6 +703,10 @@ mod tests {
                 action: None,
                 expected_frequency: None,
                 enabled: true,
+                log_level_triggers: std::collections::HashMap::new(),
+                condition_triggers: Vec::new(),
+                capture_fields: Vec::new(),
+                parameter_extractors: Vec::new(),
             },
         ];
 

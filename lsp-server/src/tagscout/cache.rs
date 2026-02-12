@@ -152,20 +152,11 @@ impl PatternCache {
         self.patterns.values().map(|cp| &cp.pattern).collect()
     }
 
-    /// Get patterns by product
-    pub fn get_patterns_by_product(&self, product: &str) -> Vec<&Pattern> {
-        self.patterns
-            .values()
-            .filter(|cp| cp.annotation.product == product)
-            .map(|cp| &cp.pattern)
-            .collect()
-    }
-
     /// Get patterns by category
     pub fn get_patterns_by_category(&self, category: &str) -> Vec<&Pattern> {
         self.patterns
             .values()
-            .filter(|cp| cp.annotation.category == category)
+            .filter(|cp| cp.annotation.category.iter().any(|c| c == category))
             .map(|cp| &cp.pattern)
             .collect()
     }
@@ -191,21 +182,15 @@ impl PatternCache {
         self.metadata.last_updated = Utc::now();
         self.metadata.pattern_count = self.patterns.len();
 
-        // Update products and categories
-        let mut products: Vec<String> = self
-            .patterns
-            .values()
-            .map(|cp| cp.annotation.product.clone())
-            .filter(|p| !p.is_empty())
-            .collect();
-        products.sort();
-        products.dedup();
-        self.metadata.products = products;
+        // Update products (use "jabber" as default since collection is jabber_prt_annotations)
+        self.metadata.products = vec!["jabber".to_string()];
 
+        // Update categories from all annotations
         let mut categories: Vec<String> = self
             .patterns
             .values()
-            .map(|cp| cp.annotation.category.clone())
+            .flat_map(|cp| cp.annotation.category.iter())
+            .map(|c| c.clone())
             .filter(|c| !c.is_empty())
             .collect();
         categories.sort();
@@ -219,9 +204,9 @@ impl PatternCache {
         use std::hash::{Hash, Hasher};
 
         let mut hasher = DefaultHasher::new();
-        annotation.pattern.hash(&mut hasher);
+        annotation.regexes.hash(&mut hasher);
         annotation.severity.hash(&mut hasher);
-        annotation.description.hash(&mut hasher);
+        annotation.template.hash(&mut hasher);
         format!("{:x}", hasher.finish())
     }
 

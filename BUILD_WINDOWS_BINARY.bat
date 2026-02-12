@@ -17,16 +17,16 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b 1
 )
 
-cargo build --release
+cargo build --release --bin log-scout-lsp-server
 if %ERRORLEVEL% EQU 0 (
     echo.
     echo SUCCESS! Copying binary...
-    if not exist "..\clients\vscode\bin" mkdir "..\clients\vscode\bin"
-    copy /Y "target\release\log-scout-lsp-server.exe" "..\clients\vscode\bin\log-scout-lsp-server-win.exe"
+    if not exist "..\vscode-extension\bin" mkdir "..\vscode-extension\bin"
+    copy /Y "target\release\log-scout-lsp-server.exe" "..\vscode-extension\bin\log-scout-lsp-server-win.exe"
     echo.
-    echo Done! Binary at: clients\vscode\bin\log-scout-lsp-server-win.exe
+    echo Done! Binary at: vscode-extension\bin\log-scout-lsp-server-win.exe
     echo.
-    echo Next step: cd clients\vscode ^&^& npm run package
+    echo Next step: cd vscode-extension ^&^& npm run package
 ) else (
     echo.
     echo BUILD FAILED!

@@ -10,6 +10,8 @@ export class CategoriesTreeProvider implements vscode.TreeDataProvider<CategoryT
     > = this._onDidChangeTreeData.event;
 
     private results: ResultItem[] = [];
+    private enabledCategories: Set<string> = new Set();
+    private allCategories: Set<string> = new Set();
 
     constructor() {}
 
@@ -19,12 +21,49 @@ export class CategoriesTreeProvider implements vscode.TreeDataProvider<CategoryT
 
     setResults(results: ResultItem[]): void {
         this.results = results;
+        
+        // Update categories list
+        this.allCategories.clear();
+        for (const result of results) {
+            const category = result.category || "Uncategorized";
+            this.allCategories.add(category);
+            
+            // Enable new categories by default
+            if (!this.enabledCategories.has(category)) {
+                this.enabledCategories.add(category);
+            }
+        }
+        
         this.refresh();
     }
 
     clear(): void {
         this.results = [];
+        this.allCategories.clear();
+        this.enabledCategories.clear();
         this.refresh();
+    }
+
+    toggleCategory(category: string): void {
+        if (this.enabledCategories.has(category)) {
+            this.enabledCategories.delete(category);
+        } else {
+            this.enabledCategories.add(category);
+        }
+        this.refresh();
+    }
+
+    toggleAll(enable: boolean): void {
+        if (enable) {
+            this.enabledCategories = new Set(this.allCategories);
+        } else {
+            this.enabledCategories.clear();
+        }
+        this.refresh();
+    }
+
+    getEnabledCategories(): Set<string> {
+        return this.enabledCategories;
     }
 
     getTreeItem(element: CategoryTreeItem): vscode.TreeItem {
@@ -33,16 +72,13 @@ export class CategoriesTreeProvider implements vscode.TreeDataProvider<CategoryT
 
     getChildren(element?: CategoryTreeItem): Thenable<CategoryTreeItem[]> {
         if (!element) {
-            // Root level - show categories
-            return Promise.resolve(this.getCategoryGroups());
-        } else if (element.contextValue === "category") {
-            // Category level - show results in that category
-            return Promise.resolve(this.getCategoryResults(element));
+            // Root level - show category toggle buttons
+            return Promise.resolve(this.getCategoryButtons());
         }
         return Promise.resolve([]);
     }
 
-    private getCategoryGroups(): CategoryTreeItem[] {
+    private getCategoryButtons(): CategoryTreeItem[] {
         if (this.results.length === 0) {
             return [
                 new CategoryTreeItem(
@@ -50,11 +86,12 @@ export class CategoriesTreeProvider implements vscode.TreeDataProvider<CategoryT
                     "",
                     vscode.TreeItemCollapsibleState.None,
                     "empty",
+                    false,
                 ),
             ];
         }
 
-        // Group results by category
+        // Group results by category to get counts
         const categoryMap = new Map<string, ResultItem[]>();
 
         for (const result of this.results) {
@@ -65,155 +102,104 @@ export class CategoriesTreeProvider implements vscode.TreeDataProvider<CategoryT
             categoryMap.get(category)!.push(result);
         }
 
-        // Create tree items for each category
+        // Create button items for each category
         const items: CategoryTreeItem[] = [];
 
-        for (const [category, results] of categoryMap.entries()) {
+        // Add "All" button at the top
+        const allEnabled = this.enabledCategories.size === this.allCategories.size;
+        const allButton = new CategoryTreeItem(
+            allEnabled ? "✓ All Categories" : "☐ All Categories",
+            `${this.allCategories.size} total`,
+            vscode.TreeItemCollapsibleState.None,
+            "toggle-all",
+            allEnabled,
+        );
+        allButton.iconPath = new vscode.ThemeIcon(allEnabled ? "check-all" : "close-all");
+        allButton.command = {
+            command: "logScoutAnalyzer.toggleAllCategories",
+            title: "Toggle All",
+            arguments: [!allEnabled],
+        };
+        items.push(allButton);
+
+        // Sort categories by error count
+        const sortedCategories = Array.from(categoryMap.entries()).sort((a, b) => {
+            const aErrors = a[1].filter((r) => r.severity === "error").length;
+            const bErrors = b[1].filter((r) => r.severity === "error").length;
+            if (aErrors !== bErrors) return bErrors - aErrors;
+            return a[0].localeCompare(b[0]);
+        });
+
+        for (const [category, results] of sortedCategories) {
+            const enabled = this.enabledCategories.has(category);
             const errors = results.filter((r) => r.severity === "error").length;
-            const warnings = results.filter(
-                (r) => r.severity === "warning",
-            ).length;
+            const warnings = results.filter((r) => r.severity === "warning").length;
             const infos = results.filter((r) => r.severity === "info").length;
-            const debugs = results.filter((r) => r.severity === "debug").length;
 
-            // Simple count description
+            // Build count description
             const parts: string[] = [];
-            if (debugs > 0) parts.push(`${debugs} debug`);
-            if (infos > 0) parts.push(`${infos} info`);
-            if (warnings > 0) parts.push(`${warnings} warnings`);
-            if (errors > 0) parts.push(`${errors} errors`);
+            if (errors > 0) parts.push(`${errors}E`);
+            if (warnings > 0) parts.push(`${warnings}W`);
+            if (infos > 0) parts.push(`${infos}I`);
+            const countDesc = parts.join(" ");
 
-            const description = parts.join(", ");
-            const tooltip = `${category}\n${errors} errors, ${warnings} warnings, ${infos} info`;
-
+            const label = enabled ? `✓ ${category}` : `☐ ${category}`;
             const item = new CategoryTreeItem(
-                category,
-                description,
-                vscode.TreeItemCollapsibleState.Collapsed,
-                "category",
+                label,
+                countDesc,
+                vscode.TreeItemCollapsibleState.None,
+                "category-toggle",
+                enabled,
             );
 
-            item.iconPath = new vscode.ThemeIcon("symbol-folder");
-            item.tooltip = tooltip;
-            item.results = results;
-
-            // Badge showing most severe issue
+            // Set icon based on severity and state
             if (errors > 0) {
                 item.iconPath = new vscode.ThemeIcon(
-                    "symbol-folder",
+                    enabled ? "circle-filled" : "circle-outline",
                     new vscode.ThemeColor("errorForeground"),
                 );
             } else if (warnings > 0) {
                 item.iconPath = new vscode.ThemeIcon(
-                    "symbol-folder",
+                    enabled ? "circle-filled" : "circle-outline",
                     new vscode.ThemeColor("editorWarning.foreground"),
-                );
-            }
-
-            items.push(item);
-        }
-
-        // Sort by number of errors (descending), then by name
-        return items.sort((a, b) => {
-            const aErrors =
-                a.results?.filter((r) => r.severity === "error").length || 0;
-            const bErrors =
-                b.results?.filter((r) => r.severity === "error").length || 0;
-
-            if (aErrors !== bErrors) {
-                return bErrors - aErrors; // More errors first
-            }
-
-            return a.label.toString().localeCompare(b.label.toString());
-        });
-    }
-
-    private getCategoryResults(category: CategoryTreeItem): CategoryTreeItem[] {
-        const results = category.results || [];
-
-        // Sort by severity (errors first), then by line number
-        const sortedResults = results.sort((a, b) => {
-            const severityOrder = { error: 0, warning: 1, info: 2, debug: 3 };
-            const severityDiff =
-                severityOrder[a.severity] - severityOrder[b.severity];
-            if (severityDiff !== 0) return severityDiff;
-            return a.line - b.line;
-        });
-
-        return sortedResults.map((result) => {
-            const lineNum = result.line + 1; // Convert to 1-based
-            const label = `Line ${lineNum}: ${result.message}`;
-            const description = result.timestamp
-                ? result.timestamp.toLocaleTimeString()
-                : "";
-
-            const item = new CategoryTreeItem(
-                label,
-                description,
-                vscode.TreeItemCollapsibleState.None,
-                "result",
-            );
-
-            // Set icon based on severity
-            if (result.severity === "error") {
-                item.iconPath = new vscode.ThemeIcon(
-                    "error",
-                    new vscode.ThemeColor("errorForeground"),
-                );
-            } else if (result.severity === "warning") {
-                item.iconPath = new vscode.ThemeIcon(
-                    "warning",
-                    new vscode.ThemeColor("editorWarning.foreground"),
-                );
-            } else if (result.severity === "debug") {
-                item.iconPath = new vscode.ThemeIcon(
-                    "bug",
-                    new vscode.ThemeColor("debugIcon.startForeground"),
                 );
             } else {
                 item.iconPath = new vscode.ThemeIcon(
-                    "info",
+                    enabled ? "circle-filled" : "circle-outline",
                     new vscode.ThemeColor("editorInfo.foreground"),
                 );
             }
 
-            // Set command to jump to line
+            // Command to toggle this category
             item.command = {
-                command: "logScoutAnalyzer.jumpToLine",
-                title: "Jump to Line",
-                arguments: [result.uri, result.line, result.column],
+                command: "logScoutAnalyzer.toggleCategory",
+                title: "Toggle Category",
+                arguments: [category],
             };
 
-            // Add tooltip with more details
-            const tooltip = new vscode.MarkdownString();
-            tooltip.appendMarkdown(`**Line ${lineNum}:${result.column}**\n\n`);
-            tooltip.appendMarkdown(`**Severity:** ${result.severity}\n\n`);
-            tooltip.appendMarkdown(`${result.message}\n\n`);
-            tooltip.appendCodeblock(result.matchedText, "log");
-            if (result.timestamp) {
-                tooltip.appendMarkdown(
-                    `\n**Time:** ${result.timestamp.toLocaleString()}`,
-                );
-            }
-            item.tooltip = tooltip;
+            item.tooltip = `${category}\n${errors} errors, ${warnings} warnings, ${infos} info\n\nClick to ${enabled ? "hide" : "show"}`;
+            item.categoryName = category;
 
-            item.result = result;
-            return item;
-        });
+            items.push(item);
+        }
+
+        return items;
     }
 }
 
 export class CategoryTreeItem extends vscode.TreeItem {
-    public results?: ResultItem[];
-    public result?: ResultItem;
+    public categoryName?: string;
+    public enabled: boolean;
 
     constructor(
         public readonly label: string,
         public readonly description: string,
         public readonly collapsibleState: vscode.TreeItemCollapsibleState,
         public readonly contextValue: string,
+        enabled: boolean = false,
     ) {
         super(label, collapsibleState);
         this.description = description;
+        this.enabled = enabled;
     }
 }

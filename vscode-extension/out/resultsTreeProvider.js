@@ -92,8 +92,23 @@ class ResultsTreeProvider {
                 new ResultTreeItem("No results", "Run analysis to see issues", vscode.TreeItemCollapsibleState.None, "empty"),
             ];
         }
-        // Show current grouping mode indicator
-        const modeIndicator = new ResultTreeItem(`📊 ${this.getGroupByLabel()}`, `${this.results.length} issues`, vscode.TreeItemCollapsibleState.None, "mode-indicator");
+        // Calculate severity counts
+        const errorCount = this.results.filter((r) => r.severity === "error").length;
+        const warningCount = this.results.filter((r) => r.severity === "warning").length;
+        const infoCount = this.results.filter((r) => r.severity === "info").length;
+        const debugCount = this.results.filter((r) => r.severity === "debug").length;
+        // Show current grouping mode indicator with severity counts
+        const countParts = [];
+        if (errorCount > 0)
+            countParts.push(`${errorCount}E`);
+        if (warningCount > 0)
+            countParts.push(`${warningCount}W`);
+        if (infoCount > 0)
+            countParts.push(`${infoCount}I`);
+        if (debugCount > 0)
+            countParts.push(`${debugCount}D`);
+        const countDesc = countParts.join(" ");
+        const modeIndicator = new ResultTreeItem(`📊 ${this.getGroupByLabel()}`, countDesc, vscode.TreeItemCollapsibleState.None, "mode-indicator");
         modeIndicator.iconPath = new vscode.ThemeIcon("filter", new vscode.ThemeColor("charts.blue"));
         // Add tooltip with instructions
         const tooltip = new vscode.MarkdownString();
@@ -218,7 +233,8 @@ class ResultsTreeProvider {
             // Create rich description with timestamp and category badges
             let description = "";
             if (result.timestamp) {
-                const time = result.timestamp.toLocaleTimeString();
+                const timestamp = result.timestamp instanceof Date ? result.timestamp : new Date(result.timestamp);
+                const time = timestamp.toLocaleTimeString();
                 description = `⏰ ${time}`;
             }
             if (result.category) {

@@ -76,18 +76,28 @@ async fn main() {
                             if !annotations.is_empty() {
                                 println!("\n  Sample annotation:");
                                 let sample = &annotations[0];
-                                println!("    • Name: {}", sample.name);
+                                println!("    • Template: {}", sample.template);
                                 println!("    • Severity: {}", sample.severity);
-                                println!("    • Category: {}", sample.category);
-                                println!("    • Product: {}", sample.product);
-                                println!(
-                                    "    • Pattern: {}...",
-                                    if sample.pattern.len() > 50 {
-                                        &sample.pattern[..50]
-                                    } else {
-                                        &sample.pattern
+                                println!("    • Category: {:?}", sample.category);
+                                println!("    • Production: {}", sample.production);
+                                println!("    • Parameters: {} defined", sample.parameters.len());
+                                if !sample.parameters.is_empty() {
+                                    println!("      Parameter details:");
+                                    for param in &sample.parameters {
+                                        println!("        - {}: {}", param.name, param.regex);
                                     }
-                                );
+                                }
+                                if !sample.regexes.is_empty() {
+                                    let pattern = &sample.regexes[0];
+                                    println!(
+                                        "    • Pattern: {}...",
+                                        if pattern.len() > 50 {
+                                            &pattern[..50]
+                                        } else {
+                                            pattern
+                                        }
+                                    );
+                                }
                             }
                             println!();
                         }

@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Annotation Dashboard - Test Page</title>
+    <link rel="stylesheet" href="media/annotationDashboard.css">
+    <style>
+        /* VS Code variable overrides for standalone testing */
+        :root {
+            --vscode-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            --vscode-font-size: 13px;
+            --vscode-foreground: #cccccc;
+            --vscode-editor-background: #1e1e1e;
+            --vscode-panel-background: #252526;
+            --vscode-panel-border: #3e3e42;
+            --vscode-input-border: #3e3e42;
+            --vscode-input-background: #3c3c3c;
+            --vscode-input-foreground: #cccccc;
+            --vscode-button-background: #0e639c;
+            --vscode-button-foreground: #ffffff;
+            --vscode-button-hoverBackground: #1177bb;
+            --vscode-button-border: #3e3e42;
+            --vscode-button-secondaryBackground: #3a3d41;
+            --vscode-button-secondaryForeground: #cccccc;
+            --vscode-button-secondaryHoverBackground: #45494e;
+            --vscode-errorForeground: #f48771;
+            --vscode-editorWarning-foreground: #cca700;
+            --vscode-editorInfo-foreground: #75beff;
+            --vscode-descriptionForeground: #9d9d9d;
+            --vscode-focusBorder: #007fd4;
+            --vscode-badge-background: #4d4d4d;
+            --vscode-badge-foreground: #ffffff;
+            --vscode-charts-purple: #b180d7;
+            --vscode-charts-blue: #75beff;
+            --vscode-charts-green: #89d185;
+            --vscode-charts-gray: #6e6e6e;
+        }
+
+        .codicon {
+            font-family: codicon;
+            font-size: 16px;
+        }
+        
+        /* Simulate codicon icons with unicode */
+        .codicon-calendar::before { content: "📅"; }
+        .codicon-database::before { content: "💾"; }
+        .codicon-note::before { content: "📝"; }
+        .codicon-kebab-vertical::before { content: "⋮"; }
+        .codicon-copy::before { content: "📋"; }
+        .codicon-eye-closed::before { content: "👁️"; }
+        .codicon-export::before { content: "💾"; }
+        .codicon-map::before { content: "🗺️"; }
+        .codicon-filter::before { content: "🔍"; }
+        .codicon-regex::before { content: ".*"; }
+        .codicon-info::before { content: "ℹ️"; }
+        
+        /* Dropdown menu styles */
+        .card-menu-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: var(--vscode-panel-background);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            min-width: 200px;
+            margin-top: 4px;
+        }
+        
+        .card-menu-dropdown.show {
+            display: block;
+        }
+        
+        .card-menu {
+            position: relative;
+        }
+        
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 8px 12px;
+            border: none;
+            background: transparent;
+            color: var(--vscode-foreground);
+            cursor: pointer;
+            font-family: var(--vscode-font-family);
+            font-size: 13px;
+            text-align: left;
+        }
+        
+        .menu-item:hover {
+            background: var(--vscode-button-secondaryHoverBackground);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <div class="filter-section">
+                <span class="filter-label">Log Level:</span>
+                <button class="loglevel-toggle-btn error active">ERROR</button>
+                <button class="loglevel-toggle-btn warning active">WARN</button>
+                <button class="loglevel-toggle-btn info active">INFO</button>
+                <button class="loglevel-toggle-btn debug active">DEBUG</button>
+                <button class="loglevel-toggle-btn trace active">TRACE</button>
+            </div>
+            <div class="filter-section">
+                <span class="filter-label">Priority:</span>
+                <button class="priority-toggle-btn critical active">CRITICAL</button>
+                <button class="priority-toggle-btn high active">HIGH</button>
+                <button class="priority-toggle-btn normal active">NORMAL</button>
+                <button class="priority-toggle-btn low active">LOW</button>
+            </div>
+            <div class="filter-section search-section">
+                <input type="text" class="search-input" placeholder="Search annotations...">
+                <button class="toggle-regex-btn"><span class="codicon codicon-regex"></span></button>
+            </div>
+            <div class="filter-section">
+                <select class="sort-dropdown">
+                    <option value="time">Sort by Time</option>
+                    <option value="priority">Sort by Priority</option>
+                    <option value="category">Sort by Category</option>
+                </select>
+            </div>
+            <div class="filter-section time-filter-section">
+                <span class="filter-label">Time Range:</span>
+                <button class="time-filter-btn active">All</button>
+                <button class="time-filter-btn">5m</button>
+                <button class="time-filter-btn">30m</button>
+                <button class="time-filter-btn">1h</button>
+                <button class="time-filter-btn">6h</button>
+                <button class="time-filter-btn">24h</button>
+            </div>
+            <div class="filter-section">
+                <button class="export-btn"><span class="codicon codicon-export"></span> Export</button>
+            </div>
+            <div class="filter-section">
+                <button class="toggle-minimap-btn"><span class="codicon codicon-map"></span> Minimap</button>
+                <button class="toggle-minimap-mode"><span class="codicon codicon-filter"></span> <span>Filter</span></button>
+            </div>
+        </div>
+
+        <!-- Test Annotations -->
+        <div class="dashboard-content">
+            <div class="annotations-list">
+                
+                <!-- Status bar -->
+                <div style="padding: 12px; background: var(--vscode-panel-background); border: 1px solid var(--vscode-panel-border); border-radius: 4px; margin-bottom: 16px; font-size: 12px; color: var(--vscode-descriptionForeground);">
+                    <strong>Test Mode:</strong> Interactive filtering enabled. 
+                    <span id="status-count">Showing 5 of 5 annotations</span>
+                </div>
+                
+                <!-- Critical Priority / ERROR Level -->
+                <div class="annotation-card" data-priority="critical" data-loglevel="error">
+                    <div class="card-header">
+                        <div class="header-left">
+                            <span class="badge category-badge">LOG-SCOUT</span>
+                            <span class="badge trigger-badge" title="Conditional trigger">⚡ Triggered</span>
+                        </div>
+                        <div class="header-right">
+                            <a href="#" class="file-link">jabber.log.2:1234</a>
+                            <span class="badge log-level-badge error">ERROR</span>
+                            <div class="card-menu">
+                                <button class="card-menu-btn"><span class="codicon codicon-kebab-vertical"></span></button>
+                                <div class="card-menu-dropdown">
+                                    <button class="menu-item"><span class="codicon codicon-copy"></span> Copy Matched Text</button>
+                                    <button class="menu-item"><span class="codicon codicon-eye-closed"></span> Hide Category</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="content-main">
+                            <div class="timestamp">
+                                <span class="codicon codicon-calendar"></span>
+                                2025-12-10 14:49:01,929
+                            </div>
+                            <div class="pattern-info">
+                                <strong>Pattern:</strong> error
+                            </div>
+                            <div class="matched-text" title="Full raw log line here...">
+                                <strong>Detected:</strong>
+                                <span class="matched-highlight">Connection failed: timeout after 30s</span>
+                                <span class="codicon codicon-info" style="margin-left: 8px; opacity: 0.6;"></span>
+                            </div>
+                            <div class="severity-info">
+                                <strong>Priority:</strong>
+                                <span class="priority-badge critical">CRITICAL</span>
+                                <span class="severity-trigger" title="Triggered by timeout">Timeout > 30s</span>
+                            </div>
+                            <div class="extracted-fields">
+                                <details open>
+                                    <summary><span class="codicon codicon-database"></span> Extracted Fields (3)</summary>
+                                    <table class="fields-table">
+                                        <tr><td class="field-key"><code>timeout</code></td><td class="field-value">30</td></tr>
+                                        <tr><td class="field-key"><code>action</code></td><td class="field-value">connection</td></tr>
+                                        <tr><td class="field-key"><code>status</code></td><td class="field-value">failed</td></tr>
+                                    </table>
+                                </details>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- High Priority / WARN Level -->
+                <div class="annotation-card" data-priority="high" data-loglevel="warn">
+                    <div class="card-header">
+                        <div class="header-left">
+                            <span class="badge category-badge">LOG-SCOUT</span>
+                        </div>
+                        <div class="header-right">
+                            <a href="#" class="file-link">jabber.log.2:2456</a>
+                            <span class="badge log-level-badge warning">WARN</span>
+                            <div class="card-menu">
+                                <button class="card-menu-btn"><span class="codicon codicon-kebab-vertical"></span></button>
+                                <div class="card-menu-dropdown">
+                                    <button class="menu-item"><span class="codicon codicon-copy"></span> Copy Matched Text</button>
+                                    <button class="menu-item"><span class="codicon codicon-eye-closed"></span> Hide Category</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="content-main">
+                            <div class="timestamp">
+                                <span class="codicon codicon-calendar"></span>
+                                2025-12-10 14:50:15,442
+                            </div>
+                            <div class="pattern-info">
+                                <strong>Pattern:</strong> warning
+                            </div>
+                            <div class="matched-text" title="2025-12-10 14:50:15,442 WARN  [0x00001234] Memory usage at 85%">
+                                <strong>Detected:</strong>
+                                <span class="matched-highlight">Memory usage at 85%</span>
+                                <span class="codicon codicon-info" style="margin-left: 8px; opacity: 0.6;"></span>
+                            </div>
+                            <div class="severity-info">
+                                <strong>Priority:</strong>
+                                <span class="priority-badge high">HIGH</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Normal Priority / INFO Level -->
+                <div class="annotation-card" data-priority="normal" data-loglevel="info">
+                    <div class="card-header">
+                        <div class="header-left">
+                            <span class="badge category-badge">LOG-SCOUT</span>
+                        </div>
+                        <div class="header-right">
+                            <a href="#" class="file-link">jabber.log.2:3789</a>
+                            <span class="badge log-level-badge info">INFO</span>
+                            <div class="card-menu">
+                                <button class="card-menu-btn"><span class="codicon codicon-kebab-vertical"></span></button>
+                                <div class="card-menu-dropdown">
+                                    <button class="menu-item"><span class="codicon codicon-copy"></span> Copy Matched Text</button>
+                                    <button class="menu-item"><span class="codicon codicon-eye-closed"></span> Hide Category</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="content-main">
+                            <div class="timestamp">
+                                <span class="codicon codicon-calendar"></span>
+                                2025-12-10 14:51:20,123
+                            </div>
+                            <div class="pattern-info">
+                                <strong>Pattern:</strong> info-message
+                            </div>
+                            <div class="matched-text" title="2025-12-10 14:51:20,123 INFO  [0x00005678] Service started successfully">
+                                <strong>Detected:</strong>
+                                <span class="matched-highlight">Service started successfully</span>
+                                <span class="codicon codicon-info" style="margin-left: 8px; opacity: 0.6;"></span>
+                            </div>
+                            <div class="severity-info">
+                                <strong>Priority:</strong>
+                                <span class="priority-badge normal">NORMAL</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Low Priority / DEBUG Level -->
+                <div class="annotation-card" data-priority="low" data-loglevel="debug">
+                    <div class="card-header">
+                        <div class="header-left">
+                            <span class="badge category-badge">LOG-SCOUT</span>
+                        </div>
+                        <div class="header-right">
+                            <a href="#" class="file-link">jabber.log.2:4012</a>
+                            <span class="badge log-level-badge debug">DEBUG</span>
+                            <div class="card-menu">
+                                <button class="card-menu-btn"><span class="codicon codicon-kebab-vertical"></span></button>
+                                <div class="card-menu-dropdown">
+                                    <button class="menu-item"><span class="codicon codicon-copy"></span> Copy Matched Text</button>
+                                    <button class="menu-item"><span class="codicon codicon-eye-closed"></span> Hide Category</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="content-main">
+                            <div class="timestamp">
+                                <span class="codicon codicon-calendar"></span>
+                                2025-12-10 14:52:05,889
+                            </div>
+                            <div class="pattern-info">
+                                <strong>Pattern:</strong> debug-info
+                            </div>
+                            <div class="matched-text" title="2025-12-10 14:52:05,889 DEBUG [0x00009abc] Processing request packet">
+                                <strong>Detected:</strong>
+                                <span class="matched-highlight">Processing request packet</span>
+                                <span class="codicon codicon-info" style="margin-left: 8px; opacity: 0.6;"></span>
+                            </div>
+                            <div class="severity-info">
+                                <strong>Priority:</strong>
+                                <span class="priority-badge low">LOW</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Low Priority / TRACE Level -->
+                <div class="annotation-card" data-priority="low" data-loglevel="trace">
+                    <div class="card-header">
+                        <div class="header-left">
+                            <span class="badge category-badge">LOG-SCOUT</span>
+                        </div>
+                        <div class="header-right">
+                            <a href="#" class="file-link">jabber.log.2:5234</a>
+                            <span class="badge log-level-badge trace">TRACE</span>
+                            <div class="card-menu">
+                                <button class="card-menu-btn"><span class="codicon codicon-kebab-vertical"></span></button>
+                                <div class="card-menu-dropdown">
+                                    <button class="menu-item"><span class="codicon codicon-copy"></span> Copy Matched Text</button>
+                                    <button class="menu-item"><span class="codicon codicon-eye-closed"></span> Hide Category</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <div class="content-main">
+                            <div class="timestamp">
+                                <span class="codicon codicon-calendar"></span>
+                                2025-12-10 14:53:12,456
+                            </div>
+                            <div class="pattern-info">
+                                <strong>Pattern:</strong> trace-detail
+                            </div>
+                            <div class="matched-text" title="2025-12-10 14:53:12,456 TRACE [0x0000def0] Entering function processData()">
+                                <strong>Detected:</strong>
+                                <span class="matched-highlight">Entering function processData()</span>
+                                <span class="codicon codicon-info" style="margin-left: 8px; opacity: 0.6;"></span>
+                            </div>
+                            <div class="severity-info">
+                                <strong>Priority:</strong>
+                                <span class="priority-badge low">LOW</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Minimap -->
+            <div class="minimap-container" id="minimap-container">
+                <div class="minimap-header">
+                    <span class="codicon codicon-map"></span>
+                    <span class="minimap-title">Overview</span>
+                </div>
+                <div class="minimap-canvas">
+                    <div style="height: 400px; background: linear-gradient(to bottom, #f48771 0%, #f48771 15%, #cca700 15%, #cca700 35%, #75beff 35%, #75beff 70%, #b180d7 70%, #b180d7 85%, #6e6e6e 85%, #6e6e6e 100%);"></div>
+                </div>
+                <div class="minimap-legend">
+                    <div class="legend-item">
+                        <span class="legend-color critical"></span>
+                        <span class="legend-label">Critical</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color high"></span>
+                        <span class="legend-label">High</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color normal"></span>
+                        <span class="legend-label">Normal</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color low"></span>
+                        <span class="legend-label">Low</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Make filters interactive
+        document.addEventListener('DOMContentLoaded', () => {
+            // Log level filters
+            document.querySelectorAll('.loglevel-toggle-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    btn.classList.toggle('active');
+                    applyFilters();
+                });
+            });
+
+            // Priority filters
+            document.querySelectorAll('.priority-toggle-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    btn.classList.toggle('active');
+                    applyFilters();
+                });
+            });
+
+            // Time filter buttons
+            document.querySelectorAll('.time-filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.time-filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                });
+            });
+
+            // Regex toggle
+            document.querySelector('.toggle-regex-btn').addEventListener('click', function() {
+                this.classList.toggle('active');
+            });
+
+            // Minimap toggle
+            document.querySelector('.toggle-minimap-btn').addEventListener('click', function() {
+                this.classList.toggle('active');
+                const minimap = document.getElementById('minimap-container');
+                minimap.style.display = minimap.style.display === 'none' ? 'flex' : 'none';
+            });
+
+            // Sort dropdown
+            document.querySelector('.sort-dropdown').addEventListener('change', (e) => {
+                console.log('Sort by:', e.target.value);
+                // In real implementation, this would re-sort the cards
+            });
+
+            // Search input
+            document.querySelector('.search-input').addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                let visibleCount = 0;
+                const totalCount = document.querySelectorAll('.annotation-card').length;
+                
+                document.querySelectorAll('.annotation-card').forEach(card => {
+                    const text = card.textContent.toLowerCase();
+                    if (text.includes(query)) {
+                        card.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+                
+                const statusCount = document.getElementById('status-count');
+                if (statusCount) {
+                    statusCount.textContent = `Showing ${visibleCount} of ${totalCount} annotations`;
+                }
+            });
+
+            // Card menu toggles
+            document.querySelectorAll('.card-menu-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const dropdown = btn.nextElementSibling;
+                    // Close all other dropdowns
+                    document.querySelectorAll('.card-menu-dropdown').forEach(dd => {
+                        if (dd !== dropdown) dd.classList.remove('show');
+                    });
+                    dropdown.classList.toggle('show');
+                });
+            });
+
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', () => {
+                document.querySelectorAll('.card-menu-dropdown').forEach(dd => {
+                    dd.classList.remove('show');
+                });
+            });
+
+            // Menu item actions
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const text = item.textContent.trim();
+                    if (text.includes('Copy')) {
+                        alert('Text copied to clipboard (simulated)');
+                    } else if (text.includes('Hide')) {
+                        alert('Category hidden (simulated)');
+                    }
+                    // Close dropdown
+                    item.closest('.card-menu-dropdown').classList.remove('show');
+                });
+            });
+
+            // File links
+            document.querySelectorAll('.file-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    alert('In VS Code, this would jump to: ' + link.textContent);
+                });
+            });
+
+            function applyFilters() {
+                const activeLogLevels = Array.from(document.querySelectorAll('.loglevel-toggle-btn.active'))
+                    .map(btn => btn.textContent.trim().toLowerCase());
+                const activePriorities = Array.from(document.querySelectorAll('.priority-toggle-btn.active'))
+                    .map(btn => btn.textContent.trim().toLowerCase());
+
+                let visibleCount = 0;
+                const totalCount = document.querySelectorAll('.annotation-card').length;
+
+                document.querySelectorAll('.annotation-card').forEach(card => {
+                    const logLevel = card.getAttribute('data-loglevel');
+                    const priority = card.getAttribute('data-priority');
+                    
+                    const logLevelMatch = activeLogLevels.length === 0 || activeLogLevels.includes(logLevel);
+                    const priorityMatch = activePriorities.length === 0 || activePriorities.includes(priority);
+                    
+                    if (logLevelMatch && priorityMatch) {
+                        card.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                // Update status
+                const statusCount = document.getElementById('status-count');
+                if (statusCount) {
+                    statusCount.textContent = `Showing ${visibleCount} of ${totalCount} annotations`;
+                }
+                console.log('Visible annotations:', visibleCount);
+            }
+        });
+    </script>
+</body>
+</html>

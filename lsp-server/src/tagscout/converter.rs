@@ -76,18 +76,46 @@ impl PatternConverter {
         Self { config }
     }
 
+    /// Extract named capture group names from a regex pattern
+    /// Finds all (?P<name>...) groups and returns their names
+    fn extract_capture_fields(pattern: &str) -> Vec<String> {
+        use regex::Regex;
+        
+        // Match named groups: (?P<field_name>...)
+        let named_group_regex = Regex::new(r"\(\?P<([^>]+)>").unwrap();
+        
+        named_group_regex
+            .captures_iter(pattern)
+            .filter_map(|cap| cap.get(1).map(|m| m.as_str().to_string()))
+            .collect()
+    }
+
     /// Convert a single TagScout annotation to an LSP pattern
     pub fn convert(&self, annotation: &TagScoutAnnotation) -> Result<Pattern, ConversionError> {
-        // Skip inactive patterns unless configured otherwise
-        if !annotation.active && !self.config.include_inactive {
+        // Skip non-production patterns unless configured otherwise
+        if !annotation.production && !self.config.include_inactive {
             return Err(ConversionError::ConversionFailed(
-                "Pattern is inactive".to_string(),
+                "Pattern is not production-ready".to_string(),
             ));
         }
 
+        // Skip content annotations (they're for content filtering, not pattern matching)
+        if annotation.content {
+            return Err(ConversionError::ConversionFailed(
+                "Content annotation".to_string(),
+            ));
+        }
+
+        // Get first regex pattern (annotations can have multiple patterns)
+        let pattern = annotation
+            .regexes
+            .first()
+            .ok_or_else(|| ConversionError::MissingField("regexes".to_string()))?
+            .clone();
+
         // Validate pattern if configured
         if self.config.validate_regex {
-            self.validate_pattern(&annotation.pattern)?;
+            self.validate_pattern(&pattern)?;
         }
 
         // Generate unique ID
@@ -97,30 +125,63 @@ impl PatternConverter {
         let severity = self.convert_severity(&annotation.severity)?;
 
         // Determine pattern mode
-        let mode = self.determine_pattern_mode(&annotation.pattern);
+        let mode = self.determine_pattern_mode(&pattern);
 
-        // Map product to service name
-        let service = self.map_product_to_service(&annotation.product);
+        // Build name from raw_data or template
+        let name = self.build_name(annotation);
 
-        // Build action text
-        let action = self.build_action(annotation);
+        // Build description from template
+        let description = if !annotation.template.is_empty() {
+            annotation.template.clone()
+        } else if !annotation.raw_data.is_empty() {
+            format!("Pattern matching: {}", annotation.raw_data.chars().take(100).collect::<String>())
+        } else {
+            "TagScout pattern".to_string()
+        };
 
-        // Build tags
-        let tags = self.build_tags(annotation);
+        // Get category (use first category if available)
+        let category = annotation.category.first().cloned().unwrap_or_default();
+
+        // Build tags from categories
+        let tags = annotation.category.clone();
+
+        // Build action from documentation
+        let action = if !annotation.documentation.is_empty() {
+            Some(annotation.documentation.clone())
+        } else {
+            None
+        };
+
+        // Extract capture field names from the regex pattern
+        let capture_fields = Self::extract_capture_fields(&pattern);
+
+        // Convert TagScout parameters to parameter extractors
+        let parameter_extractors: Vec<crate::pattern_engine::ParameterExtractor> = annotation
+            .parameters
+            .iter()
+            .map(|p| crate::pattern_engine::ParameterExtractor {
+                name: p.name.clone(),
+                regex: p.regex.clone(),
+            })
+            .collect();
 
         Ok(Pattern {
             id,
-            name: annotation.name.clone(),
-            description: annotation.description.clone(),
-            pattern: annotation.pattern.clone(),
+            name,
+            description,
+            pattern,
             mode,
             severity,
-            category: annotation.category.clone(),
-            service,
+            category,
+            service: Some("jabber".to_string()), // Derive from collection name
             tags,
             action,
-            expected_frequency: None, // Could be derived from metadata in future
-            enabled: annotation.active,
+            expected_frequency: None,
+            enabled: annotation.production,
+            log_level_triggers: std::collections::HashMap::new(),
+            condition_triggers: Vec::new(),
+            capture_fields,
+            parameter_extractors,
         })
     }
 
@@ -136,7 +197,7 @@ impl PatternConverter {
             match self.convert(&annotation) {
                 Ok(pattern) => patterns.push(pattern),
                 Err(e) => {
-                    tracing::warn!("Failed to convert pattern '{}': {}", annotation.name, e);
+                    tracing::warn!("Failed to convert pattern '{}': {}", annotation.id.to_hex(), e);
                     errors.push(e);
                 }
             }
@@ -160,14 +221,39 @@ impl PatternConverter {
 
     /// Generate a unique ID for the pattern
     fn generate_id(&self, annotation: &TagScoutAnnotation) -> String {
-        // Use MongoDB ObjectId as base
-        let oid = annotation.id.to_hex();
+        // Use MongoDB ObjectId as unique identifier
+        annotation.id.to_hex()
+    }
 
-        // Include product prefix if available
-        if !annotation.product.is_empty() {
-            format!("{}-{}", annotation.product.to_lowercase(), oid)
+    /// Build a name from annotation data
+    fn build_name(&self, annotation: &TagScoutAnnotation) -> String {
+        // Try to extract a meaningful name from the raw_data
+        if !annotation.raw_data.is_empty() {
+            // Take first meaningful part of the log line
+            let parts: Vec<&str> = annotation.raw_data.split_whitespace().collect();
+            if parts.len() > 3 {
+                // Skip timestamp and log level, take the interesting part
+                let name_part = parts[3..].iter()
+                    .take(5)
+                    .map(|s| *s)
+                    .collect::<Vec<&str>>()
+                    .join(" ");
+                if name_part.len() > 50 {
+                    format!("{}...", &name_part[..50])
+                } else {
+                    name_part
+                }
+            } else {
+                annotation.raw_data.chars().take(50).collect::<String>()
+            }
+        } else if !annotation.template.is_empty() {
+            // Use template as name
+            annotation.template.chars().take(50).collect::<String>()
+        } else if let Some(first_regex) = annotation.regexes.first() {
+            // Use regex as fallback
+            first_regex.chars().take(50).collect::<String>()
         } else {
-            oid
+            format!("Pattern {}", annotation.id.to_hex())
         }
     }
 
@@ -231,64 +317,6 @@ impl PatternConverter {
 
         // Default: use product name as service name
         Some(product.to_lowercase())
-    }
-
-    /// Build action text from annotation
-    fn build_action(&self, annotation: &TagScoutAnnotation) -> Option<String> {
-        let mut action_parts = Vec::new();
-
-        // Add primary action
-        if !annotation.action.is_empty() {
-            action_parts.push(annotation.action.clone());
-        }
-
-        // Add KB reference
-        if !annotation.kb_id.is_empty() {
-            action_parts.push(format!("See KB article: {}", annotation.kb_id));
-        }
-
-        // Add bug reference
-        if !annotation.bug_id.is_empty() {
-            action_parts.push(format!("Related bug: {}", annotation.bug_id));
-        }
-
-        // Add version information
-        if !annotation.version_fixed.is_empty() {
-            action_parts.push(format!("Fixed in version: {}", annotation.version_fixed));
-        } else if !annotation.version_introduced.is_empty() {
-            action_parts.push(format!(
-                "Known issue since version: {}",
-                annotation.version_introduced
-            ));
-        }
-
-        if action_parts.is_empty() {
-            None
-        } else {
-            Some(action_parts.join(" | "))
-        }
-    }
-
-    /// Build tags from annotation
-    fn build_tags(&self, annotation: &TagScoutAnnotation) -> Vec<String> {
-        let mut tags = annotation.tags.clone();
-
-        // Add product as tag if not empty
-        if !annotation.product.is_empty() && !tags.contains(&annotation.product) {
-            tags.push(annotation.product.clone());
-        }
-
-        // Add component as tag if not empty
-        if !annotation.component.is_empty() && !tags.contains(&annotation.component) {
-            tags.push(annotation.component.clone());
-        }
-
-        // Add category as tag if not already in tags
-        if !annotation.category.is_empty() && !tags.contains(&annotation.category) {
-            tags.push(annotation.category.clone());
-        }
-
-        tags
     }
 
     /// Get converter configuration
@@ -372,10 +400,10 @@ pub fn convert_with_result(
     let mut errors = Vec::new();
 
     for annotation in annotations {
-        let name = annotation.name.clone();
+        let id = annotation.id.to_hex();
         match converter.convert(&annotation) {
             Ok(pattern) => patterns.push(pattern),
-            Err(e) => errors.push((name, e)),
+            Err(e) => errors.push((id, e)),
         }
     }
 

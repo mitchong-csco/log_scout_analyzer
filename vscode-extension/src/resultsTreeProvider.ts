@@ -9,6 +9,8 @@ export interface ResultItem {
     context: string;
     timestamp?: Date;
     category?: string;
+    patternId?: string;
+    patternName?: string;
     uri: vscode.Uri;
 }
 
@@ -89,10 +91,23 @@ export class ResultsTreeProvider implements vscode.TreeDataProvider<ResultTreeIt
             ];
         }
 
-        // Show current grouping mode indicator
+        // Calculate severity counts
+        const errorCount = this.results.filter((r) => r.severity === "error").length;
+        const warningCount = this.results.filter((r) => r.severity === "warning").length;
+        const infoCount = this.results.filter((r) => r.severity === "info").length;
+        const debugCount = this.results.filter((r) => r.severity === "debug").length;
+
+        // Show current grouping mode indicator with severity counts
+        const countParts: string[] = [];
+        if (errorCount > 0) countParts.push(`${errorCount}E`);
+        if (warningCount > 0) countParts.push(`${warningCount}W`);
+        if (infoCount > 0) countParts.push(`${infoCount}I`);
+        if (debugCount > 0) countParts.push(`${debugCount}D`);
+        const countDesc = countParts.join(" ");
+
         const modeIndicator = new ResultTreeItem(
             `📊 ${this.getGroupByLabel()}`,
-            `${this.results.length} issues`,
+            countDesc,
             vscode.TreeItemCollapsibleState.None,
             "mode-indicator",
         );
@@ -293,7 +308,8 @@ export class ResultsTreeProvider implements vscode.TreeDataProvider<ResultTreeIt
             // Create rich description with timestamp and category badges
             let description = "";
             if (result.timestamp) {
-                const time = result.timestamp.toLocaleTimeString();
+                const timestamp = result.timestamp instanceof Date ? result.timestamp : new Date(result.timestamp);
+                const time = timestamp.toLocaleTimeString();
                 description = `⏰ ${time}`;
             }
             if (result.category) {

@@ -1,46 +1,64 @@
 # Log Scout Analyzer
 
-A powerful Language Server Protocol (LSP) based log file analysis tool for detecting errors, warnings, and patterns in log files. Works with VS Code, Zed, Neovim, and any LSP-compatible editor.
+A powerful Language Server Protocol (LSP) based log file analysis tool with enhanced DevTools-style interface. Features real-time pattern matching, timeline visualization, and SIP call flow analysis.
 
-## 🚀 Features
+## 🚀 Key Features
 
-- **Universal Editor Support**: One server, multiple editors (VS Code, Zed, Vim, Emacs, etc.)
-- **Real-time Analysis**: Instant pattern matching and diagnostics as you type
-- **Rich Pattern Matching**: Regex-based patterns with configurable severity levels
-- **Timeline Analysis**: Extract and visualize events from logs
-- **SIP/VoIP Support**: Specialized patterns for telecom and VoIP logs
-- **Performance**: Rust-based server for fast analysis of large log files
-- **Extensible**: Easy to add custom patterns and rules
+### Universal Editor Support
+- **LSP-based**: One Rust server works with VS Code, Zed, Vim, Emacs, and any LSP-compatible editor
+- **Consolidated**: Enhanced UI + powerful backend in a single package
 
-## 📦 Installation
+### Intelligent Analysis
+- **TagScout Integration**: 1000+ curated patterns from MongoDB
+- **Real-time Diagnostics**: Instant pattern matching as you type
+- **Offline-First**: Cached patterns work without network
+- **Product-Specific**: Specialized support for Jabber, WebEx, CUCM logs
 
-### VS Code
+### Rich UI (VS Code)
+- **DevTools-Style Interface**: Activity bar with tree views
+- **Timeline Visualization**: Events grouped by time intervals
+- **Scout Console**: Real-time analysis output with clickable links
+- **SIP Call Flow**: Ladder diagrams for VoIP debugging
+- **Split View**: Side-by-side annotated logs
 
-1. Download the latest `.vsix` file from releases
-2. Install via VS Code:
-   ```
-   code --install-extension log-scout-analyzer-1.0.0.vsix
-   ```
-3. Open any `.log` file to start analyzing
+## 📦 Quick Start
 
-### Zed
+### VS Code (Recommended)
 
-1. Open Zed settings
-2. Add to extensions:
-   ```json
-   {
-     "extensions": {
-       "log-scout-analyzer": true
-     }
-   }
-   ```
-3. Restart Zed
+**Option 1: Install Pre-built**
+```bash
+code --install-extension log-scout-analyzer.vsix
+```
+
+**Option 2: Build from Source**
+```bash
+# 1. Build LSP server
+cd lsp-server
+cargo build --release
+
+# 2. Build extension
+cd ../vscode-extension
+npm install
+npm run build
+npm run package
+
+# 3. Install
+code --install-extension log-scout-analyzer.vsix
+```
+
+### Zed Editor
+
+```bash
+cd zed-extension
+./build.sh
+./install-extension.sh
+```
 
 ### Other Editors
 
-See [docs/EDITOR_SETUP.md](docs/EDITOR_SETUP.md) for instructions on setting up Neovim, Emacs, and other LSP-compatible editors.
+The LSP server works with any LSP client. See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
 
-## 🎯 Quick Start
+## 🎯 Usage
 
 1. **Open a log file** in your editor
 2. **See diagnostics** appear automatically in the Problems panel

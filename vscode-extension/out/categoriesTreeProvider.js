@@ -40,39 +40,70 @@ class CategoriesTreeProvider {
         this._onDidChangeTreeData = new vscode.EventEmitter();
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
         this.results = [];
+        this.enabledCategories = new Set();
+        this.allCategories = new Set();
     }
     refresh() {
         this._onDidChangeTreeData.fire();
     }
     setResults(results) {
         this.results = results;
+        // Update categories list
+        this.allCategories.clear();
+        for (const result of results) {
+            const category = result.category || "Uncategorized";
+            this.allCategories.add(category);
+            // Enable new categories by default
+            if (!this.enabledCategories.has(category)) {
+                this.enabledCategories.add(category);
+            }
+        }
         this.refresh();
     }
     clear() {
         this.results = [];
+        this.allCategories.clear();
+        this.enabledCategories.clear();
         this.refresh();
+    }
+    toggleCategory(category) {
+        if (this.enabledCategories.has(category)) {
+            this.enabledCategories.delete(category);
+        }
+        else {
+            this.enabledCategories.add(category);
+        }
+        this.refresh();
+    }
+    toggleAll(enable) {
+        if (enable) {
+            this.enabledCategories = new Set(this.allCategories);
+        }
+        else {
+            this.enabledCategories.clear();
+        }
+        this.refresh();
+    }
+    getEnabledCategories() {
+        return this.enabledCategories;
     }
     getTreeItem(element) {
         return element;
     }
     getChildren(element) {
         if (!element) {
-            // Root level - show categories
-            return Promise.resolve(this.getCategoryGroups());
-        }
-        else if (element.contextValue === "category") {
-            // Category level - show results in that category
-            return Promise.resolve(this.getCategoryResults(element));
+            // Root level - show category toggle buttons
+            return Promise.resolve(this.getCategoryButtons());
         }
         return Promise.resolve([]);
     }
-    getCategoryGroups() {
+    getCategoryButtons() {
         if (this.results.length === 0) {
             return [
-                new CategoryTreeItem("No categories", "", vscode.TreeItemCollapsibleState.None, "empty"),
+                new CategoryTreeItem("No categories", "", vscode.TreeItemCollapsibleState.None, "empty", false),
             ];
         }
-        // Group results by category
+        // Group results by category to get counts
         const categoryMap = new Map();
         for (const result of this.results) {
             const category = result.category || "Uncategorized";
@@ -81,108 +112,75 @@ class CategoriesTreeProvider {
             }
             categoryMap.get(category).push(result);
         }
-        // Create tree items for each category
+        // Create button items for each category
         const items = [];
-        for (const [category, results] of categoryMap.entries()) {
+        // Add "All" button at the top
+        const allEnabled = this.enabledCategories.size === this.allCategories.size;
+        const allButton = new CategoryTreeItem(allEnabled ? "✓ All Categories" : "☐ All Categories", `${this.allCategories.size} total`, vscode.TreeItemCollapsibleState.None, "toggle-all", allEnabled);
+        allButton.iconPath = new vscode.ThemeIcon(allEnabled ? "check-all" : "close-all");
+        allButton.command = {
+            command: "logScoutAnalyzer.toggleAllCategories",
+            title: "Toggle All",
+            arguments: [!allEnabled],
+        };
+        items.push(allButton);
+        // Sort categories by error count
+        const sortedCategories = Array.from(categoryMap.entries()).sort((a, b) => {
+            const aErrors = a[1].filter((r) => r.severity === "error").length;
+            const bErrors = b[1].filter((r) => r.severity === "error").length;
+            if (aErrors !== bErrors)
+                return bErrors - aErrors;
+            return a[0].localeCompare(b[0]);
+        });
+        for (const [category, results] of sortedCategories) {
+            const enabled = this.enabledCategories.has(category);
             const errors = results.filter((r) => r.severity === "error").length;
             const warnings = results.filter((r) => r.severity === "warning").length;
             const infos = results.filter((r) => r.severity === "info").length;
-            const debugs = results.filter((r) => r.severity === "debug").length;
-            // Simple count description
+            // Build count description
             const parts = [];
-            if (debugs > 0)
-                parts.push(`${debugs} debug`);
-            if (infos > 0)
-                parts.push(`${infos} info`);
-            if (warnings > 0)
-                parts.push(`${warnings} warnings`);
             if (errors > 0)
-                parts.push(`${errors} errors`);
-            const description = parts.join(", ");
-            const tooltip = `${category}\n${errors} errors, ${warnings} warnings, ${infos} info`;
-            const item = new CategoryTreeItem(category, description, vscode.TreeItemCollapsibleState.Collapsed, "category");
-            item.iconPath = new vscode.ThemeIcon("symbol-folder");
-            item.tooltip = tooltip;
-            item.results = results;
-            // Badge showing most severe issue
+                parts.push(`${errors}E`);
+            if (warnings > 0)
+                parts.push(`${warnings}W`);
+            if (infos > 0)
+                parts.push(`${infos}I`);
+            const countDesc = parts.join(" ");
+            const label = enabled ? `✓ ${category}` : `☐ ${category}`;
+            const item = new CategoryTreeItem(label, countDesc, vscode.TreeItemCollapsibleState.None, "category-toggle", enabled);
+            // Set icon based on severity and state
             if (errors > 0) {
-                item.iconPath = new vscode.ThemeIcon("symbol-folder", new vscode.ThemeColor("errorForeground"));
+                item.iconPath = new vscode.ThemeIcon(enabled ? "circle-filled" : "circle-outline", new vscode.ThemeColor("errorForeground"));
             }
             else if (warnings > 0) {
-                item.iconPath = new vscode.ThemeIcon("symbol-folder", new vscode.ThemeColor("editorWarning.foreground"));
-            }
-            items.push(item);
-        }
-        // Sort by number of errors (descending), then by name
-        return items.sort((a, b) => {
-            const aErrors = a.results?.filter((r) => r.severity === "error").length || 0;
-            const bErrors = b.results?.filter((r) => r.severity === "error").length || 0;
-            if (aErrors !== bErrors) {
-                return bErrors - aErrors; // More errors first
-            }
-            return a.label.toString().localeCompare(b.label.toString());
-        });
-    }
-    getCategoryResults(category) {
-        const results = category.results || [];
-        // Sort by severity (errors first), then by line number
-        const sortedResults = results.sort((a, b) => {
-            const severityOrder = { error: 0, warning: 1, info: 2, debug: 3 };
-            const severityDiff = severityOrder[a.severity] - severityOrder[b.severity];
-            if (severityDiff !== 0)
-                return severityDiff;
-            return a.line - b.line;
-        });
-        return sortedResults.map((result) => {
-            const lineNum = result.line + 1; // Convert to 1-based
-            const label = `Line ${lineNum}: ${result.message}`;
-            const description = result.timestamp
-                ? result.timestamp.toLocaleTimeString()
-                : "";
-            const item = new CategoryTreeItem(label, description, vscode.TreeItemCollapsibleState.None, "result");
-            // Set icon based on severity
-            if (result.severity === "error") {
-                item.iconPath = new vscode.ThemeIcon("error", new vscode.ThemeColor("errorForeground"));
-            }
-            else if (result.severity === "warning") {
-                item.iconPath = new vscode.ThemeIcon("warning", new vscode.ThemeColor("editorWarning.foreground"));
-            }
-            else if (result.severity === "debug") {
-                item.iconPath = new vscode.ThemeIcon("bug", new vscode.ThemeColor("debugIcon.startForeground"));
+                item.iconPath = new vscode.ThemeIcon(enabled ? "circle-filled" : "circle-outline", new vscode.ThemeColor("editorWarning.foreground"));
             }
             else {
-                item.iconPath = new vscode.ThemeIcon("info", new vscode.ThemeColor("editorInfo.foreground"));
+                item.iconPath = new vscode.ThemeIcon(enabled ? "circle-filled" : "circle-outline", new vscode.ThemeColor("editorInfo.foreground"));
             }
-            // Set command to jump to line
+            // Command to toggle this category
             item.command = {
-                command: "logScoutAnalyzer.jumpToLine",
-                title: "Jump to Line",
-                arguments: [result.uri, result.line, result.column],
+                command: "logScoutAnalyzer.toggleCategory",
+                title: "Toggle Category",
+                arguments: [category],
             };
-            // Add tooltip with more details
-            const tooltip = new vscode.MarkdownString();
-            tooltip.appendMarkdown(`**Line ${lineNum}:${result.column}**\n\n`);
-            tooltip.appendMarkdown(`**Severity:** ${result.severity}\n\n`);
-            tooltip.appendMarkdown(`${result.message}\n\n`);
-            tooltip.appendCodeblock(result.matchedText, "log");
-            if (result.timestamp) {
-                tooltip.appendMarkdown(`\n**Time:** ${result.timestamp.toLocaleString()}`);
-            }
-            item.tooltip = tooltip;
-            item.result = result;
-            return item;
-        });
+            item.tooltip = `${category}\n${errors} errors, ${warnings} warnings, ${infos} info\n\nClick to ${enabled ? "hide" : "show"}`;
+            item.categoryName = category;
+            items.push(item);
+        }
+        return items;
     }
 }
 exports.CategoriesTreeProvider = CategoriesTreeProvider;
 class CategoryTreeItem extends vscode.TreeItem {
-    constructor(label, description, collapsibleState, contextValue) {
+    constructor(label, description, collapsibleState, contextValue, enabled = false) {
         super(label, collapsibleState);
         this.label = label;
         this.description = description;
         this.collapsibleState = collapsibleState;
         this.contextValue = contextValue;
         this.description = description;
+        this.enabled = enabled;
     }
 }
 exports.CategoryTreeItem = CategoryTreeItem;

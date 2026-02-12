@@ -152,7 +152,8 @@ class ConsoleWebview {
     _exportConsole() {
         const content = this._messages
             .map((msg) => {
-            const time = msg.timestamp.toLocaleTimeString();
+            const timestamp = msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp);
+            const time = timestamp.toLocaleTimeString();
             const sev = msg.severity.toUpperCase();
             const cat = msg.category ? `[${msg.category}]` : "";
             const loc = msg.line ? `Line ${msg.line + 1}` : "";
@@ -570,7 +571,8 @@ class ConsoleWebview {
 </html>`;
     }
     _getMessageHtml(msg, index) {
-        const time = msg.timestamp.toLocaleTimeString();
+        const timestamp = msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp);
+        const time = timestamp.toLocaleTimeString();
         const severityBadge = `<span class="message-badge ${msg.severity}">${msg.severity.toUpperCase()}</span>`;
         const categoryBadge = msg.category
             ? `<span class="message-badge category">${msg.category}</span>`

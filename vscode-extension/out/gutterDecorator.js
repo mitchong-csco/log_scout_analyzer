@@ -41,6 +41,8 @@ const vscode = __importStar(require("vscode"));
 class GutterDecorator {
     constructor() {
         this.annotatedLines = new Map();
+        this.pendingUpdates = new Map();
+        this.updateTimeouts = new Map();
         // Create decoration types for gutter icons
         this.errorDecoration = vscode.window.createTextEditorDecorationType({
             gutterIconPath: this.createGutterIcon("🔴"),
@@ -96,60 +98,13 @@ class GutterDecorator {
     /**
      * Create hover tooltip content
      */
-    createHoverTooltip(annotation, document) {
+    createHoverTooltip(annotation, _document) {
         const markdown = new vscode.MarkdownString();
         markdown.isTrusted = true;
-        markdown.supportHtml = true;
-        // Severity icon and header
-        const severityIcon = annotation.severity === "error"
-            ? "🔴"
-            : annotation.severity === "warning"
-                ? "🟡"
-                : annotation.severity === "info"
-                    ? "🔵"
-                    : "🟣";
-        markdown.appendMarkdown(`### ${severityIcon} ${annotation.severity.toUpperCase()} - Line ${annotation.line + 1}\n\n`);
-        // Category
-        if (annotation.category) {
-            markdown.appendMarkdown(`**Category:** \`${annotation.category}\`\n\n`);
-        }
-        // Pattern
-        if (annotation.pattern) {
-            markdown.appendMarkdown(`**Pattern:** \`${annotation.pattern}\`\n\n`);
-        }
-        // Timestamp
-        if (annotation.timestamp) {
-            markdown.appendMarkdown(`**Timestamp:** ${annotation.timestamp.toLocaleString()}\n\n`);
-        }
-        // Message
-        markdown.appendMarkdown(`**Message:** ${annotation.message}\n\n`);
-        // Matched text
-        markdown.appendMarkdown("---\n\n");
-        markdown.appendMarkdown("**Matched Text:**\n```\n");
-        markdown.appendMarkdown(annotation.matchedText);
-        markdown.appendMarkdown("\n```\n\n");
-        // Context (surrounding lines)
-        if (annotation.context) {
-            markdown.appendMarkdown("**Context:**\n```\n");
-            const contextLines = annotation.context.split("\n");
-            const targetLineIndex = Math.floor(contextLines.length / 2);
-            contextLines.forEach((line, idx) => {
-                if (idx === targetLineIndex) {
-                    markdown.appendMarkdown(`→ ${line}\n`);
-                }
-                else {
-                    markdown.appendMarkdown(`  ${line}\n`);
-                }
-            });
-            markdown.appendMarkdown("```\n\n");
-        }
-        // Command links
-        const jumpCommand = `[Jump to Definition](command:revealLine?${JSON.stringify({ lineNumber: annotation.line, at: "center" })})`;
-        const copyCommand = `[Copy](command:editor.action.clipboardCopyAction)`;
-        markdown.appendMarkdown(`${jumpCommand} | ${copyCommand}`);
-        // Create hover range (entire line)
-        const lineRange = document.lineAt(annotation.line).range;
-        return new vscode.Hover(markdown, lineRange);
+        markdown.supportHtml = false;
+        // Just show the message (already contains parameter values from LSP server)
+        markdown.appendMarkdown(annotation.message);
+        return new vscode.Hover(markdown);
     }
     /**
      * Update decorations for a specific editor
@@ -168,7 +123,7 @@ class GutterDecorator {
             const range = line.range;
             const decorationOption = {
                 range,
-                hoverMessage: `${annotation.severity.toUpperCase()}: ${annotation.message}`,
+                hoverMessage: annotation.message, // Just the message with parameter values
             };
             switch (annotation.severity) {
                 case "error":
@@ -196,6 +151,13 @@ class GutterDecorator {
      */
     clearDecorations(editor) {
         const uri = editor.document.uri.toString();
+        // Clear any pending updates
+        const existingTimeout = this.updateTimeouts.get(uri);
+        if (existingTimeout) {
+            clearTimeout(existingTimeout);
+            this.updateTimeouts.delete(uri);
+        }
+        this.pendingUpdates.delete(uri);
         this.annotatedLines.delete(uri);
         editor.setDecorations(this.errorDecoration, []);
         editor.setDecorations(this.warningDecoration, []);
@@ -206,10 +168,17 @@ class GutterDecorator {
      * Clear all decorations across all documents
      */
     clearAll() {
+        // Clear all pending timeouts
+        this.updateTimeouts.forEach((timeout) => clearTimeout(timeout));
+        this.updateTimeouts.clear();
+        this.pendingUpdates.clear();
         this.annotatedLines.clear();
         // Clear decorations in all visible editors
         vscode.window.visibleTextEditors.forEach((editor) => {
-            this.clearDecorations(editor);
+            editor.setDecorations(this.errorDecoration, []);
+            editor.setDecorations(this.warningDecoration, []);
+            editor.setDecorations(this.infoDecoration, []);
+            editor.setDecorations(this.debugDecoration, []);
         });
     }
     /**
@@ -222,6 +191,10 @@ class GutterDecorator {
      * Dispose of all resources
      */
     dispose() {
+        // Clear all pending timeouts
+        this.updateTimeouts.forEach((timeout) => clearTimeout(timeout));
+        this.updateTimeouts.clear();
+        this.pendingUpdates.clear();
         this.errorDecoration.dispose();
         this.warningDecoration.dispose();
         this.infoDecoration.dispose();
@@ -229,7 +202,6 @@ class GutterDecorator {
         if (this.hoverProvider) {
             this.hoverProvider.dispose();
         }
-        this.annotatedLines.clear();
     }
 }
 exports.GutterDecorator = GutterDecorator;

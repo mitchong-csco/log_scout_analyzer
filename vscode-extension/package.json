@@ -2,7 +2,7 @@
     "name": "log-scout-analyzer",
     "displayName": "Log Scout Analyzer - DevTools Edition",
     "description": "Professional log analysis workbench with DevTools-style interface, pattern recognition, and real-time diagnostics",
-    "version": "0.0.18",
+    "version": "0.0.87",
     "publisher": "log-scout-team",
     "engines": {
         "vscode": "^1.75.0"
@@ -40,6 +40,11 @@
                     "id": "scout-analyzer",
                     "title": "Scout Analyzer",
                     "icon": "$(telescope)"
+                },
+                {
+                    "id": "scout-inventor",
+                    "title": "Scout Toolkit",
+                    "icon": "$(circuit-board)"
                 }
             ]
         },
@@ -72,6 +77,22 @@
                     "icon": "$(play-circle)",
                     "contextualTitle": "Scout Analyzer",
                     "visibility": "visible"
+                },
+                {
+                    "id": "scoutCachedFiles",
+                    "name": "Cached Files",
+                    "icon": "$(database)",
+                    "contextualTitle": "Cached Analysis Files",
+                    "visibility": "visible"
+                }
+            ],
+            "scout-inventor": [
+                {
+                    "id": "scoutInventor",
+                    "name": "Quick Actions",
+                    "icon": "$(circuit-board)",
+                    "contextualTitle": "Scout Toolkit",
+                    "visibility": "visible"
                 }
             ]
         },
@@ -85,7 +106,17 @@
                 "extensions": [
                     ".log",
                     ".txt",
-                    ".out"
+                    ".out",
+                    ".err"
+                ],
+                "filenames": [
+                    "log",
+                    "syslog"
+                ],
+                "filenamePatterns": [
+                    "**/log.[0-9]*",
+                    "log.{1..10}",
+                    "*.log.*"
                 ],
                 "configuration": "./language-configuration/log.json"
             }
@@ -236,19 +267,6 @@
                     "default": true,
                     "description": "Automatically open Scout Analyzer Panel when a log file is opened"
                 },
-                "logScoutAnalyzer.consoleOutputLocation": {
-                    "type": "string",
-                    "enum": [
-                        "outputPanel",
-                        "terminal"
-                    ],
-                    "default": "outputPanel",
-                    "description": "Where to show Scout Console output: Output Panel (sidebar) or Terminal",
-                    "enumDescriptions": [
-                        "Show console output in the Output panel (sidebar)",
-                        "Show console output in a dedicated terminal"
-                    ]
-                },
                 "logScoutAnalyzer.useEnhancedTreeView": {
                     "type": "boolean",
                     "default": true,
@@ -297,6 +315,74 @@
                     "minimum": 1,
                     "maximum": 1440,
                     "description": "Time interval in minutes for grouping timeline events (1-1440)"
+                },
+                "logScoutAnalyzer.dashboard.hiddenCategories": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "default": [],
+                    "description": "Categories hidden in the annotation dashboard"
+                },
+                "logScoutAnalyzer.dashboard.filterError": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show ERROR severity in annotation dashboard"
+                },
+                "logScoutAnalyzer.dashboard.filterWarning": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show WARNING severity in annotation dashboard"
+                },
+                "logScoutAnalyzer.dashboard.filterInfo": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show INFO severity in annotation dashboard"
+                },
+                "logScoutAnalyzer.dashboard.filterWarn": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show WARN severity in annotation dashboard"
+                },
+                "logScoutAnalyzer.dashboard.filterDebug": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show DEBUG severity in annotation dashboard"
+                },
+                "logScoutAnalyzer.dashboard.filterTrace": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show TRACE severity in annotation dashboard"
+                },
+                "logScoutAnalyzer.dashboard.filterCritical": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show CRITICAL priority in annotation dashboard"
+                },
+                "logScoutAnalyzer.dashboard.filterHigh": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show HIGH priority in annotation dashboard"
+                },
+                "logScoutAnalyzer.dashboard.filterNormal": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show NORMAL priority in annotation dashboard"
+                },
+                "logScoutAnalyzer.dashboard.filterLow": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show LOW priority in annotation dashboard"
+                },
+                "logScoutAnalyzer.dashboard.sortBy": {
+                    "type": "string",
+                    "enum": [
+                        "time",
+                        "severity",
+                        "category"
+                    ],
+                    "default": "time",
+                    "description": "Default sort order for annotations"
                 }
             }
         },
@@ -310,12 +396,30 @@
                 "title": "Scout: Clear Diagnostics"
             },
             {
+                "command": "logScoutAnalyzer.clearCache",
+                "title": "Scout: Clear Analysis Cache"
+            },
+            {
+                "command": "logScoutAnalyzer.showCacheStats",
+                "title": "Scout: Show Cache Statistics"
+            },
+            {
                 "command": "logScoutAnalyzer.showPatterns",
                 "title": "Scout: Show Configured Patterns"
             },
             {
                 "command": "logScoutAnalyzer.showVersion",
                 "title": "Scout: Show Version Info"
+            },
+            {
+                "command": "logScoutAnalyzer.openActionPanel",
+                "title": "Scout: Open Action Panel & Scenarios",
+                "icon": "$(tools)"
+            },
+            {
+                "command": "logScoutAnalyzer.openAnnotationDashboard",
+                "title": "Scout: Open Annotation Dashboard",
+                "icon": "$(notebook)"
             },
             {
                 "command": "logScoutAnalyzer.refreshResults",
@@ -408,6 +512,72 @@
                 "command": "logScoutAnalyzer.showLadderDiagram",
                 "title": "Scout: Show SIP Ladder Diagram",
                 "icon": "$(type-hierarchy)"
+            },
+            {
+                "command": "logScoutAnalyzer.toggleCategory",
+                "title": "Scout: Toggle Category Filter"
+            },
+            {
+                "command": "logScoutAnalyzer.toggleAllCategories",
+                "title": "Scout: Toggle All Categories"
+            },
+            {
+                "command": "logScoutAnalyzer.removeCachedFile",
+                "title": "Scout: Remove from Cache",
+                "icon": "$(trash)"
+            },
+            {
+                "command": "logScoutAnalyzer.openCachedFile",
+                "title": "Scout: Open Cached File",
+                "icon": "$(file)"
+            },
+            {
+                "command": "logScoutAnalyzer.toggleTimeframe",
+                "title": "Scout: Toggle Timeframe Filter"
+            },
+            {
+                "command": "logScoutAnalyzer.toggleAllTimeframes",
+                "title": "Scout: Toggle All Timeframes"
+            },
+            {
+                "command": "logScoutAnalyzer.changeTimeInterval",
+                "title": "Scout: Change Time Interval",
+                "icon": "$(settings-gear)"
+            },
+            {
+                "command": "logScoutAnalyzer.copyFilePath",
+                "title": "Scout: Copy File Path",
+                "icon": "$(clippy)"
+            },
+            {
+                "command": "logScoutAnalyzer.openInNewWindow",
+                "title": "Scout: Open in New Window",
+                "icon": "$(window)"
+            },
+            {
+                "command": "logScoutAnalyzer.copyVersionInfo",
+                "title": "Scout: Copy Version Info",
+                "icon": "$(clippy)"
+            },
+            {
+                "command": "logScoutAnalyzer.copyResultInfo",
+                "title": "Scout: Copy Issue Details",
+                "icon": "$(clippy)"
+            },
+            {
+                "command": "logScoutAnalyzer.showPatternForResult",
+                "title": "Scout: Show Pattern Details",
+                "icon": "$(search)"
+            },
+            {
+                "command": "logScoutAnalyzer.openFileInEditor",
+                "title": "Scout: Open File in Editor",
+                "icon": "$(go-to-file)"
+            },
+            {
+                "command": "logScoutAnalyzer.revealInExplorer",
+                "title": "Scout: Reveal in Explorer",
+                "icon": "$(folder-opened)"
             }
         ],
         "menus": {
@@ -451,12 +621,98 @@
                     "command": "logScoutAnalyzer.toggleSignificantEvents",
                     "when": "view == scoutTimeline",
                     "group": "navigation"
+                },
+                {
+                    "command": "logScoutAnalyzer.clearCache",
+                    "when": "view == scoutCachedFiles",
+                    "group": "navigation"
                 }
             ],
             "view/item/context": [
                 {
                     "command": "logScoutAnalyzer.jumpToLine",
-                    "when": "viewItem == result"
+                    "when": "viewItem == result",
+                    "group": "1_navigation@1"
+                },
+                {
+                    "command": "logScoutAnalyzer.showPatternForResult",
+                    "when": "viewItem == result",
+                    "group": "1_navigation@2"
+                },
+                {
+                    "command": "logScoutAnalyzer.copyResultInfo",
+                    "when": "viewItem == result",
+                    "group": "2_copy@1"
+                },
+                {
+                    "command": "logScoutAnalyzer.removeCachedFile",
+                    "when": "viewItem == cachedFile",
+                    "group": "inline"
+                },
+                {
+                    "command": "logScoutAnalyzer.openCachedFile",
+                    "when": "viewItem == cachedFile",
+                    "group": "1_open@1"
+                },
+                {
+                    "command": "logScoutAnalyzer.openFileInEditor",
+                    "when": "viewItem == cachedFile",
+                    "group": "1_open@2"
+                },
+                {
+                    "command": "logScoutAnalyzer.revealInExplorer",
+                    "when": "viewItem == cachedFile",
+                    "group": "2_explorer@1"
+                },
+                {
+                    "command": "logScoutAnalyzer.copyFilePath",
+                    "when": "viewItem == currentFile",
+                    "group": "1_actions@1"
+                },
+                {
+                    "command": "logScoutAnalyzer.openInNewWindow",
+                    "when": "viewItem == currentFile",
+                    "group": "1_actions@2"
+                },
+                {
+                    "command": "logScoutAnalyzer.analyzeFile",
+                    "when": "viewItem == analyzeFile",
+                    "group": "1_actions@1"
+                },
+                {
+                    "command": "logScoutAnalyzer.analyzeDirectory",
+                    "when": "viewItem == analyzeDirectory",
+                    "group": "1_actions@1"
+                },
+                {
+                    "command": "logScoutAnalyzer.analyzeAllBelow",
+                    "when": "viewItem == analyzeRecursive",
+                    "group": "1_actions@1"
+                },
+                {
+                    "command": "logScoutAnalyzer.clearDiagnostics",
+                    "when": "viewItem == clearResults",
+                    "group": "1_actions@1"
+                },
+                {
+                    "command": "logScoutAnalyzer.exportResults",
+                    "when": "viewItem == exportResults",
+                    "group": "1_actions@1"
+                },
+                {
+                    "command": "logScoutAnalyzer.showPatterns",
+                    "when": "viewItem == showPatterns",
+                    "group": "1_actions@1"
+                },
+                {
+                    "command": "logScoutAnalyzer.showVersion",
+                    "when": "viewItem == version",
+                    "group": "1_actions@1"
+                },
+                {
+                    "command": "logScoutAnalyzer.copyVersionInfo",
+                    "when": "viewItem == version",
+                    "group": "2_copy@1"
                 }
             ]
         }
@@ -464,15 +720,15 @@
     "scripts": {
         "vscode:prepublish": "echo \"Skipping build - using existing compiled code\"",
         "build": "node generate-build-info.js && npm run compile",
-        "compile": "tsc -p ./",
+        "compile": "tsc -p ./ && tsc -p tsconfig.webview.json",
         "watch": "tsc -watch -p ./",
         "pretest": "npm run compile && npm run lint",
         "lint": "eslint src --ext ts",
         "test": "node ./out/test/runTest.js",
         "version:increment": "node increment-version.js",
         "package": "npm run version:increment && npm run build && vsce package --allow-star-activation --out log-scout-analyzer.vsix",
-        "postpackage": "node copy-to-windows.js",
-        "publish": "vsce publish"
+        "postpackage": "node copy-vsix.js",
+        "deploy": "npm run package && code --install-extension log-scout-analyzer.vsix"
     },
     "devDependencies": {
         "@types/node": "^18.0.0",
@@ -485,7 +741,8 @@
         "@vscode/vsce": "^2.19.0"
     },
     "dependencies": {
-        "js-yaml": "^4.1.0"
+        "js-yaml": "^4.1.0",
+        "vscode-languageclient": "^9.0.1"
     },
     "repository": {
         "type": "git",

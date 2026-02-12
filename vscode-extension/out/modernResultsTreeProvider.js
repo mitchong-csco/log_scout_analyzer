@@ -179,8 +179,9 @@ class ModernResultsTreeProvider {
     createIssueItem(result) {
         // Create rich label with timestamp and category badges
         const lineNum = result.line + 1;
-        const time = result.timestamp
-            ? result.timestamp.toLocaleTimeString()
+        const timestamp = result.timestamp instanceof Date ? result.timestamp : (result.timestamp ? new Date(result.timestamp) : undefined);
+        const time = timestamp
+            ? timestamp.toLocaleTimeString()
             : "";
         // Main label: Line number and message (truncated)
         const shortMessage = result.message.length > 60

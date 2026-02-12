@@ -41,83 +41,74 @@ pub struct TagScoutAnnotation {
     #[serde(rename = "_id")]
     pub id: bson::oid::ObjectId,
 
-    /// Annotation name/title
-    pub name: String,
-
-    /// Detailed description
+    /// Raw example log line
     #[serde(default)]
-    pub description: String,
+    pub raw_data: String,
 
-    /// Regular expression pattern
-    pub pattern: String,
+    /// Regular expression patterns (array - may have multiple variations)
+    pub regexes: Vec<String>,
 
-    /// Severity level (error, warning, info, etc.)
+    /// Severity level (Info, Warning, Error, etc.)
     #[serde(default = "default_severity")]
     pub severity: String,
 
-    /// Category (network, authentication, performance, etc.)
+    /// Category tags (array)
     #[serde(default)]
-    pub category: String,
+    pub category: Vec<String>,
 
-    /// Product/service (jabber, webex, cuic, etc.)
+    /// Display template with parameter placeholders
     #[serde(default)]
-    pub product: String,
+    pub template: String,
 
-    /// Component within product
+    /// Production-ready flag
     #[serde(default)]
-    pub component: String,
+    pub production: bool,
 
-    /// Tags for classification
+    /// Whether this is a content annotation
     #[serde(default)]
-    pub tags: Vec<String>,
+    pub content: bool,
 
-    /// Suggested action/remediation
+    /// Documentation notes
     #[serde(default)]
-    pub action: String,
+    pub documentation: String,
 
-    /// Knowledge base article ID
-    #[serde(default, rename = "kb_id")]
-    pub kb_id: String,
-
-    /// Bug ID if associated with a known issue
-    #[serde(default, rename = "bug_id")]
-    pub bug_id: String,
-
-    /// Version introduced (if applicable)
+    /// Internal notes
     #[serde(default)]
-    pub version_introduced: String,
+    pub internal_notes: String,
 
-    /// Version fixed (if applicable)
+    /// Multiline pattern flag
     #[serde(default)]
-    pub version_fixed: String,
+    pub multiline: Option<bool>,
 
-    /// Whether this annotation is active/enabled
-    #[serde(default = "default_true")]
-    pub active: bool,
-
-    /// Last updated timestamp
-    #[serde(default, rename = "lastUpdated")]
-    pub last_updated: Option<bson::DateTime>,
-
-    /// Created timestamp
-    #[serde(default, rename = "createdAt")]
-    pub created_at: Option<bson::DateTime>,
-
-    /// Author/creator
+    /// Whether this is an external annotation
     #[serde(default)]
-    pub author: String,
+    pub external: bool,
 
-    /// Additional metadata
-    #[serde(flatten)]
-    pub metadata: Option<Document>,
+    /// BORG integration flag
+    #[serde(default)]
+    pub borg: bool,
+
+    /// Parameter extraction regexes
+    #[serde(default)]
+    pub parameters: Vec<TagScoutParameter>,
+}
+
+/// Parameter definition for field extraction
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TagScoutParameter {
+    /// Parameter name (matches template placeholder)
+    pub name: String,
+
+    /// Regex pattern to extract this parameter
+    pub regex: String,
+
+    /// Enum type (usually "None")
+    #[serde(default)]
+    pub r#enum: String,
 }
 
 fn default_severity() -> String {
     "info".to_string()
-}
-
-fn default_true() -> bool {
-    true
 }
 
 /// TagScout client configuration
@@ -150,10 +141,17 @@ pub struct TagScoutConfig {
 
 impl Default for TagScoutConfig {
     fn default() -> Self {
+        // Get MongoDB connection from environment or use BDB production default
+        let connection_string = std::env::var("TAGSCOUT_MONGODB_URI")
+            .unwrap_or_else(|_| "mongodb://TagScoutLibrary_ro:4d6e2f2a60b17c87c2574fa3c1d39a18093a04d4@bdb-int-prod-mongos-1.cisco.com:27017,bdb-int-prod-mongos-2.cisco.com:27017/task_TagScoutLibrary?tls=true".to_string());
+        
+        let database = std::env::var("TAGSCOUT_DATABASE")
+            .unwrap_or_else(|_| "task_TagScoutLibrary".to_string());
+        
         Self {
-            connection_string: "mongodb://task_TagScoutLibrary:HWCa_lWVy0U6SPl@10.89.108.161:27017/?authSource=admin".to_string(),
-            database: "task_TagScoutLibrary".to_string(),
-            collection: "annotations".to_string(),
+            connection_string,
+            database,
+            collection: "jabber_prt_annotations".to_string(),
             connection_timeout: 10,
             server_selection_timeout: 10,
             enable_pooling: true,
@@ -221,9 +219,9 @@ impl TagScoutClient {
         Ok(())
     }
 
-    /// Fetch all active annotations
+    /// Fetch all production annotations
     pub async fn fetch_all_annotations(&self) -> Result<Vec<TagScoutAnnotation>, TagScoutError> {
-        self.fetch_annotations_filtered(doc! { "active": true })
+        self.fetch_annotations_filtered(doc! { "production": true })
             .await
     }
 

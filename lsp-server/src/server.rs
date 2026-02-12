@@ -2,7 +2,7 @@
 //!
 //! Implements the Language Server Protocol for log file analysis.
 
-use crate::pattern_engine::{Detection, Pattern, PatternEngine, Severity};
+use crate::pattern_engine::{Detection, PatternEngine, Severity};
 use crate::tagscout::{SyncMode, SyncService, SyncServiceConfig};
 
 use dashmap::DashMap;
@@ -24,13 +24,13 @@ pub struct LogScoutServer {
 impl LogScoutServer {
     /// Create a new LSP server instance
     pub fn new(client: Client) -> Self {
-        // Start with default patterns
+        // No default patterns - rely entirely on TagScout
         let pattern_engine = Self::load_default_patterns();
 
         if pattern_engine.is_some() {
             tracing::info!("Pattern engine initialized with default patterns");
         } else {
-            tracing::warn!("Pattern engine not initialized - using empty pattern set");
+            tracing::info!("Pattern engine will be initialized after TagScout patterns load");
         }
 
         Self {
@@ -135,136 +135,96 @@ impl LogScoutServer {
         }
     }
 
-    /// Load default pattern set
+    /// Load default pattern set (fallback when TagScout unavailable)
     fn load_default_patterns() -> Option<PatternEngine> {
-        // Create some default patterns for common log issues
-        let default_patterns = vec![
-            Pattern {
-                id: "error".to_string(),
-                name: "Error Message".to_string(),
-                description: "Detects ERROR level log messages".to_string(),
-                pattern: r"(?i)\bERROR\b".to_string(),
-                mode: crate::pattern_engine::PatternMode::SingleLine,
-                severity: Severity::Error,
-                category: "error".to_string(),
-                service: None,
-                tags: vec![],
-                action: None,
-                expected_frequency: None,
-                enabled: true,
-            },
-            Pattern {
-                id: "warning".to_string(),
-                name: "Warning Message".to_string(),
-                description: "Detects WARNING level log messages".to_string(),
-                pattern: r"(?i)\bWARN(ING)?\b".to_string(),
-                mode: crate::pattern_engine::PatternMode::SingleLine,
-                severity: Severity::Warning,
-                category: "warning".to_string(),
-                service: None,
-                tags: vec![],
-                action: None,
-                expected_frequency: None,
-                enabled: true,
-            },
-            Pattern {
-                id: "fatal".to_string(),
-                name: "Fatal Error".to_string(),
-                description: "Detects FATAL level log messages".to_string(),
-                pattern: r"(?i)\bFATAL\b".to_string(),
-                mode: crate::pattern_engine::PatternMode::SingleLine,
-                severity: Severity::Error,
-                category: "fatal".to_string(),
-                service: None,
-                tags: vec![],
-                action: None,
-                expected_frequency: None,
-                enabled: true,
-            },
-            Pattern {
-                id: "exception".to_string(),
-                name: "Exception".to_string(),
-                description: "Detects exception traces".to_string(),
-                pattern: r"(?i)(exception|stack\s+trace|traceback)".to_string(),
-                mode: crate::pattern_engine::PatternMode::SingleLine,
-                severity: Severity::Error,
-                category: "exception".to_string(),
-                service: None,
-                tags: vec![],
-                action: None,
-                expected_frequency: None,
-                enabled: true,
-            },
-            Pattern {
-                id: "timeout".to_string(),
-                name: "Timeout".to_string(),
-                description: "Detects timeout errors".to_string(),
-                pattern: r"(?i)\btimeout\b".to_string(),
-                mode: crate::pattern_engine::PatternMode::SingleLine,
-                severity: Severity::Warning,
-                category: "timeout".to_string(),
-                service: None,
-                tags: vec![],
-                action: None,
-                expected_frequency: None,
-                enabled: true,
-            },
-            Pattern {
-                id: "connection_failed".to_string(),
-                name: "Connection Failed".to_string(),
-                description: "Detects connection failures".to_string(),
-                pattern: r"(?i)connection\s+(failed|refused|reset)".to_string(),
-                mode: crate::pattern_engine::PatternMode::SingleLine,
-                severity: Severity::Error,
-                category: "network".to_string(),
-                service: None,
-                tags: vec![],
-                action: None,
-                expected_frequency: None,
-                enabled: true,
-            },
-        ];
+        // No default patterns - rely entirely on TagScout for meaningful categorization
+        // Return None to ensure no pattern engine is initialized until TagScout loads
+        None
+    }
 
-        match PatternEngine::new(default_patterns, 0.7, 5) {
-            Ok(engine) => Some(engine),
-            Err(e) => {
-                tracing::error!("Failed to create pattern engine: {}", e);
-                None
+    /// Analyze text and return diagnostics (shared by push and pull)
+    async fn analyze_text(&self, text: &str, _uri: &str, total_lines: usize) -> Vec<Diagnostic> {
+        let engine_guard = self.pattern_engine.read().await;
+        if let Some(engine) = engine_guard.as_ref() {
+            let mut all_detections = Vec::new();
+            let mut processed = 0;
+            
+            for (line_num, line) in text.lines().enumerate() {
+                let detections = engine.process_line(line, line_num);
+                all_detections.extend(detections);
+                processed += 1;
+                
+                // Report progress every 1000 lines
+                if processed % 1000 == 0 {
+                    let percentage = (processed as f64 / total_lines as f64 * 100.0) as u32;
+                    self.client
+                        .log_message(
+                            MessageType::LOG,
+                            &format!("Analyzing: {}% ({}/{} lines)", percentage, processed, total_lines)
+                        )
+                        .await;
+                }
             }
+
+            tracing::info!("Found {} detections", all_detections.len());
+
+            // Convert detections to LSP diagnostics
+            all_detections
+                .into_iter()
+                .map(|detection| self.detection_to_diagnostic(&detection))
+                .collect()
+        } else {
+            tracing::warn!("No pattern engine available");
+            vec![]
         }
     }
 
-    /// Analyze document and publish diagnostics
+    /// Analyze document and publish diagnostics (push mode)
     async fn analyze_and_publish(&self, uri: &Url, text: &str) {
-        tracing::debug!("Analyzing document: {}", uri);
+        tracing::debug!("Analyzing document (push): {}", uri);
+        
+        // Send status notification
+        self.client
+            .log_message(MessageType::INFO, &format!("🔍 Analyzing {}", uri.path()))
+            .await;
 
-        let diagnostics = {
-            let engine_guard = self.pattern_engine.read().await;
-            if let Some(engine) = engine_guard.as_ref() {
-                // Process each line and collect detections
-                let mut all_detections = Vec::new();
-                for (line_num, line) in text.lines().enumerate() {
-                    let detections = engine.process_line(line, line_num);
-                    all_detections.extend(detections);
-                }
-
-                tracing::info!("Found {} detections", all_detections.len());
-
-                // Convert detections to LSP diagnostics
-                all_detections
-                    .into_iter()
-                    .map(|detection| self.detection_to_diagnostic(&detection))
-                    .collect()
-            } else {
-                tracing::warn!("No pattern engine available");
-                vec![]
-            }
-        };
+        let total_lines = text.lines().count();
+        let diagnostics = self.analyze_text(text, uri.as_str(), total_lines).await;
 
         // Publish diagnostics to client
+        let count = diagnostics.len();
         self.client
             .publish_diagnostics(uri.clone(), diagnostics, None)
             .await;
+            
+        self.client
+            .log_message(MessageType::INFO, &format!("✅ Analysis complete: {} issues found", count))
+            .await;
+    }
+
+    /// Replace template placeholders like {{ fieldName }} with actual values from field_values
+    /// Handles all spacing variations: {{CODE}}, {{ CODE }}, {{ CODE}}, {{CODE }}
+    fn substitute_template(template: &str, field_values: &std::collections::HashMap<String, String>) -> String {
+        use regex::Regex;
+        
+        let mut result = template.to_string();
+        
+        // Replace each placeholder with the actual value
+        for (field_name, field_value) in field_values {
+            // Create regex to match {{optional_spaces field_name optional_spaces}}
+            // This handles: {{CODE}}, {{ CODE }}, {{ CODE}}, {{CODE }}, etc.
+            let pattern_str = format!(r"\{{\{{\s*{}\s*\}}\}}", regex::escape(field_name));
+            if let Ok(re) = Regex::new(&pattern_str) {
+                result = re.replace_all(&result, field_value.as_str()).to_string();
+            }
+        }
+        
+        // Remove any remaining unsubstituted placeholders (when regex doesn't have named groups)
+        if let Ok(re) = Regex::new(r"\{\{[^}]+\}\}") {
+            result = re.replace_all(&result, "[...]").to_string();
+        }
+        
+        result
     }
 
     /// Convert a Detection to an LSP Diagnostic
@@ -277,6 +237,37 @@ impl LogScoutServer {
         };
 
         let (start_col, end_col) = detection.column_range;
+
+        // Substitute template placeholders in category and description
+        let category = Self::substitute_template(&detection.pattern.category, &detection.field_values);
+        let description = Self::substitute_template(&detection.pattern.description, &detection.field_values);
+
+        // Include extracted fields and other metadata in diagnostic data
+        let data = if !detection.field_values.is_empty() || detection.timestamp.is_some() || detection.log_level.is_some() {
+            let mut data_map = serde_json::Map::new();
+            
+            if !detection.field_values.is_empty() {
+                data_map.insert("extractedFields".to_string(), serde_json::to_value(&detection.field_values).unwrap());
+            }
+            
+            if let Some(ref timestamp) = detection.timestamp {
+                data_map.insert("timestamp".to_string(), serde_json::Value::String(timestamp.clone()));
+            }
+            
+            if let Some(ref log_level) = detection.log_level {
+                data_map.insert("logLevel".to_string(), serde_json::Value::String(format!("{:?}", log_level)));
+            }
+            
+            data_map.insert("matchedText".to_string(), serde_json::Value::String(detection.matched_text.clone()));
+            data_map.insert("category".to_string(), serde_json::Value::String(category.clone()));
+            
+            Some(serde_json::Value::Object(data_map))
+        } else {
+            // Even if no other data, always include category
+            let mut data_map = serde_json::Map::new();
+            data_map.insert("category".to_string(), serde_json::Value::String(category.clone()));
+            Some(serde_json::Value::Object(data_map))
+        };
 
         Diagnostic {
             range: Range {
@@ -295,11 +286,11 @@ impl LogScoutServer {
             source: Some("log-scout".to_string()),
             message: format!(
                 "{}: {}",
-                detection.pattern.name, detection.pattern.description
+                detection.pattern.name, description
             ),
             related_information: None,
             tags: None,
-            data: None,
+            data,
         }
     }
 }
@@ -319,7 +310,9 @@ impl LanguageServer for LogScoutServer {
                         identifier: Some("log-scout".to_string()),
                         inter_file_dependencies: false,
                         workspace_diagnostics: false,
-                        work_done_progress_options: Default::default(),
+                        work_done_progress_options: WorkDoneProgressOptions {
+                            work_done_progress: Some(true),
+                        },
                     },
                 )),
                 code_action_provider: Some(CodeActionProviderCapability::Simple(true)),
@@ -331,7 +324,9 @@ impl LanguageServer for LogScoutServer {
                         "logScout.refreshPatterns".to_string(),
                         "logScout.getPatterns".to_string(),
                     ],
-                    work_done_progress_options: Default::default(),
+                    work_done_progress_options: WorkDoneProgressOptions {
+                        work_done_progress: Some(true),
+                    },
                 }),
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
                 document_symbol_provider: Some(OneOf::Left(true)),
@@ -365,7 +360,7 @@ impl LanguageServer for LogScoutServer {
                         .log_message(
                             MessageType::WARNING,
                             &format!(
-                                "TagScout initialization failed: {}. Using default patterns.",
+                                "TagScout initialization failed: {}. No patterns available.",
                                 e
                             ),
                         )
@@ -572,6 +567,13 @@ impl LanguageServer for LogScoutServer {
                     let patterns = engine.get_patterns();
                     tracing::info!("Returning {} patterns to TagScout UI", patterns.len());
 
+                    // Determine source based on pattern count and content
+                    let source = if patterns.len() <= 6 {
+                        "fallback_defaults"
+                    } else {
+                        "tagscout_mongodb"
+                    };
+
                     // Convert patterns to JSON for the UI
                     let pattern_data: Vec<serde_json::Value> = patterns
                         .iter()
@@ -599,13 +601,14 @@ impl LanguageServer for LogScoutServer {
                     Ok(Some(serde_json::json!({
                         "patterns": pattern_data,
                         "count": pattern_data.len(),
-                        "source": "tagscout_mongodb"
+                        "source": source
                     })))
                 } else {
                     tracing::warn!("No pattern engine available");
                     Ok(Some(serde_json::json!({
                         "patterns": [],
                         "count": 0,
+                        "source": "none",
                         "error": "Pattern engine not initialized"
                     })))
                 }
@@ -634,6 +637,7 @@ impl LanguageServer for LogScoutServer {
                     || line.contains("INFO")
                     || line.contains("FATAL")
                 {
+                    #[allow(deprecated)]
                     let symbol = DocumentSymbol {
                         name: line.chars().take(50).collect::<String>(),
                         detail: Some(format!("Line {}", line_num + 1)),
@@ -670,5 +674,61 @@ impl LanguageServer for LogScoutServer {
         }
 
         Ok(None)
+    }
+
+    async fn diagnostic(
+        &self,
+        params: DocumentDiagnosticParams,
+    ) -> Result<DocumentDiagnosticReportResult> {
+        let uri = params.text_document.uri.clone();
+        
+        tracing::info!("Pull diagnostic request for: {}", uri);
+
+        // Get document and analyze if we have it
+        if let Some(doc) = self.documents.get(&uri) {
+            let text = doc.clone();
+            drop(doc);
+
+            // Send status notification
+            self.client
+                .log_message(MessageType::INFO, &format!("🔍 Pull diagnostic request: {}", uri.path()))
+                .await;
+
+            // Analyze the document
+            let total_lines = text.lines().count();
+            let diagnostics = self.analyze_text(&text, uri.as_str(), total_lines).await;
+            
+            tracing::info!("Returning {} diagnostics for pull request", diagnostics.len());
+            
+            self.client
+                .log_message(MessageType::INFO, &format!("✅ Pull diagnostic complete: {} issues found", diagnostics.len()))
+                .await;
+            
+            return Ok(DocumentDiagnosticReportResult::Report(
+                DocumentDiagnosticReport::Full(
+                    RelatedFullDocumentDiagnosticReport {
+                        related_documents: None,
+                        full_document_diagnostic_report: FullDocumentDiagnosticReport {
+                            result_id: None,
+                            items: diagnostics,
+                        },
+                    }
+                )
+            ));
+        }
+
+        // No document found, return empty diagnostics
+        tracing::info!("No document found for pull request: {}", uri);
+        Ok(DocumentDiagnosticReportResult::Report(
+            DocumentDiagnosticReport::Full(
+                RelatedFullDocumentDiagnosticReport {
+                    related_documents: None,
+                    full_document_diagnostic_report: FullDocumentDiagnosticReport {
+                        result_id: None,
+                        items: vec![],
+                    },
+                }
+            )
+        ))
     }
 }
