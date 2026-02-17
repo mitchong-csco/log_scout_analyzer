@@ -246,6 +246,80 @@ fn parse_operator(operator_str: &str) -> Result<ConditionOperator, Box<dyn std::
     }
 }
 
+/// Apply pattern overrides to a list of canonical patterns
+/// Returns a new list of patterns with overrides applied
+pub fn apply_overrides(
+    canonical_patterns: Vec<Pattern>,
+    workspace_path: Option<&str>,
+) -> Result<Vec<Pattern>, Box<dyn std::error::Error>> {
+    // Load override file
+    let override_file = load_overrides(workspace_path)?;
+
+    // If no overrides exist, return canonical patterns as-is
+    if override_file.overrides.is_empty() && override_file.custom.is_empty() {
+        tracing::info!("No pattern overrides found, using canonical patterns");
+        return Ok(canonical_patterns);
+    }
+
+    tracing::info!(
+        "Applying {} overrides and {} custom patterns",
+        override_file.overrides.len(),
+        override_file.custom.len()
+    );
+
+    let mut result_patterns = Vec::new();
+
+    // Process canonical patterns with overrides
+    for canonical in canonical_patterns {
+        // Check if there's an override for this pattern
+        // Try matching by source_id first, then by pattern id
+        let override_opt = override_file.overrides.values().find(|o| {
+            o.source_id.as_ref() == Some(&canonical.id)
+                || o.id == format!("override-{}", canonical.id)
+        });
+
+        if let Some(override_data) = override_opt {
+            // Apply override
+            match merge_pattern(&canonical, override_data) {
+                Ok(merged) => {
+                    tracing::info!(
+                        "Applied override to pattern '{}': {}",
+                        canonical.id,
+                        override_data
+                            .reason
+                            .as_deref()
+                            .unwrap_or("no reason provided")
+                    );
+                    result_patterns.push(merged);
+                }
+                Err(e) => {
+                    tracing::error!(
+                        "Failed to apply override to pattern '{}': {}",
+                        canonical.id,
+                        e
+                    );
+                    // Use canonical pattern as fallback
+                    result_patterns.push(canonical);
+                }
+            }
+        } else {
+            // No override, use canonical pattern
+            result_patterns.push(canonical);
+        }
+    }
+
+    // TODO: Add custom patterns from override_file.custom
+    // This requires converting PatternOverride to Pattern, which will be
+    // implemented in a future task when we support creating patterns from scratch
+
+    tracing::info!(
+        "Pattern override application complete: {} patterns after overrides",
+        result_patterns.len()
+    );
+
+    Ok(result_patterns)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -591,5 +665,227 @@ mod tests {
 
         // Test invalid operator
         assert!(parse_operator("invalid").is_err());
+    }
+
+    #[test]
+    fn test_apply_overrides_no_overrides() {
+        use crate::pattern_engine::{Pattern, PatternMode, Severity};
+
+        let canonical = vec![Pattern {
+            id: "test-pattern".to_string(),
+            name: "Test Pattern".to_string(),
+            annotation: "Test annotation".to_string(),
+            pattern: "test.*pattern".to_string(),
+            mode: PatternMode::SingleLine,
+            severity: Severity::Warning,
+            category: "test".to_string(),
+            service: None,
+            tags: vec![],
+            action: None,
+            expected_frequency: None,
+            enabled: true,
+            log_level_triggers: HashMap::new(),
+            condition_triggers: vec![],
+            capture_fields: vec![],
+            parameter_extractors: vec![],
+            tagscout_metadata: None,
+        }];
+
+        // No override file exists, should return canonical patterns
+        let result = apply_overrides(canonical.clone(), Some("/nonexistent/path")).unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].id, "test-pattern");
+        assert_eq!(result[0].pattern, "test.*pattern");
+    }
+
+    #[test]
+    fn test_apply_overrides_with_matching_override() {
+        use crate::pattern_engine::{Pattern, PatternMode, Severity};
+        use std::fs;
+        use std::path::PathBuf;
+        use tempfile::TempDir;
+
+        // Create a temporary directory for test
+        let temp_dir = TempDir::new().unwrap();
+        let workspace_path = temp_dir.path().to_str().unwrap();
+
+        // Create .log-scout directory
+        let mut log_scout_dir = PathBuf::from(workspace_path);
+        log_scout_dir.push(".log-scout");
+        fs::create_dir_all(&log_scout_dir).unwrap();
+
+        // Create override file
+        let mut override_file_path = log_scout_dir.clone();
+        override_file_path.push("pattern-overrides.json");
+
+        let override_json = r#"{
+            "version": "1.0",
+            "overrides": {
+                "override-test-pattern": {
+                    "id": "override-test-pattern",
+                    "sourceType": "mongodb",
+                    "sourceId": "test-pattern",
+                    "reason": "Increase severity for testing",
+                    "enabled": true,
+                    "overrides": {
+                        "severity": "error"
+                    }
+                }
+            },
+            "custom": {}
+        }"#;
+
+        fs::write(&override_file_path, override_json).unwrap();
+
+        let canonical = vec![Pattern {
+            id: "test-pattern".to_string(),
+            name: "Test Pattern".to_string(),
+            annotation: "Test annotation".to_string(),
+            pattern: "test.*pattern".to_string(),
+            mode: PatternMode::SingleLine,
+            severity: Severity::Warning,
+            category: "test".to_string(),
+            service: None,
+            tags: vec![],
+            action: None,
+            expected_frequency: None,
+            enabled: true,
+            log_level_triggers: HashMap::new(),
+            condition_triggers: vec![],
+            capture_fields: vec![],
+            parameter_extractors: vec![],
+            tagscout_metadata: None,
+        }];
+
+        let result = apply_overrides(canonical, Some(workspace_path)).unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].id, "test-pattern");
+        assert_eq!(result[0].severity, Severity::Error); // Overridden
+        assert_eq!(result[0].pattern, "test.*pattern"); // Unchanged
+    }
+
+    #[test]
+    fn test_apply_overrides_multiple_patterns() {
+        use crate::pattern_engine::{Pattern, PatternMode, Severity};
+        use std::fs;
+        use std::path::PathBuf;
+        use tempfile::TempDir;
+
+        // Create a temporary directory for test
+        let temp_dir = TempDir::new().unwrap();
+        let workspace_path = temp_dir.path().to_str().unwrap();
+
+        // Create .log-scout directory
+        let mut log_scout_dir = PathBuf::from(workspace_path);
+        log_scout_dir.push(".log-scout");
+        fs::create_dir_all(&log_scout_dir).unwrap();
+
+        // Create override file with multiple overrides
+        let mut override_file_path = log_scout_dir.clone();
+        override_file_path.push("pattern-overrides.json");
+
+        let override_json = r#"{
+            "version": "1.0",
+            "overrides": {
+                "override-pattern1": {
+                    "id": "override-pattern1",
+                    "sourceType": "mongodb",
+                    "sourceId": "pattern1",
+                    "reason": "Disable pattern1",
+                    "enabled": false,
+                    "overrides": {}
+                },
+                "override-pattern2": {
+                    "id": "override-pattern2",
+                    "sourceType": "mongodb",
+                    "sourceId": "pattern2",
+                    "reason": "Change regex",
+                    "enabled": true,
+                    "overrides": {
+                        "regex": "new.*regex"
+                    }
+                }
+            },
+            "custom": {}
+        }"#;
+
+        fs::write(&override_file_path, override_json).unwrap();
+
+        let canonical = vec![
+            Pattern {
+                id: "pattern1".to_string(),
+                name: "Pattern 1".to_string(),
+                annotation: "Annotation 1".to_string(),
+                pattern: "old.*pattern1".to_string(),
+                mode: PatternMode::SingleLine,
+                severity: Severity::Warning,
+                category: "test".to_string(),
+                service: None,
+                tags: vec![],
+                action: None,
+                expected_frequency: None,
+                enabled: true,
+                log_level_triggers: HashMap::new(),
+                condition_triggers: vec![],
+                capture_fields: vec![],
+                parameter_extractors: vec![],
+                tagscout_metadata: None,
+            },
+            Pattern {
+                id: "pattern2".to_string(),
+                name: "Pattern 2".to_string(),
+                annotation: "Annotation 2".to_string(),
+                pattern: "old.*pattern2".to_string(),
+                mode: PatternMode::SingleLine,
+                severity: Severity::Info,
+                category: "test".to_string(),
+                service: None,
+                tags: vec![],
+                action: None,
+                expected_frequency: None,
+                enabled: true,
+                log_level_triggers: HashMap::new(),
+                condition_triggers: vec![],
+                capture_fields: vec![],
+                parameter_extractors: vec![],
+                tagscout_metadata: None,
+            },
+            Pattern {
+                id: "pattern3".to_string(),
+                name: "Pattern 3".to_string(),
+                annotation: "Annotation 3".to_string(),
+                pattern: "unchanged.*pattern".to_string(),
+                mode: PatternMode::SingleLine,
+                severity: Severity::Hint,
+                category: "test".to_string(),
+                service: None,
+                tags: vec![],
+                action: None,
+                expected_frequency: None,
+                enabled: true,
+                log_level_triggers: HashMap::new(),
+                condition_triggers: vec![],
+                capture_fields: vec![],
+                parameter_extractors: vec![],
+                tagscout_metadata: None,
+            },
+        ];
+
+        let result = apply_overrides(canonical, Some(workspace_path)).unwrap();
+        assert_eq!(result.len(), 3);
+
+        // Pattern 1 should be disabled
+        assert_eq!(result[0].id, "pattern1");
+        assert_eq!(result[0].enabled, false);
+
+        // Pattern 2 should have new regex
+        assert_eq!(result[1].id, "pattern2");
+        assert_eq!(result[1].pattern, "new.*regex");
+        assert_eq!(result[1].enabled, true);
+
+        // Pattern 3 should be unchanged
+        assert_eq!(result[2].id, "pattern3");
+        assert_eq!(result[2].pattern, "unchanged.*pattern");
+        assert_eq!(result[2].enabled, true);
     }
 }

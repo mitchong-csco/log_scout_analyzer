@@ -3,6 +3,7 @@
 //! Implements the Language Server Protocol for log file analysis.
 
 use crate::pattern_engine::{Detection, PatternEngine, Severity};
+use crate::pattern_loader;
 use crate::tagscout::{SyncMode, SyncService, SyncServiceConfig};
 
 use dashmap::DashMap;
@@ -19,6 +20,7 @@ pub struct LogScoutServer {
     pattern_engine: Arc<RwLock<Option<PatternEngine>>>,
     tagscout_service: Arc<RwLock<Option<SyncService>>>,
     documents: Arc<DashMap<Url, String>>,
+    workspace_path: Arc<RwLock<Option<String>>>,
 }
 
 impl LogScoutServer {
@@ -38,6 +40,7 @@ impl LogScoutServer {
             pattern_engine: Arc::new(RwLock::new(pattern_engine)),
             tagscout_service: Arc::new(RwLock::new(None)),
             documents: Arc::new(DashMap::new()),
+            workspace_path: Arc::new(RwLock::new(None)),
         }
     }
 
@@ -79,11 +82,17 @@ impl LogScoutServer {
             .map_err(|e| format!("Failed to get patterns: {}", e))?;
 
         if !patterns.is_empty() {
-            let engine = PatternEngine::new(patterns, 0.7, 10)
+            // Apply pattern overrides
+            let workspace_path_opt = self.workspace_path.read().await.clone();
+            let patterns_with_overrides =
+                pattern_loader::apply_overrides(patterns, workspace_path_opt.as_deref())
+                    .map_err(|e| format!("Failed to apply pattern overrides: {}", e))?;
+
+            let engine = PatternEngine::new(patterns_with_overrides, 0.7, 10)
                 .map_err(|e| format!("Failed to create pattern engine: {}", e))?;
 
             *self.pattern_engine.write().await = Some(engine);
-            tracing::info!("Pattern engine updated with TagScout patterns");
+            tracing::info!("Pattern engine updated with TagScout patterns and overrides");
         }
 
         // Store service
@@ -123,7 +132,13 @@ impl LogScoutServer {
 
             let count = patterns.len();
             if !patterns.is_empty() {
-                let engine = PatternEngine::new(patterns, 0.7, 10)
+                // Apply pattern overrides
+                let workspace_path_opt = self.workspace_path.read().await.clone();
+                let patterns_with_overrides =
+                    pattern_loader::apply_overrides(patterns, workspace_path_opt.as_deref())
+                        .map_err(|e| format!("Failed to apply pattern overrides: {}", e))?;
+
+                let engine = PatternEngine::new(patterns_with_overrides, 0.7, 10)
                     .map_err(|e| format!("Failed to update engine: {}", e))?;
                 *self.pattern_engine.write().await = Some(engine);
                 Ok(count)
@@ -490,8 +505,26 @@ impl LogScoutServer {
 
 #[tower_lsp::async_trait]
 impl LanguageServer for LogScoutServer {
-    async fn initialize(&self, _params: InitializeParams) -> Result<InitializeResult> {
+    async fn initialize(&self, params: InitializeParams) -> Result<InitializeResult> {
         tracing::info!("Client initializing LSP server");
+
+        // Capture workspace path for pattern overrides
+        if let Some(workspace_folders) = params.workspace_folders {
+            if let Some(folder) = workspace_folders.first() {
+                let path = folder.uri.to_file_path().ok();
+                if let Some(path_str) = path.as_ref().and_then(|p| p.to_str()) {
+                    *self.workspace_path.write().await = Some(path_str.to_string());
+                    tracing::info!("Workspace path set to: {}", path_str);
+                }
+            }
+        } else if let Some(root_uri) = params.root_uri {
+            if let Ok(path) = root_uri.to_file_path() {
+                if let Some(path_str) = path.to_str() {
+                    *self.workspace_path.write().await = Some(path_str.to_string());
+                    tracing::info!("Workspace path set from root_uri: {}", path_str);
+                }
+            }
+        }
 
         Ok(InitializeResult {
             capabilities: ServerCapabilities {
