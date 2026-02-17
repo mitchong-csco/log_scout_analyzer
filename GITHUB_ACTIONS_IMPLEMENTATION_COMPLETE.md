@@ -26,7 +26,7 @@ I've **completed the entire GitHub Actions implementation**. Everything is ready
 
 #### **Pattern Quality CI** (`.github/workflows/ci.yml`)
 - **Purpose:** Automated testing on every push
-- **Platforms:** Linux + Windows
+- **Platforms:** Linux, Windows, macOS
 - **Tests:** 34+ unit tests
 - **Duration:** ~7 minutes
 - **Triggers:** Every push, every PR
@@ -235,8 +235,8 @@ git push origin main
 ### Your Estimated Usage
 ```
 CI Workflow:
-  10 pushes/day × 7 minutes = 70 min/day
-  70 min/day × 22 work days = 1,540 min/month
+  10 pushes/day × 10 minutes = 100 min/day
+  100 min/day × 22 work days = 2,200 min/month
 
 Advanced Workflow:
   2 runs/day × 15 minutes = 30 min/day
@@ -245,15 +245,18 @@ Advanced Workflow:
 Weekly Workflow:
   4 runs/month × 5 minutes = 20 min/month
 
-TOTAL: ~1,540 min/month (CI only)
-       ~2,220 min/month (all workflows)
+TOTAL: ~2,200 min/month (CI only)
+       ~2,880 min/month (all workflows)
 
-Result: Slightly over free tier if running advanced daily
+Result: Slightly over free tier
 Solution: Advanced only runs on main branch pushes
-         So realistically: ~1,540 min/month
+         Typical usage: ~2,000-2,200 min/month
+
+**Note:** CI now tests 3 platforms (Linux, Windows, macOS)
+which takes longer but provides better coverage.
 ```
 
-**Verdict:** ✅ **Within free tier**
+**Verdict:** ✅ **At or near free tier limit**
 
 ---
 
@@ -261,7 +264,7 @@ Solution: Advanced only runs on main branch pushes
 
 ### Development Workflow
 - ✅ **Instant feedback** - Know if code works in 7 minutes
-- ✅ **Multi-platform** - Test on Linux + Windows automatically
+- ✅ **Multi-platform** - Test on Linux, Windows, and macOS automatically
 - ✅ **Pre-merge checks** - PRs must pass tests
 - ✅ **No local builds** - Download artifacts from GitHub
 

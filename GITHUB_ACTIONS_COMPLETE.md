@@ -18,7 +18,7 @@ GitHub Actions CI/CD pipeline is **fully implemented and ready to use**! All thr
 
 #### **`.github/workflows/ci.yml`** - Continuous Integration
 - ✅ Runs on every push and pull request
-- ✅ Tests on Linux and Windows
+- ✅ Tests on Linux, Windows, and macOS
 - ✅ Runs all 34+ unit tests
 - ✅ Code formatting checks (rustfmt)
 - ✅ Linting (clippy)
@@ -192,7 +192,7 @@ git push origin main
 
 ### Development Workflow
 - ✅ **Instant Feedback** - Know if code works in 7 minutes
-- ✅ **Multi-Platform** - Test Linux + Windows on every commit
+- ✅ **Multi-Platform** - Test Linux, Windows, and macOS on every commit
 - ✅ **Pre-merge Checks** - PRs must pass before merging
 - ✅ **No Local Build** - Download artifacts from Actions
 
@@ -264,7 +264,7 @@ on:
 
 **Jobs:**
 1. `quick-checks` - Fast feedback (rustfmt, clippy)
-2. `test-lsp-server` - Build & test on Linux + Windows
+2. `test-lsp-server` - Build & test on Linux, Windows, macOS
 3. `test-vscode-extension` - Extension build & lint
 4. `report` - Summary generation
 

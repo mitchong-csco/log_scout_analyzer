@@ -58,7 +58,7 @@
 ```
 ✅ Code formatting (rustfmt)
 ✅ Linting (clippy)
-✅ LSP server build (Linux + Windows)
+✅ LSP server build (Linux, Windows, macOS)
 ✅ All 34+ unit tests:
    - Pattern loader tests (12)
    - Pattern marking tests (14)

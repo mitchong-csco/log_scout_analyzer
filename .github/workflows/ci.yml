@@ -3,13 +3,13 @@ name: Pattern Quality CI
 # When to run this workflow
 on:
   push:
-    branches: [ main, master, develop ]
+    branches: [main, master, develop, 'feature/**']  # Now includes feature branches!
     paths:
-      - 'lsp-server/**'
-      - '.github/workflows/ci.yml'
+      - "lsp-server/**"
+      - ".github/workflows/ci.yml"
   pull_request:
-    branches: [ main, master, develop ]
-  workflow_dispatch:  # Manual trigger button
+    branches: [main, master, develop]
+  workflow_dispatch: # Manual trigger button
 
 # Cancel old runs if new push happens
 concurrency:
@@ -55,7 +55,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         rust: [stable]
 
     steps:
@@ -129,8 +129,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
           cache-dependency-path: vscode-extension/package-lock.json
 
       - name: Install dependencies

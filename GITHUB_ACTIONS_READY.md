@@ -55,7 +55,7 @@ git push origin main
 ### Every Push / Pull Request (ci.yml)
 ```
 ⏱️ Duration: ~7-10 minutes
-🖥️ Platforms: Linux + Windows
+🖥️ Platforms: Linux, Windows, macOS
 
 What runs:
   ✅ Code formatting check

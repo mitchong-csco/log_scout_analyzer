@@ -20,6 +20,20 @@ pub struct PatternOverride {
     pub reason: Option<String>,
     pub enabled: Option<bool>,
     pub overrides: OverrideValues,
+
+    // Pattern Marking Fields (Phase 1.6)
+    #[serde(rename = "markingStatus")]
+    pub marking_status: Option<String>, // "draft" | "pending-review" | "approved" | "applied"
+    #[serde(rename = "markedBy")]
+    pub marked_by: Option<String>, // Username or email
+    #[serde(rename = "markedAt")]
+    pub marked_at: Option<String>, // ISO 8601 timestamp
+    #[serde(rename = "reviewedBy")]
+    pub reviewed_by: Option<Vec<ReviewComment>>,
+    #[serde(rename = "priority")]
+    pub priority: Option<String>, // "low" | "medium" | "high" | "critical"
+    #[serde(rename = "category")]
+    pub category: Option<String>, // "regex" | "extractor" | "severity" | "missing-pattern"
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -47,6 +61,15 @@ pub struct ConditionTrigger {
     pub value: String,
     pub severity: String,
     pub description: Option<String>,
+}
+
+/// Review comment on a pattern override (Phase 1.6)
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ReviewComment {
+    pub author: String,
+    pub timestamp: String, // ISO 8601
+    pub comment: String,
+    pub status: String, // "approved" | "changes-requested" | "questioned"
 }
 
 /// Override file structure
@@ -246,6 +269,325 @@ fn parse_operator(operator_str: &str) -> Result<ConditionOperator, Box<dyn std::
     }
 }
 
+// ===== Pattern Marking Support (Phase 1.6) =====
+
+/// Marking status for patterns under review
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MarkingStatus {
+    Draft,         // Created but not yet marked for review
+    PendingReview, // Waiting for team review
+    Approved,      // Approved by reviewer
+    Applied,       // Override is in use and working
+}
+
+impl MarkingStatus {
+    /// Parse a string into MarkingStatus
+    pub fn from_str(s: &str) -> Result<Self, String> {
+        match s.to_lowercase().as_str() {
+            "draft" => Ok(Self::Draft),
+            "pending-review" => Ok(Self::PendingReview),
+            "approved" => Ok(Self::Approved),
+            "applied" => Ok(Self::Applied),
+            _ => Err(format!("Invalid marking status: {}", s)),
+        }
+    }
+
+    /// Get string representation
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Draft => "draft",
+            Self::PendingReview => "pending-review",
+            Self::Approved => "approved",
+            Self::Applied => "applied",
+        }
+    }
+}
+
+/// Priority level for pattern overrides
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Priority {
+    Low,
+    Medium,
+    High,
+    Critical,
+}
+
+impl Priority {
+    /// Parse a string into Priority
+    pub fn from_str(s: &str) -> Result<Self, String> {
+        match s.to_lowercase().as_str() {
+            "low" => Ok(Self::Low),
+            "medium" => Ok(Self::Medium),
+            "high" => Ok(Self::High),
+            "critical" => Ok(Self::Critical),
+            _ => Err(format!("Invalid priority: {}", s)),
+        }
+    }
+
+    /// Get string representation
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Low => "low",
+            Self::Medium => "medium",
+            Self::High => "high",
+            Self::Critical => "critical",
+        }
+    }
+}
+
+/// Category of pattern issue
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum IssueCategory {
+    Regex,
+    Extractor,
+    Severity,
+    MissingPattern,
+}
+
+impl IssueCategory {
+    /// Parse a string into IssueCategory
+    pub fn from_str(s: &str) -> Result<Self, String> {
+        match s.to_lowercase().as_str() {
+            "regex" => Ok(Self::Regex),
+            "extractor" => Ok(Self::Extractor),
+            "severity" => Ok(Self::Severity),
+            "missing-pattern" => Ok(Self::MissingPattern),
+            _ => Err(format!("Invalid category: {}", s)),
+        }
+    }
+
+    /// Get string representation
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Regex => "regex",
+            Self::Extractor => "extractor",
+            Self::Severity => "severity",
+            Self::MissingPattern => "missing-pattern",
+        }
+    }
+}
+
+/// Validate marking fields in a PatternOverride
+pub fn validate_marking(override_data: &PatternOverride) -> Result<(), Vec<String>> {
+    let mut errors = Vec::new();
+
+    // Validate marking_status if present
+    if let Some(status) = &override_data.marking_status {
+        if MarkingStatus::from_str(status).is_err() {
+            errors.push(format!("Invalid marking status: {}", status));
+        }
+    }
+
+    // Validate priority if present
+    if let Some(priority) = &override_data.priority {
+        if Priority::from_str(priority).is_err() {
+            errors.push(format!("Invalid priority: {}", priority));
+        }
+    }
+
+    // Validate category if present
+    if let Some(category) = &override_data.category {
+        if IssueCategory::from_str(category).is_err() {
+            errors.push(format!("Invalid category: {}", category));
+        }
+    }
+
+    // Validate marked_at timestamp if present
+    if let Some(marked_at) = &override_data.marked_at {
+        if chrono::DateTime::parse_from_rfc3339(marked_at).is_err() {
+            errors.push(format!(
+                "Invalid ISO 8601 timestamp in marked_at: {}",
+                marked_at
+            ));
+        }
+    }
+
+    // Validate review timestamps if present
+    if let Some(comments) = &override_data.reviewed_by {
+        for (idx, comment) in comments.iter().enumerate() {
+            if chrono::DateTime::parse_from_rfc3339(&comment.timestamp).is_err() {
+                errors.push(format!(
+                    "Invalid ISO 8601 timestamp in reviewed_by[{}]: {}",
+                    idx, comment.timestamp
+                ));
+            }
+            if !["approved", "changes-requested", "questioned"]
+                .contains(&comment.status.to_lowercase().as_str())
+            {
+                errors.push(format!(
+                    "Invalid review status in reviewed_by[{}]: {}",
+                    idx, comment.status
+                ));
+            }
+        }
+    }
+
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        Err(errors)
+    }
+}
+
+// Helper methods for PatternOverride marking
+impl PatternOverride {
+    /// Get the marking status
+    pub fn marking_status(&self) -> MarkingStatus {
+        self.marking_status
+            .as_ref()
+            .and_then(|s| MarkingStatus::from_str(s).ok())
+            .unwrap_or(MarkingStatus::Draft)
+    }
+
+    /// Check if override is approved or applied
+    pub fn is_approved(&self) -> bool {
+        matches!(
+            self.marking_status(),
+            MarkingStatus::Approved | MarkingStatus::Applied
+        )
+    }
+
+    /// Check if override is pending review
+    pub fn is_pending_review(&self) -> bool {
+        self.marking_status() == MarkingStatus::PendingReview
+    }
+
+    /// Get the priority level
+    pub fn get_priority(&self) -> Option<Priority> {
+        self.priority
+            .as_ref()
+            .and_then(|p| Priority::from_str(p).ok())
+    }
+
+    /// Get the issue category
+    pub fn get_category(&self) -> Option<IssueCategory> {
+        self.category
+            .as_ref()
+            .and_then(|c| IssueCategory::from_str(c).ok())
+    }
+
+    /// Mark the override with a new status
+    pub fn mark_as(&mut self, status: MarkingStatus, marked_by: &str) {
+        self.marking_status = Some(status.as_str().to_string());
+        self.marked_by = Some(marked_by.to_string());
+        self.marked_at = Some(chrono::Utc::now().to_rfc3339());
+    }
+
+    /// Add a review comment
+    pub fn add_review_comment(
+        &mut self,
+        author: &str,
+        comment: &str,
+        status: &str,
+    ) -> Result<(), String> {
+        // Validate status
+        if !["approved", "changes-requested", "questioned"].contains(&status) {
+            return Err(format!("Invalid review status: {}", status));
+        }
+
+        if self.reviewed_by.is_none() {
+            self.reviewed_by = Some(Vec::new());
+        }
+
+        if let Some(ref mut comments) = self.reviewed_by {
+            comments.push(ReviewComment {
+                author: author.to_string(),
+                timestamp: chrono::Utc::now().to_rfc3339(),
+                comment: comment.to_string(),
+                status: status.to_string(),
+            });
+            tracing::debug!(
+                "Added review comment to override '{}' by {}",
+                self.id,
+                author
+            );
+            Ok(())
+        } else {
+            Err("Could not add review comment".to_string())
+        }
+    }
+
+    /// Get count of approved review comments
+    pub fn approved_count(&self) -> usize {
+        self.reviewed_by
+            .as_ref()
+            .map(|comments| {
+                comments
+                    .iter()
+                    .filter(|c| c.status.to_lowercase() == "approved")
+                    .count()
+            })
+            .unwrap_or(0)
+    }
+
+    /// Check if all reviewers approved
+    pub fn all_approved(&self) -> bool {
+        if let Some(comments) = &self.reviewed_by {
+            if comments.is_empty() {
+                return false;
+            }
+            comments
+                .iter()
+                .all(|c| c.status.to_lowercase() == "approved")
+        } else {
+            false
+        }
+    }
+}
+
+/// Query helpers for finding patterns by marking status
+pub struct MarkingQueries;
+
+impl MarkingQueries {
+    /// Get all patterns pending review
+    pub fn get_pending_review(
+        overrides: &HashMap<String, PatternOverride>,
+    ) -> Vec<&PatternOverride> {
+        overrides
+            .values()
+            .filter(|o| o.is_pending_review())
+            .collect()
+    }
+
+    /// Get all approved patterns
+    pub fn get_approved(overrides: &HashMap<String, PatternOverride>) -> Vec<&PatternOverride> {
+        overrides.values().filter(|o| o.is_approved()).collect()
+    }
+
+    /// Get patterns by priority
+    pub fn get_by_priority(
+        overrides: &HashMap<String, PatternOverride>,
+        priority: Priority,
+    ) -> Vec<&PatternOverride> {
+        overrides
+            .values()
+            .filter(|o| o.get_priority() == Some(priority))
+            .collect()
+    }
+
+    /// Get patterns by category
+    pub fn get_by_category(
+        overrides: &HashMap<String, PatternOverride>,
+        category: IssueCategory,
+    ) -> Vec<&PatternOverride> {
+        overrides
+            .values()
+            .filter(|o| o.get_category() == Some(category))
+            .collect()
+    }
+
+    /// Get patterns by status
+    pub fn get_by_status(
+        overrides: &HashMap<String, PatternOverride>,
+        status: MarkingStatus,
+    ) -> Vec<&PatternOverride> {
+        overrides
+            .values()
+            .filter(|o| o.marking_status() == status)
+            .collect()
+    }
+}
+
 /// Apply pattern overrides to a list of canonical patterns
 /// Returns a new list of patterns with overrides applied
 pub fn apply_overrides(
@@ -279,12 +621,35 @@ pub fn apply_overrides(
         });
 
         if let Some(override_data) = override_opt {
+            // Check if override should be applied based on marking status
+            // Only apply overrides that are approved or applied
+            if !override_data.is_approved() {
+                tracing::debug!(
+                    "Skipping override for pattern '{}': marking status is {:?}",
+                    canonical.id,
+                    override_data.marking_status()
+                );
+                result_patterns.push(canonical);
+                continue;
+            }
+
+            // Validate marking fields
+            if let Err(errors) = validate_marking(override_data) {
+                tracing::warn!(
+                    "Pattern override '{}' has validation errors: {:?}",
+                    override_data.id,
+                    errors
+                );
+                // Still apply the override, just log the warnings
+            }
+
             // Apply override
             match merge_pattern(&canonical, override_data) {
                 Ok(merged) => {
                     tracing::info!(
-                        "Applied override to pattern '{}': {}",
+                        "Applied override to pattern '{}' (status: {}): {}",
                         canonical.id,
+                        override_data.marking_status().as_str(),
                         override_data
                             .reason
                             .as_deref()
@@ -887,5 +1252,344 @@ mod tests {
         assert_eq!(result[2].id, "pattern3");
         assert_eq!(result[2].pattern, "unchanged.*pattern");
         assert_eq!(result[2].enabled, true);
+    }
+
+    // ===== Pattern Marking Tests (Phase 1.6) =====
+
+    #[test]
+    fn test_marking_status_parsing() {
+        assert_eq!(
+            MarkingStatus::from_str("draft").unwrap(),
+            MarkingStatus::Draft
+        );
+        assert_eq!(
+            MarkingStatus::from_str("pending-review").unwrap(),
+            MarkingStatus::PendingReview
+        );
+        assert_eq!(
+            MarkingStatus::from_str("approved").unwrap(),
+            MarkingStatus::Approved
+        );
+        assert_eq!(
+            MarkingStatus::from_str("applied").unwrap(),
+            MarkingStatus::Applied
+        );
+        assert!(MarkingStatus::from_str("invalid").is_err());
+    }
+
+    #[test]
+    fn test_priority_parsing() {
+        assert_eq!(Priority::from_str("low").unwrap(), Priority::Low);
+        assert_eq!(Priority::from_str("medium").unwrap(), Priority::Medium);
+        assert_eq!(Priority::from_str("high").unwrap(), Priority::High);
+        assert_eq!(Priority::from_str("critical").unwrap(), Priority::Critical);
+        assert!(Priority::from_str("invalid").is_err());
+    }
+
+    #[test]
+    fn test_category_parsing() {
+        assert_eq!(
+            IssueCategory::from_str("regex").unwrap(),
+            IssueCategory::Regex
+        );
+        assert_eq!(
+            IssueCategory::from_str("extractor").unwrap(),
+            IssueCategory::Extractor
+        );
+        assert_eq!(
+            IssueCategory::from_str("severity").unwrap(),
+            IssueCategory::Severity
+        );
+        assert_eq!(
+            IssueCategory::from_str("missing-pattern").unwrap(),
+            IssueCategory::MissingPattern
+        );
+        assert!(IssueCategory::from_str("invalid").is_err());
+    }
+
+    #[test]
+    fn test_pattern_override_marking_methods() {
+        let mut override_data = PatternOverride {
+            id: "test-override".to_string(),
+            source_type: "mongodb".to_string(),
+            source_id: Some("test-pattern".to_string()),
+            name: Some("Test Pattern".to_string()),
+            notes: None,
+            reason: None,
+            enabled: Some(true),
+            overrides: OverrideValues {
+                regex: None,
+                severity: None,
+                parameter_extractors: None,
+                condition_triggers: None,
+            },
+            marking_status: None,
+            marked_by: None,
+            marked_at: None,
+            reviewed_by: None,
+            priority: None,
+            category: None,
+        };
+
+        // Default should be Draft
+        assert_eq!(override_data.marking_status(), MarkingStatus::Draft);
+        assert!(!override_data.is_approved());
+        assert!(!override_data.is_pending_review());
+
+        // Mark as pending-review
+        override_data.mark_as(MarkingStatus::PendingReview, "john@example.com");
+        assert_eq!(override_data.marking_status(), MarkingStatus::PendingReview);
+        assert!(override_data.is_pending_review());
+        assert!(!override_data.is_approved());
+        assert_eq!(
+            override_data.marked_by.as_ref().unwrap(),
+            "john@example.com"
+        );
+        assert!(override_data.marked_at.is_some());
+
+        // Mark as approved
+        override_data.mark_as(MarkingStatus::Approved, "jane@example.com");
+        assert_eq!(override_data.marking_status(), MarkingStatus::Approved);
+        assert!(override_data.is_approved());
+        assert!(!override_data.is_pending_review());
+    }
+
+    #[test]
+    fn test_review_comments() {
+        let mut override_data = PatternOverride {
+            id: "test-override".to_string(),
+            source_type: "mongodb".to_string(),
+            source_id: Some("test-pattern".to_string()),
+            name: Some("Test Pattern".to_string()),
+            notes: None,
+            reason: None,
+            enabled: Some(true),
+            overrides: OverrideValues {
+                regex: None,
+                severity: None,
+                parameter_extractors: None,
+                condition_triggers: None,
+            },
+            marking_status: None,
+            marked_by: None,
+            marked_at: None,
+            reviewed_by: None,
+            priority: None,
+            category: None,
+        };
+
+        // Add review comments
+        assert!(override_data
+            .add_review_comment("john@example.com", "Looks good!", "approved")
+            .is_ok());
+        assert!(override_data
+            .add_review_comment(
+                "jane@example.com",
+                "Please fix the regex",
+                "changes-requested"
+            )
+            .is_ok());
+
+        assert_eq!(override_data.approved_count(), 1);
+        assert!(!override_data.all_approved());
+
+        // Invalid status should error
+        assert!(override_data
+            .add_review_comment("bob@example.com", "Comment", "invalid-status")
+            .is_err());
+    }
+
+    #[test]
+    fn test_validate_marking() {
+        let valid = PatternOverride {
+            id: "test".to_string(),
+            source_type: "mongodb".to_string(),
+            source_id: None,
+            name: None,
+            notes: None,
+            reason: None,
+            enabled: None,
+            overrides: OverrideValues {
+                regex: None,
+                severity: None,
+                parameter_extractors: None,
+                condition_triggers: None,
+            },
+            marking_status: Some("approved".to_string()),
+            marked_by: Some("john@example.com".to_string()),
+            marked_at: Some("2026-02-16T10:00:00Z".to_string()),
+            reviewed_by: Some(vec![ReviewComment {
+                author: "jane@example.com".to_string(),
+                timestamp: "2026-02-16T10:30:00Z".to_string(),
+                comment: "Approved".to_string(),
+                status: "approved".to_string(),
+            }]),
+            priority: Some("high".to_string()),
+            category: Some("extractor".to_string()),
+        };
+
+        assert!(validate_marking(&valid).is_ok());
+
+        let invalid_status = PatternOverride {
+            marking_status: Some("invalid-status".to_string()),
+            ..valid.clone()
+        };
+        assert!(validate_marking(&invalid_status).is_err());
+
+        let invalid_timestamp = PatternOverride {
+            marked_at: Some("not-a-date".to_string()),
+            ..valid.clone()
+        };
+        assert!(validate_marking(&invalid_timestamp).is_err());
+    }
+
+    #[test]
+    fn test_marking_queries() {
+        let mut overrides = HashMap::new();
+
+        // Create test overrides with different statuses
+        for i in 0..3 {
+            let mut override_data = PatternOverride {
+                id: format!("override-{}", i),
+                source_type: "mongodb".to_string(),
+                source_id: Some(format!("pattern-{}", i)),
+                name: Some(format!("Pattern {}", i)),
+                notes: None,
+                reason: None,
+                enabled: Some(true),
+                overrides: OverrideValues {
+                    regex: None,
+                    severity: None,
+                    parameter_extractors: None,
+                    condition_triggers: None,
+                },
+                marking_status: None,
+                marked_by: None,
+                marked_at: None,
+                reviewed_by: None,
+                priority: None,
+                category: None,
+            };
+
+            match i {
+                0 => override_data.mark_as(MarkingStatus::PendingReview, "user1"),
+                1 => override_data.mark_as(MarkingStatus::Approved, "user1"),
+                2 => override_data.mark_as(MarkingStatus::Applied, "user1"),
+                _ => {}
+            }
+
+            overrides.insert(format!("override-{}", i), override_data);
+        }
+
+        // Test queries
+        let pending = MarkingQueries::get_pending_review(&overrides);
+        assert_eq!(pending.len(), 1);
+
+        let approved = MarkingQueries::get_approved(&overrides);
+        assert_eq!(approved.len(), 2); // Both Approved and Applied count as approved
+
+        let by_status = MarkingQueries::get_by_status(&overrides, MarkingStatus::Applied);
+        assert_eq!(by_status.len(), 1);
+    }
+
+    #[test]
+    fn test_apply_overrides_respects_marking_status() {
+        use crate::pattern_engine::{Pattern, PatternMode, Severity};
+        use std::fs;
+        use std::path::PathBuf;
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().unwrap();
+        let workspace_path = temp_dir.path().to_str().unwrap();
+
+        let mut log_scout_dir = PathBuf::from(workspace_path);
+        log_scout_dir.push(".log-scout");
+        fs::create_dir_all(&log_scout_dir).unwrap();
+
+        let mut override_file_path = log_scout_dir.clone();
+        override_file_path.push("pattern-overrides.json");
+
+        let override_json = r#"{
+            "version": "1.0",
+            "overrides": {
+                "override-pattern-draft": {
+                    "id": "override-pattern-draft",
+                    "sourceType": "mongodb",
+                    "sourceId": "pattern-draft",
+                    "reason": "Draft override",
+                    "enabled": true,
+                    "markingStatus": "draft",
+                    "overrides": {
+                        "severity": "error"
+                    }
+                },
+                "override-pattern-approved": {
+                    "id": "override-pattern-approved",
+                    "sourceType": "mongodb",
+                    "sourceId": "pattern-approved",
+                    "reason": "Approved override",
+                    "enabled": true,
+                    "markingStatus": "approved",
+                    "overrides": {
+                        "severity": "error"
+                    }
+                }
+            },
+            "custom": {}
+        }"#;
+
+        fs::write(&override_file_path, override_json).unwrap();
+
+        let canonical = vec![
+            Pattern {
+                id: "pattern-draft".to_string(),
+                name: "Draft Pattern".to_string(),
+                annotation: "Draft".to_string(),
+                pattern: "draft.*pattern".to_string(),
+                mode: PatternMode::SingleLine,
+                severity: Severity::Warning,
+                category: "test".to_string(),
+                service: None,
+                tags: vec![],
+                action: None,
+                expected_frequency: None,
+                enabled: true,
+                log_level_triggers: HashMap::new(),
+                condition_triggers: vec![],
+                capture_fields: vec![],
+                parameter_extractors: vec![],
+                tagscout_metadata: None,
+            },
+            Pattern {
+                id: "pattern-approved".to_string(),
+                name: "Approved Pattern".to_string(),
+                annotation: "Approved".to_string(),
+                pattern: "approved.*pattern".to_string(),
+                mode: PatternMode::SingleLine,
+                severity: Severity::Warning,
+                category: "test".to_string(),
+                service: None,
+                tags: vec![],
+                action: None,
+                expected_frequency: None,
+                enabled: true,
+                log_level_triggers: HashMap::new(),
+                condition_triggers: vec![],
+                capture_fields: vec![],
+                parameter_extractors: vec![],
+                tagscout_metadata: None,
+            },
+        ];
+
+        let result = apply_overrides(canonical.clone(), Some(workspace_path)).unwrap();
+        assert_eq!(result.len(), 2);
+
+        // Draft override should NOT be applied (severity should remain Warning)
+        assert_eq!(result[0].id, "pattern-draft");
+        assert_eq!(result[0].severity, Severity::Warning);
+
+        // Approved override SHOULD be applied (severity should be changed to Error)
+        assert_eq!(result[1].id, "pattern-approved");
+        assert_eq!(result[1].severity, Severity::Error);
     }
 }
