@@ -1,0 +1,52 @@
+name: Feature - Quality System
+
+on:
+  push:
+    paths:
+      - 'crates/quality-system/**'
+      - 'crates/pattern-engine/**'
+      - 'crates/core/**'
+      - 'Cargo.toml'
+      - '.github/workflows/ci-feature-quality.yml'
+  pull_request:
+    paths:
+      - 'crates/quality-system/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-quality-system:
+    name: Test Quality System
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/
+          key: ${{ runner.os }}-quality-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build Quality System
+        run: cargo build -p quality-system
+
+      - name: Test Quality System
+        run: cargo test -p quality-system --verbose
+
+      - name: Format check
+        run: cargo fmt --check -p quality-system
+
+      - name: Clippy
+        run: cargo clippy -p quality-system -- -D warnings

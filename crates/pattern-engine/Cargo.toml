@@ -1,0 +1,23 @@
+[package]
+name = "pattern-engine"
+version = "0.1.0"
+edition = "2021"
+authors = ["Log Scout Team"]
+description = "Pattern matching engine for log analysis"
+license = "MIT"
+
+[dependencies]
+log-scout-core = { path = "../core" }
+regex = { workspace = true }
+lazy_static = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+
+[[bench]]
+name = "pattern_matching"
+harness = false

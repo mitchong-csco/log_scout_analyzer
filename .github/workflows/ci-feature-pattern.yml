@@ -1,0 +1,72 @@
+name: Feature - Pattern Engine
+
+on:
+  push:
+    paths:
+      - 'crates/pattern-engine/**'
+      - 'crates/core/**'
+      - 'Cargo.toml'
+      - '.github/workflows/ci-feature-pattern.yml'
+  pull_request:
+    paths:
+      - 'crates/pattern-engine/**'
+      - 'crates/core/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-pattern-engine:
+    name: Test Pattern Engine (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/
+          key: ${{ runner.os }}-pattern-engine-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build Pattern Engine
+        run: cargo build -p pattern-engine --verbose
+
+      - name: Test Pattern Engine
+        run: cargo test -p pattern-engine --verbose
+
+      - name: Test Pattern Engine with Core
+        run: cargo test -p log-scout-core -p pattern-engine
+
+  lint:
+    name: Lint Pattern Engine
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Format check
+        run: cargo fmt --check -p pattern-engine
+
+      - name: Clippy
+        run: cargo clippy -p pattern-engine -- -D warnings

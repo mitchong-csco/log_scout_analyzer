@@ -1,0 +1,17 @@
+[package]
+name = "quality-system"
+version = "0.1.0"
+edition = "2021"
+authors = ["Log Scout Team"]
+description = "Pattern quality monitoring and evaluation"
+license = "MIT"
+
+[dependencies]
+log-scout-core = { path = "../core" }
+pattern-engine = { path = "../pattern-engine" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+
+[dev-dependencies]
+tokio-test = { workspace = true }

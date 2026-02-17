@@ -1,0 +1,52 @@
+name: Feature - Pattern Loader
+
+on:
+  push:
+    paths:
+      - 'crates/pattern-loader/**'
+      - 'crates/pattern-engine/**'
+      - 'crates/core/**'
+      - 'Cargo.toml'
+      - '.github/workflows/ci-feature-loader.yml'
+  pull_request:
+    paths:
+      - 'crates/pattern-loader/**'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-pattern-loader:
+    name: Test Pattern Loader
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/
+          key: ${{ runner.os }}-loader-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build Pattern Loader
+        run: cargo build -p pattern-loader
+
+      - name: Test Pattern Loader
+        run: cargo test -p pattern-loader --verbose
+
+      - name: Format check
+        run: cargo fmt --check -p pattern-loader
+
+      - name: Clippy
+        run: cargo clippy -p pattern-loader -- -D warnings

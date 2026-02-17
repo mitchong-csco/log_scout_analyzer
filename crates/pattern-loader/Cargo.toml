@@ -1,0 +1,20 @@
+[package]
+name = "pattern-loader"
+version = "0.1.0"
+edition = "2021"
+authors = ["Log Scout Team"]
+description = "Pattern loading and override management"
+license = "MIT"
+
+[dependencies]
+log-scout-core = { path = "../core" }
+pattern-engine = { path = "../pattern-engine" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+dirs = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
