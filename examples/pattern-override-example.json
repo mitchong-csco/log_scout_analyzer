@@ -1,0 +1,98 @@
+{
+  "version": "1.0",
+  "lastSync": "2024-01-15T10:30:00Z",
+  "overrides": {
+    "override-http-error": {
+      "id": "override-http-error",
+      "sourceType": "mongodb",
+      "sourceId": "http-error-pattern",
+      "name": "HTTP Error Pattern (Customized)",
+      "notes": "Extended to catch all HTTP status codes, not just errors",
+      "reason": "Need to monitor all HTTP traffic including successful requests",
+      "enabled": true,
+      "overrides": {
+        "regex": "HTTP/\\d\\.\\d\\s+(?P<code>\\d{3})",
+        "severity": "info",
+        "parameterExtractors": {
+          "CODE": {
+            "original": "([45]\\d{2})",
+            "override": "(\\d{3})",
+            "reason": "Match all HTTP codes (2xx, 3xx, 4xx, 5xx) instead of just errors"
+          }
+        }
+      }
+    },
+    "override-mongodb-connection": {
+      "id": "override-mongodb-connection",
+      "sourceType": "mongodb",
+      "sourceId": "mongodb-connection-error",
+      "reason": "Increase severity for production database issues",
+      "enabled": true,
+      "overrides": {
+        "severity": "error"
+      }
+    },
+    "override-verbose-debug": {
+      "id": "override-verbose-debug",
+      "sourceType": "mongodb",
+      "sourceId": "verbose-debug-pattern",
+      "reason": "Too noisy in production logs - creates too many diagnostics",
+      "enabled": false,
+      "overrides": {}
+    },
+    "override-memory-warning": {
+      "id": "override-memory-warning",
+      "sourceType": "mongodb",
+      "sourceId": "memory-threshold-warning",
+      "name": "Memory Usage Warning (Custom Threshold)",
+      "notes": "Adjusted threshold for our specific infrastructure",
+      "reason": "Original threshold too sensitive for our server specs",
+      "enabled": true,
+      "overrides": {
+        "regex": "Memory usage: (\\d+)MB",
+        "parameterExtractors": {
+          "MEMORY_MB": {
+            "override": "(\\d+)",
+            "reason": "Extract memory value for threshold checking"
+          }
+        },
+        "conditionTriggers": [
+          {
+            "field": "MEMORY_MB",
+            "operator": "greaterthan",
+            "value": "8192",
+            "severity": "error",
+            "description": "Memory usage exceeds 8GB - critical threshold"
+          },
+          {
+            "field": "MEMORY_MB",
+            "operator": "greaterthan",
+            "value": "6144",
+            "severity": "warning",
+            "description": "Memory usage exceeds 6GB - warning threshold"
+          }
+        ]
+      }
+    },
+    "override-authentication-failure": {
+      "id": "override-authentication-failure",
+      "sourceType": "mongodb",
+      "sourceId": "auth-failure-pattern",
+      "reason": "Add more context extraction for security monitoring",
+      "enabled": true,
+      "overrides": {
+        "parameterExtractors": {
+          "USERNAME": {
+            "override": "user[=:\\s]+([\\w.-]+)",
+            "reason": "Extract username from various auth log formats"
+          },
+          "IP_ADDRESS": {
+            "override": "from\\s+([\\d.]+)",
+            "reason": "Extract source IP for security analysis"
+          }
+        }
+      }
+    }
+  },
+  "custom": {}
+}

@@ -157,6 +157,38 @@ impl LogScoutServer {
         None
     }
 
+    /// Re-analyze all open documents and publish diagnostics
+    async fn reanalyze_all_documents(&self) -> usize {
+        let mut re_analyzed = 0;
+        let document_urls: Vec<Url> = self
+            .documents
+            .iter()
+            .map(|entry| entry.key().clone())
+            .collect();
+
+        for url in document_urls {
+            if let Some(content) = self.documents.get(&url) {
+                let text = content.value().clone();
+                let total_lines = text.lines().count();
+
+                tracing::debug!("Re-analyzing document: {}", url);
+
+                // Analyze the document
+                let diagnostics = self.analyze_text(&text, url.as_str(), total_lines).await;
+
+                // Publish diagnostics
+                self.client
+                    .publish_diagnostics(url.clone(), diagnostics, None)
+                    .await;
+
+                re_analyzed += 1;
+            }
+        }
+
+        tracing::info!("Re-analyzed {} documents", re_analyzed);
+        re_analyzed
+    }
+
     /// Analyze text and return diagnostics (shared by push and pull)
     async fn analyze_text(&self, text: &str, _uri: &str, total_lines: usize) -> Vec<Diagnostic> {
         let engine_guard = self.pattern_engine.read().await;
@@ -548,6 +580,7 @@ impl LanguageServer for LogScoutServer {
                         "logScout.showTimeline".to_string(),
                         "logScout.exportResults".to_string(),
                         "logScout.refreshPatterns".to_string(),
+                        "logScout.reloadPatterns".to_string(),
                         "logScout.getPatterns".to_string(),
                     ],
                     work_done_progress_options: WorkDoneProgressOptions {
@@ -784,6 +817,43 @@ impl LanguageServer for LogScoutServer {
                     }
                 }
                 Ok(None)
+            }
+            "logScout.reloadPatterns" => {
+                self.client
+                    .log_message(MessageType::INFO, "Reloading patterns with overrides...")
+                    .await;
+
+                // Refresh patterns from TagScout
+                let pattern_count = match self.refresh_tagscout_patterns().await {
+                    Ok(count) => count,
+                    Err(e) => {
+                        self.client
+                            .show_message(
+                                MessageType::ERROR,
+                                &format!("Failed to reload patterns: {}", e),
+                            )
+                            .await;
+                        return Ok(None);
+                    }
+                };
+
+                // Re-analyze all open documents
+                let re_analyzed = self.reanalyze_all_documents().await;
+
+                self.client
+                    .show_message(
+                        MessageType::INFO,
+                        &format!(
+                            "Reloaded {} patterns and re-analyzed {} documents",
+                            pattern_count, re_analyzed
+                        ),
+                    )
+                    .await;
+
+                Ok(Some(serde_json::json!({
+                    "patternsLoaded": pattern_count,
+                    "documentsAnalyzed": re_analyzed
+                })))
             }
             "logScout.getPatterns" => {
                 tracing::info!("TagScout UI requesting patterns from LSP");
