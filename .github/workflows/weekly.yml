@@ -1,0 +1,107 @@
+name: Weekly Quality Report
+
+# Run every Monday at 9 AM UTC
+on:
+  schedule:
+    - cron: '0 9 * * MON'
+  workflow_dispatch:  # Can also trigger manually
+
+jobs:
+  weekly-audit:
+    name: Weekly Pattern Quality Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            lsp-server/target
+          key: ${{ runner.os }}-weekly-audit-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run pattern quality evaluation
+        run: |
+          cd lsp-server
+          cargo run --example evaluate-patterns > weekly-quality-report.txt
+          cat weekly-quality-report.txt
+
+      - name: Analyze results
+        id: analyze
+        run: |
+          cd lsp-server
+          # Count patterns by grade
+          GRADE_A=$(grep -c "Grade A" weekly-quality-report.txt || echo 0)
+          GRADE_F=$(grep -c "Grade F" weekly-quality-report.txt || echo 0)
+
+          echo "grade_a=$GRADE_A" >> $GITHUB_OUTPUT
+          echo "grade_f=$GRADE_F" >> $GITHUB_OUTPUT
+
+      - name: Generate summary
+        run: |
+          echo "## 📊 Weekly Pattern Quality Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Grade A patterns: ${{ steps.analyze.outputs.grade_a }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Grade F patterns: ${{ steps.analyze.outputs.grade_f }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "See full report in artifacts below." >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload report
+        uses: actions/upload-artifact@v3
+        with:
+          name: weekly-quality-report-${{ github.run_number }}
+          path: lsp-server/weekly-quality-report.txt
+          retention-days: 90
+
+      - name: Create issue if quality drops
+        if: steps.analyze.outputs.grade_f > 5
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '⚠️ Pattern Quality Alert: High number of Grade F patterns',
+              body: `Weekly quality audit found ${{ steps.analyze.outputs.grade_f }} Grade F patterns.\n\nSee workflow run for details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`,
+              labels: ['quality', 'automated']
+            })
+
+  dependency-audit:
+    name: Dependency Security Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: Run audit
+        run: |
+          cd lsp-server
+          cargo audit --json > audit-report.json
+        continue-on-error: true
+
+      - name: Upload audit report
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-audit-${{ github.run_number }}
+          path: lsp-server/audit-report.json
+          retention-days: 90

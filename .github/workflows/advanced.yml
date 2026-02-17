@@ -1,0 +1,183 @@
+name: Advanced Pipeline
+
+# Only run on main branch or manual trigger
+on:
+  push:
+    branches: [ main, master ]
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  # Matrix build across platforms
+  build-all-platforms:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+          - os: macos-latest
+            target: x86_64-apple-darwin
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
+
+      - name: Build release
+        run: |
+          cd lsp-server
+          cargo build --release --target ${{ matrix.target }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: lsp-server-${{ matrix.target }}
+          path: lsp-server/target/${{ matrix.target }}/release/log-scout-lsp-server*
+          retention-days: 7
+
+  # Package VSCode extension
+  package-extension:
+    name: Package VSCode Extension
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          cd vscode-extension
+          npm ci
+
+      - name: Package extension
+        run: |
+          cd vscode-extension
+          npm install -g @vscode/vsce
+          vsce package
+
+      - name: Upload VSIX
+        uses: actions/upload-artifact@v3
+        with:
+          name: vscode-extension
+          path: vscode-extension/*.vsix
+          retention-days: 30
+
+  # Run pattern quality audit
+  quality-audit:
+    name: Pattern Quality Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Run quality evaluation
+        run: |
+          cd lsp-server
+          cargo run --example evaluate-patterns > quality-report.txt
+
+      - name: Upload quality report
+        uses: actions/upload-artifact@v3
+        with:
+          name: quality-report
+          path: lsp-server/quality-report.txt
+
+  # Security scanning
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: Run security audit
+        run: |
+          cd lsp-server
+          cargo audit
+        continue-on-error: true
+
+  # Create GitHub Release (only on tags)
+  create-release:
+    name: Create GitHub Release
+    needs: [build-all-platforms, package-extension]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts/
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            artifacts/**/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Notification job
+  notify:
+    name: Send Notifications
+    needs: [build-all-platforms, package-extension, quality-audit]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Report status
+        run: |
+          echo "## 🎉 Advanced Pipeline Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Linux Build: ${{ needs.build-all-platforms.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- VSCode Package: ${{ needs.package-extension.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Quality Audit: ${{ needs.quality-audit.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Artifacts Available" >> $GITHUB_STEP_SUMMARY
+          echo "Check the 'Artifacts' section below to download build outputs" >> $GITHUB_STEP_SUMMARY
