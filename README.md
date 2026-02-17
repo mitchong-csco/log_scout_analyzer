@@ -1,5 +1,9 @@
 # Log Scout Analyzer
 
+[![Pattern Quality CI](https://github.com/bdb-tasks/log_scout_analyzer/workflows/Pattern%20Quality%20CI/badge.svg)](https://github.com/bdb-tasks/log_scout_analyzer/actions/workflows/ci.yml)
+[![Advanced Pipeline](https://github.com/bdb-tasks/log_scout_analyzer/workflows/Advanced%20Pipeline/badge.svg)](https://github.com/bdb-tasks/log_scout_analyzer/actions/workflows/advanced.yml)
+[![Weekly Quality Report](https://github.com/bdb-tasks/log_scout_analyzer/workflows/Weekly%20Quality%20Report/badge.svg)](https://github.com/bdb-tasks/log_scout_analyzer/actions/workflows/weekly.yml)
+
 A powerful Language Server Protocol (LSP) based log file analysis tool with enhanced DevTools-style interface. Features real-time pattern matching, timeline visualization, and SIP call flow analysis.
 
 ## 🚀 Key Features
