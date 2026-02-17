@@ -80,10 +80,10 @@ impl PatternConverter {
     /// Finds all (?P<name>...) groups and returns their names
     fn extract_capture_fields(pattern: &str) -> Vec<String> {
         use regex::Regex;
-        
+
         // Match named groups: (?P<field_name>...)
         let named_group_regex = Regex::new(r"\(\?P<([^>]+)>").unwrap();
-        
+
         named_group_regex
             .captures_iter(pattern)
             .filter_map(|cap| cap.get(1).map(|m| m.as_str().to_string()))
@@ -91,7 +91,12 @@ impl PatternConverter {
     }
 
     /// Convert a single TagScout annotation to an LSP pattern
-    pub fn convert(&self, annotation: &TagScoutAnnotation) -> Result<Pattern, ConversionError> {
+    /// product: the product/service name from the collection (e.g., "jabber_prt", "webex_videomesh")
+    pub fn convert(
+        &self,
+        annotation: &TagScoutAnnotation,
+        product: Option<&str>,
+    ) -> Result<Pattern, ConversionError> {
         // Skip non-production patterns unless configured otherwise
         if !annotation.production && !self.config.include_inactive {
             return Err(ConversionError::ConversionFailed(
@@ -130,11 +135,14 @@ impl PatternConverter {
         // Build name from raw_data or template
         let name = self.build_name(annotation);
 
-        // Build description from template
-        let description = if !annotation.template.is_empty() {
+        // Build annotation from template (TagScout template field becomes annotation message)
+        let annotation_text = if !annotation.template.is_empty() {
             annotation.template.clone()
         } else if !annotation.raw_data.is_empty() {
-            format!("Pattern matching: {}", annotation.raw_data.chars().take(100).collect::<String>())
+            format!(
+                "Pattern matching: {}",
+                annotation.raw_data.chars().take(100).collect::<String>()
+            )
         } else {
             "TagScout pattern".to_string()
         };
@@ -165,15 +173,18 @@ impl PatternConverter {
             })
             .collect();
 
+        // Serialize original annotation as metadata
+        let tagscout_metadata = serde_json::to_value(annotation).ok();
+
         Ok(Pattern {
             id,
             name,
-            description,
+            annotation: annotation_text,
             pattern,
             mode,
             severity,
             category,
-            service: Some("jabber".to_string()), // Derive from collection name
+            service: product.map(|s| s.to_string()),
             tags,
             action,
             expected_frequency: None,
@@ -182,10 +193,40 @@ impl PatternConverter {
             condition_triggers: Vec::new(),
             capture_fields,
             parameter_extractors,
+            tagscout_metadata,
         })
     }
 
-    /// Convert multiple annotations
+    /// Convert multiple annotations with their product names
+    pub fn convert_batch_with_products(
+        &self,
+        annotations: Vec<(String, TagScoutAnnotation)>,
+    ) -> Result<Vec<Pattern>, ConversionError> {
+        let mut patterns = Vec::new();
+        let mut errors = Vec::new();
+
+        for (product, annotation) in annotations {
+            match self.convert(&annotation, Some(&product)) {
+                Ok(pattern) => patterns.push(pattern),
+                Err(e) => {
+                    errors.push(format!("Product {}: {}", product, e));
+                    continue;
+                }
+            }
+        }
+
+        if !errors.is_empty() {
+            tracing::warn!(
+                "Conversion errors: {} failed, {} succeeded",
+                errors.len(),
+                patterns.len()
+            );
+        }
+
+        Ok(patterns)
+    }
+
+    /// Convert multiple annotations (legacy method, uses None for product)
     pub fn convert_batch(
         &self,
         annotations: Vec<TagScoutAnnotation>,
@@ -194,10 +235,14 @@ impl PatternConverter {
         let mut errors = Vec::new();
 
         for annotation in annotations {
-            match self.convert(&annotation) {
+            match self.convert(&annotation, None) {
                 Ok(pattern) => patterns.push(pattern),
                 Err(e) => {
-                    tracing::warn!("Failed to convert pattern '{}': {}", annotation.id.to_hex(), e);
+                    tracing::warn!(
+                        "Failed to convert pattern '{}': {}",
+                        annotation.id.to_hex(),
+                        e
+                    );
                     errors.push(e);
                 }
             }
@@ -233,7 +278,8 @@ impl PatternConverter {
             let parts: Vec<&str> = annotation.raw_data.split_whitespace().collect();
             if parts.len() > 3 {
                 // Skip timestamp and log level, take the interesting part
-                let name_part = parts[3..].iter()
+                let name_part = parts[3..]
+                    .iter()
                     .take(5)
                     .map(|s| *s)
                     .collect::<Vec<&str>>()
@@ -303,6 +349,7 @@ impl PatternConverter {
     }
 
     /// Map product name to service name
+    #[allow(dead_code)]
     fn map_product_to_service(&self, product: &str) -> Option<String> {
         if product.is_empty() {
             return None;
@@ -401,7 +448,7 @@ pub fn convert_with_result(
 
     for annotation in annotations {
         let id = annotation.id.to_hex();
-        match converter.convert(&annotation) {
+        match converter.convert(&annotation, None) {
             Ok(pattern) => patterns.push(pattern),
             Err(e) => errors.push((id, e)),
         }

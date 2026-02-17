@@ -120,8 +120,50 @@ impl PatternCache {
         }
     }
 
+    /// Normalize template placeholders to consistent format: {{ FIELD }}
+    /// This ensures template substitution works correctly regardless of spacing inconsistencies
+    fn normalize_template_fields(template: &str) -> String {
+        use regex::Regex;
+
+        // Match {{FIELD}}, {{ FIELD}}, {{FIELD }}, or {{ FIELD }}
+        let re = Regex::new(r"\{\{\s*([A-Za-z_][A-Za-z0-9_]*)\s*\}\}").unwrap();
+
+        // Replace all matches with standardized format: {{ FIELD }}
+        re.replace_all(template, "{{ $1 }}").to_string()
+    }
+
+    /// Normalize parameter extractors to ensure consistency
+    /// Trims whitespace from parameter names and their regex patterns
+    ///
+    /// NOTE: We do NOT normalize case (e.g., "code" vs "CODE") because:
+    /// - TagScout data uses mixed conventions (UPPERCASE, camelCase, PascalCase, lowercase)
+    /// - Parameter names must exactly match template placeholders (case-sensitive)
+    /// - Normalizing case would require matching both params and templates perfectly
+    /// - Original author's naming intent is preserved (e.g., "eventType" is more readable)
+    /// - Case mismatches are rare and indicate data quality issues in MongoDB
+    fn normalize_parameters(params: &mut [crate::pattern_engine::ParameterExtractor]) {
+        for param in params.iter_mut() {
+            // Trim whitespace from parameter names (must match template placeholders exactly)
+            // Example: " request " -> "request", "CODE " -> "CODE"
+            param.name = param.name.trim().to_string();
+
+            // Trim leading/trailing whitespace from regex patterns
+            param.regex = param.regex.trim().to_string();
+        }
+    }
+
     /// Add a pattern to the cache
-    pub fn add_pattern(&mut self, annotation: TagScoutAnnotation, pattern: Pattern) {
+    pub fn add_pattern(&mut self, annotation: TagScoutAnnotation, mut pattern: Pattern) {
+        // Normalize template fields in annotation and category to ensure consistent substitution
+        pattern.annotation = Self::normalize_template_fields(&pattern.annotation);
+        pattern.category = Self::normalize_template_fields(&pattern.category);
+
+        // Normalize parameter extractors (trim names and regex patterns)
+        Self::normalize_parameters(&mut pattern.parameter_extractors);
+
+        // Trim main regex pattern to remove leading/trailing whitespace
+        pattern.pattern = pattern.pattern.trim().to_string();
+
         let checksum = Self::calculate_checksum(&annotation);
         let cached_pattern = CachedPattern {
             annotation,
@@ -492,7 +534,7 @@ mod tests {
         Pattern {
             id: "test-error".to_string(),
             name: "Test Error".to_string(),
-            description: "Test description".to_string(),
+            annotation: "Test description".to_string(),
             pattern: r"ERROR:\s+(.+)".to_string(),
             mode: PatternMode::SingleLine,
             severity: Severity::Error,
@@ -502,6 +544,11 @@ mod tests {
             action: Some("Check logs".to_string()),
             expected_frequency: None,
             enabled: true,
+            log_level_triggers: std::collections::HashMap::new(),
+            condition_triggers: Vec::new(),
+            capture_fields: Vec::new(),
+            parameter_extractors: Vec::new(),
+            tagscout_metadata: None,
         }
     }
 

@@ -148,27 +148,54 @@ impl LogScoutServer {
         if let Some(engine) = engine_guard.as_ref() {
             let mut all_detections = Vec::new();
             let mut processed = 0;
-            
+
+            // STAGE 1: Pattern Matching - Analyze each line
             for (line_num, line) in text.lines().enumerate() {
                 let detections = engine.process_line(line, line_num);
                 all_detections.extend(detections);
                 processed += 1;
-                
+
                 // Report progress every 1000 lines
                 if processed % 1000 == 0 {
                     let percentage = (processed as f64 / total_lines as f64 * 100.0) as u32;
                     self.client
                         .log_message(
                             MessageType::LOG,
-                            &format!("Analyzing: {}% ({}/{} lines)", percentage, processed, total_lines)
+                            &format!(
+                                "Analyzing: {}% ({}/{} lines)",
+                                percentage, processed, total_lines
+                            ),
                         )
                         .await;
                 }
             }
 
-            tracing::info!("Found {} detections", all_detections.len());
+            tracing::info!(
+                "Found {} detections (before deduplication)",
+                all_detections.len()
+            );
 
-            // Convert detections to LSP diagnostics
+            // TODO: STAGE 2: Signature Detection - Group patterns in same category
+            // let signatures = signature_engine.detect(&all_detections);
+
+            // TODO: STAGE 3: Process Correlation - Identify functional flows
+            // let processes = process_engine.correlate(&signatures);
+
+            // TODO: STAGE 4: Scenario Analysis - Cross-category event correlation
+            // let scenarios = scenario_engine.analyze(&processes);
+
+            // STAGE 5: Deduplication - Remove overlapping pattern matches
+            all_detections = Self::deduplicate_detections(all_detections);
+
+            tracing::info!(
+                "Found {} unique detections (after deduplication)",
+                all_detections.len()
+            );
+
+            // TODO: STAGE 6: Remediation - Generate action plans for deduplicated issues
+            // let remediations = remediation_engine.recommend(&all_detections, &signatures, &scenarios);
+
+            // STAGE 7: Diagnostic Creation - Convert to LSP diagnostics
             all_detections
                 .into_iter()
                 .map(|detection| self.detection_to_diagnostic(&detection))
@@ -179,10 +206,60 @@ impl LogScoutServer {
         }
     }
 
+    /// Deduplicate detections that overlap on the same line
+    ///
+    /// When multiple patterns match the same location (line + column range),
+    /// keep only the one with the highest severity. This handles cases where
+    /// TagScout has multiple patterns with the same regex but different templates
+    /// (e.g., HTTP success vs error patterns that both match any HTTP response).
+    ///
+    /// Future stages (signatures, scenarios) will see ALL matches before deduplication,
+    /// so they have full context for analysis.
+    fn deduplicate_detections(
+        detections: Vec<crate::pattern_engine::Detection>,
+    ) -> Vec<crate::pattern_engine::Detection> {
+        use std::collections::HashMap;
+
+        // Group detections by line and column range
+        let mut grouped: HashMap<(usize, (usize, usize)), Vec<crate::pattern_engine::Detection>> =
+            HashMap::new();
+
+        for detection in detections {
+            let key = (detection.line_number, detection.column_range);
+            grouped.entry(key).or_insert_with(Vec::new).push(detection);
+        }
+
+        // For each group, keep only the highest severity
+        let mut deduplicated = Vec::new();
+        for (_, mut group) in grouped {
+            if group.len() == 1 {
+                deduplicated.push(group.pop().unwrap());
+            } else {
+                // Sort by severity (Error > Warning > Info > Hint)
+                group.sort_by_key(|d| match d.final_severity {
+                    crate::pattern_engine::Severity::Error => 0,
+                    crate::pattern_engine::Severity::Warning => 1,
+                    crate::pattern_engine::Severity::Info => 2,
+                    crate::pattern_engine::Severity::Hint => 3,
+                });
+
+                // Keep the highest severity (first after sorting)
+                if let Some(highest) = group.into_iter().next() {
+                    deduplicated.push(highest);
+                }
+            }
+        }
+
+        // Sort by line number to maintain document order
+        deduplicated.sort_by_key(|d| d.line_number);
+
+        deduplicated
+    }
+
     /// Analyze document and publish diagnostics (push mode)
     async fn analyze_and_publish(&self, uri: &Url, text: &str) {
         tracing::debug!("Analyzing document (push): {}", uri);
-        
+
         // Send status notification
         self.client
             .log_message(MessageType::INFO, &format!("🔍 Analyzing {}", uri.path()))
@@ -196,34 +273,49 @@ impl LogScoutServer {
         self.client
             .publish_diagnostics(uri.clone(), diagnostics, None)
             .await;
-            
+
         self.client
-            .log_message(MessageType::INFO, &format!("✅ Analysis complete: {} issues found", count))
+            .log_message(
+                MessageType::INFO,
+                &format!("✅ Analysis complete: {} issues found", count),
+            )
             .await;
     }
 
     /// Replace template placeholders like {{ fieldName }} with actual values from field_values
     /// Handles all spacing variations: {{CODE}}, {{ CODE }}, {{ CODE}}, {{CODE }}
-    fn substitute_template(template: &str, field_values: &std::collections::HashMap<String, String>) -> String {
+    fn substitute_template(
+        template: &str,
+        field_values: &std::collections::HashMap<String, String>,
+    ) -> String {
         use regex::Regex;
-        
+
+        tracing::info!("=== SUBSTITUTE_TEMPLATE ===");
+        tracing::info!("  Input template: '{}'", template);
+        tracing::info!("  Field values: {:?}", field_values);
+
         let mut result = template.to_string();
-        
+
         // Replace each placeholder with the actual value
         for (field_name, field_value) in field_values {
             // Create regex to match {{optional_spaces field_name optional_spaces}}
             // This handles: {{CODE}}, {{ CODE }}, {{ CODE}}, {{CODE }}, etc.
             let pattern_str = format!(r"\{{\{{\s*{}\s*\}}\}}", regex::escape(field_name));
             if let Ok(re) = Regex::new(&pattern_str) {
+                let before = result.clone();
                 result = re.replace_all(&result, field_value.as_str()).to_string();
+                if before != result {
+                    tracing::info!("  Replaced {{{{ {} }}}} with '{}'", field_name, field_value);
+                }
             }
         }
-        
-        // Remove any remaining unsubstituted placeholders (when regex doesn't have named groups)
-        if let Ok(re) = Regex::new(r"\{\{[^}]+\}\}") {
-            result = re.replace_all(&result, "[...]").to_string();
-        }
-        
+
+        // Keep unsubstituted placeholders as-is (shows {{ FIELD }} instead of [...])
+        // This makes it clear which fields weren't extracted
+
+        tracing::info!("  Output result: '{}'", result);
+        tracing::info!("=== END SUBSTITUTE_TEMPLATE ===");
+
         result
     }
 
@@ -238,36 +330,140 @@ impl LogScoutServer {
 
         let (start_col, end_col) = detection.column_range;
 
-        // Substitute template placeholders in category and description
-        let category = Self::substitute_template(&detection.pattern.category, &detection.field_values);
-        let description = Self::substitute_template(&detection.pattern.description, &detection.field_values);
+        // Substitute template placeholders in category
+        let category =
+            Self::substitute_template(&detection.pattern.category, &detection.field_values);
 
-        // Include extracted fields and other metadata in diagnostic data
-        let data = if !detection.field_values.is_empty() || detection.timestamp.is_some() || detection.log_level.is_some() {
-            let mut data_map = serde_json::Map::new();
-            
-            if !detection.field_values.is_empty() {
-                data_map.insert("extractedFields".to_string(), serde_json::to_value(&detection.field_values).unwrap());
-            }
-            
-            if let Some(ref timestamp) = detection.timestamp {
-                data_map.insert("timestamp".to_string(), serde_json::Value::String(timestamp.clone()));
-            }
-            
-            if let Some(ref log_level) = detection.log_level {
-                data_map.insert("logLevel".to_string(), serde_json::Value::String(format!("{:?}", log_level)));
-            }
-            
-            data_map.insert("matchedText".to_string(), serde_json::Value::String(detection.matched_text.clone()));
-            data_map.insert("category".to_string(), serde_json::Value::String(category.clone()));
-            
-            Some(serde_json::Value::Object(data_map))
+        // Get raw template from pattern (the message template from TagScout)
+        let template = if detection.pattern.annotation.is_empty() {
+            "(missing)".to_string()
         } else {
-            // Even if no other data, always include category
-            let mut data_map = serde_json::Map::new();
-            data_map.insert("category".to_string(), serde_json::Value::String(category.clone()));
-            Some(serde_json::Value::Object(data_map))
+            detection.pattern.annotation.clone()
         };
+
+        tracing::info!("=== COMPUTING MERGED_TEMPLATE ===");
+        tracing::info!("  Pattern name: {}", detection.pattern.name);
+        tracing::info!("  Template: '{}'", template);
+        tracing::info!("  Field values count: {}", detection.field_values.len());
+
+        // Create merged template - template with substituted values
+        let merged_template = if template == "(missing)" {
+            tracing::error!(
+                "  Template is MISSING for pattern '{}' - this pattern requires an annotation",
+                detection.pattern.id
+            );
+            template.clone() // Diagnostic message will be "(missing)"
+        } else {
+            // Substitute field values into template
+            let substituted = Self::substitute_template(&template, &detection.field_values);
+            tracing::info!(
+                "  Successfully computed merged_template from template: '{}'",
+                substituted
+            );
+            substituted
+        };
+
+        tracing::info!("  Final merged_template: '{}'", merged_template);
+        tracing::info!("=== END COMPUTING MERGED_TEMPLATE ===");
+
+        // Build diagnostic data with complete information
+        let mut data_map = serde_json::Map::new();
+
+        // Include ALL original TagScout annotation fields if available
+        if let Some(ref tagscout_metadata) = detection.pattern.tagscout_metadata {
+            if let serde_json::Value::Object(metadata_map) = tagscout_metadata {
+                // Copy all original TagScout fields
+                for (key, value) in metadata_map {
+                    data_map.insert(key.clone(), value.clone());
+                }
+            }
+        }
+
+        // Build extracted_parameters as list of key-value pairs
+        let extracted_params: Vec<serde_json::Value> = detection
+            .field_values
+            .iter()
+            .map(|(name, value)| {
+                let mut param = serde_json::Map::new();
+                param.insert("name".to_string(), serde_json::Value::String(name.clone()));
+                param.insert(
+                    "value".to_string(),
+                    serde_json::Value::String(value.clone()),
+                );
+                serde_json::Value::Object(param)
+            })
+            .collect();
+
+        // Add/override with detection-specific fields using TagScout naming conventions
+        tracing::info!("=== BUILDING DIAGNOSTIC DATA ===");
+        tracing::info!("  template: '{}'", template);
+        tracing::info!("  merged_template: '{}'", merged_template);
+        tracing::info!("  log_line (matched): '{}'", detection.matched_text);
+
+        // Core fields: template and merged result
+        data_map.insert(
+            "template".to_string(),
+            serde_json::Value::String(template.clone()),
+        );
+        data_map.insert(
+            "merged_template".to_string(),
+            serde_json::Value::String(merged_template.clone()),
+        );
+
+        // Source information
+        data_map.insert(
+            "log_line".to_string(),
+            serde_json::Value::String(detection.context.first().cloned().unwrap_or_default()),
+        );
+
+        // Extracted parameters as list of {name, value} objects
+        data_map.insert(
+            "extracted_parameters".to_string(),
+            serde_json::Value::Array(extracted_params),
+        );
+
+        // Pattern metadata
+        data_map.insert(
+            "pattern_id".to_string(),
+            serde_json::Value::String(detection.pattern.id.clone()),
+        );
+        data_map.insert(
+            "pattern_name".to_string(),
+            serde_json::Value::String(detection.pattern.name.clone()),
+        );
+        data_map.insert(
+            "category".to_string(),
+            serde_json::Value::String(category.clone()),
+        );
+
+        // Debugging information
+        data_map.insert(
+            "matched_text".to_string(),
+            serde_json::Value::String(detection.matched_text.clone()),
+        );
+        data_map.insert(
+            "pattern_regex".to_string(),
+            serde_json::Value::String(detection.pattern.pattern.clone()),
+        );
+
+        // Include timestamp if present
+        if let Some(ref timestamp) = detection.timestamp {
+            data_map.insert(
+                "timestamp".to_string(),
+                serde_json::Value::String(timestamp.clone()),
+            );
+        }
+
+        // Include log level if present
+        if let Some(ref log_level) = detection.log_level {
+            data_map.insert(
+                "log_level".to_string(),
+                serde_json::Value::String(format!("{:?}", log_level)),
+            );
+        }
+
+        tracing::info!("  Data map has {} keys", data_map.len());
+        tracing::info!("=== END BUILDING DIAGNOSTIC DATA ===");
 
         Diagnostic {
             range: Range {
@@ -284,13 +480,10 @@ impl LogScoutServer {
             code: Some(NumberOrString::String(detection.pattern.id.clone())),
             code_description: None,
             source: Some("log-scout".to_string()),
-            message: format!(
-                "{}: {}",
-                detection.pattern.name, description
-            ),
+            message: merged_template, // Main message is the merged template (substituted values)
             related_information: None,
             tags: None,
-            data,
+            data: Some(serde_json::Value::Object(data_map)),
         }
     }
 }
@@ -582,7 +775,7 @@ impl LanguageServer for LogScoutServer {
                             serde_json::json!({
                                 "id": p.id,
                                 "name": p.name,
-                                "description": p.description,
+                                "description": p.annotation,
                                 "pattern": p.pattern,
                                 "severity": match p.severity {
                                     Severity::Error => "error",
@@ -594,6 +787,13 @@ impl LanguageServer for LogScoutServer {
                                 "service": p.service,
                                 "tags": p.tags,
                                 "action": p.action,
+                                "captureFields": p.capture_fields,
+                                "parameterExtractors": p.parameter_extractors.iter().map(|pe| {
+                                    serde_json::json!({
+                                        "name": pe.name,
+                                        "regex": pe.regex
+                                    })
+                                }).collect::<Vec<_>>(),
                             })
                         })
                         .collect();
@@ -681,7 +881,7 @@ impl LanguageServer for LogScoutServer {
         params: DocumentDiagnosticParams,
     ) -> Result<DocumentDiagnosticReportResult> {
         let uri = params.text_document.uri.clone();
-        
+
         tracing::info!("Pull diagnostic request for: {}", uri);
 
         // Get document and analyze if we have it
@@ -691,44 +891,52 @@ impl LanguageServer for LogScoutServer {
 
             // Send status notification
             self.client
-                .log_message(MessageType::INFO, &format!("🔍 Pull diagnostic request: {}", uri.path()))
+                .log_message(
+                    MessageType::INFO,
+                    &format!("🔍 Pull diagnostic request: {}", uri.path()),
+                )
                 .await;
 
             // Analyze the document
             let total_lines = text.lines().count();
             let diagnostics = self.analyze_text(&text, uri.as_str(), total_lines).await;
-            
-            tracing::info!("Returning {} diagnostics for pull request", diagnostics.len());
-            
+
+            tracing::info!(
+                "Returning {} diagnostics for pull request",
+                diagnostics.len()
+            );
+
             self.client
-                .log_message(MessageType::INFO, &format!("✅ Pull diagnostic complete: {} issues found", diagnostics.len()))
-                .await;
-            
-            return Ok(DocumentDiagnosticReportResult::Report(
-                DocumentDiagnosticReport::Full(
-                    RelatedFullDocumentDiagnosticReport {
-                        related_documents: None,
-                        full_document_diagnostic_report: FullDocumentDiagnosticReport {
-                            result_id: None,
-                            items: diagnostics,
-                        },
-                    }
+                .log_message(
+                    MessageType::INFO,
+                    &format!(
+                        "✅ Pull diagnostic complete: {} issues found",
+                        diagnostics.len()
+                    ),
                 )
+                .await;
+
+            return Ok(DocumentDiagnosticReportResult::Report(
+                DocumentDiagnosticReport::Full(RelatedFullDocumentDiagnosticReport {
+                    related_documents: None,
+                    full_document_diagnostic_report: FullDocumentDiagnosticReport {
+                        result_id: None,
+                        items: diagnostics,
+                    },
+                }),
             ));
         }
 
         // No document found, return empty diagnostics
         tracing::info!("No document found for pull request: {}", uri);
         Ok(DocumentDiagnosticReportResult::Report(
-            DocumentDiagnosticReport::Full(
-                RelatedFullDocumentDiagnosticReport {
-                    related_documents: None,
-                    full_document_diagnostic_report: FullDocumentDiagnosticReport {
-                        result_id: None,
-                        items: vec![],
-                    },
-                }
-            )
+            DocumentDiagnosticReport::Full(RelatedFullDocumentDiagnosticReport {
+                related_documents: None,
+                full_document_diagnostic_report: FullDocumentDiagnosticReport {
+                    result_id: None,
+                    items: vec![],
+                },
+            }),
         ))
     }
 }

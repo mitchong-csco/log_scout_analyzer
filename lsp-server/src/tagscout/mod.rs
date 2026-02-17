@@ -233,24 +233,26 @@ impl SyncService {
 
         tracing::info!("Fetching patterns from TagScout MongoDB");
 
-        // Fetch all active annotations
-        let annotations = client.fetch_all_annotations().await?;
-        let total_fetched = annotations.len();
+        // Fetch all active annotations with product names
+        let annotations_with_products = client.fetch_all_annotations().await?;
+        let total_fetched = annotations_with_products.len();
 
         tracing::info!(
-            "Fetched {} annotations, converting to patterns",
-            total_fetched
+            "Fetched {} annotations from {} products, converting to patterns",
+            total_fetched,
+            annotations_with_products.iter().map(|(p, _)| p).collect::<std::collections::HashSet<_>>().len()
         );
 
-        // Convert to patterns
-        let patterns = self.converter.convert_batch(annotations.clone())?;
+        // Convert to patterns (preserving product information)
+        let patterns = self.converter.convert_batch_with_products(annotations_with_products.clone())?;
         let patterns_count = patterns.len();
 
         // Update cache
         let mut cache_manager = self.cache_manager.write().await;
-        let pattern_tuples: Vec<_> = annotations
+        let pattern_tuples: Vec<_> = annotations_with_products
             .into_iter()
             .zip(patterns.clone().into_iter())
+            .map(|((_, annotation), pattern)| (annotation, pattern))
             .collect();
 
         cache_manager.update(pattern_tuples).await?;

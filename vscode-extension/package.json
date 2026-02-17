@@ -2,7 +2,7 @@
     "name": "log-scout-analyzer",
     "displayName": "Log Scout Analyzer - DevTools Edition",
     "description": "Professional log analysis workbench with DevTools-style interface, pattern recognition, and real-time diagnostics",
-    "version": "0.0.87",
+    "version": "0.0.144",
     "publisher": "log-scout-team",
     "engines": {
         "vscode": "^1.75.0"
@@ -29,6 +29,7 @@
         "onLanguage:log",
         "onView:scoutCategories",
         "onView:scoutResults",
+        "onView:scoutFilters",
         "onView:scoutTimeline",
         "*"
     ],
@@ -58,18 +59,25 @@
                     "visibility": "visible"
                 },
                 {
+                    "id": "scoutFilters",
+                    "name": "Filters",
+                    "icon": "$(filter)",
+                    "contextualTitle": "Result Filters",
+                    "visibility": "visible"
+                },
+                {
                     "id": "scoutCategories",
                     "name": "Categories",
                     "icon": "$(symbol-folder)",
                     "contextualTitle": "Scout Categories",
-                    "visibility": "visible"
+                    "visibility": "collapsed"
                 },
                 {
                     "id": "scoutTimeline",
                     "name": "Timeline",
                     "icon": "$(clock)",
                     "contextualTitle": "Scout Timeline",
-                    "visibility": "visible"
+                    "visibility": "collapsed"
                 },
                 {
                     "id": "scoutAnalyzer",
@@ -408,8 +416,8 @@
                 "title": "Scout: Show Configured Patterns"
             },
             {
-                "command": "logScoutAnalyzer.showVersion",
-                "title": "Scout: Show Version Info"
+                "command": "logScoutAnalyzer.showAbout",
+                "title": "Scout: About"
             },
             {
                 "command": "logScoutAnalyzer.openActionPanel",
@@ -463,6 +471,31 @@
                 "command": "logScoutAnalyzer.exportResults",
                 "title": "Scout: Export Results",
                 "icon": "$(save)"
+            },
+            {
+                "command": "logScoutAnalyzer.sortByLine",
+                "title": "Scout: Sort by Line",
+                "icon": "$(sort-precedence)"
+            },
+            {
+                "command": "logScoutAnalyzer.sortBySeverity",
+                "title": "Scout: Sort by Severity",
+                "icon": "$(symbol-color)"
+            },
+            {
+                "command": "logScoutAnalyzer.sortByTime",
+                "title": "Scout: Sort by Time",
+                "icon": "$(history)"
+            },
+            {
+                "command": "logScoutAnalyzer.sortByFile",
+                "title": "Scout: Sort by File",
+                "icon": "$(file)"
+            },
+            {
+                "command": "logScoutAnalyzer.sortByCategory",
+                "title": "Scout: Sort by Category",
+                "icon": "$(symbol-folder)"
             },
             {
                 "command": "logScoutAnalyzer.openAnalyzerPanel",
@@ -532,6 +565,11 @@
                 "icon": "$(file)"
             },
             {
+                "command": "logScoutAnalyzer.viewCacheMetadata",
+                "title": "Scout: View Cache Metadata",
+                "icon": "$(json)"
+            },
+            {
                 "command": "logScoutAnalyzer.toggleTimeframe",
                 "title": "Scout: Toggle Timeframe Filter"
             },
@@ -565,6 +603,16 @@
                 "icon": "$(clippy)"
             },
             {
+                "command": "logScoutAnalyzer.showCacheData",
+                "title": "Scout: Show Cache Data",
+                "icon": "$(database)"
+            },
+            {
+                "command": "logScoutAnalyzer.copyDiagnosticAtCursor",
+                "title": "Scout: Copy Diagnostic at Cursor",
+                "icon": "$(clippy)"
+            },
+            {
                 "command": "logScoutAnalyzer.showPatternForResult",
                 "title": "Scout: Show Pattern Details",
                 "icon": "$(search)"
@@ -578,6 +626,59 @@
                 "command": "logScoutAnalyzer.revealInExplorer",
                 "title": "Scout: Reveal in Explorer",
                 "icon": "$(folder-opened)"
+            },
+            {
+                "command": "logScoutAnalyzer.downloadCase",
+                "title": "Scout: Download Case from URL",
+                "icon": "$(cloud-download)"
+            },
+            {
+                "command": "logScoutAnalyzer.importCase",
+                "title": "Scout: Import Case from File",
+                "icon": "$(file-add)"
+            },
+            {
+                "command": "logScoutAnalyzer.openCase",
+                "title": "Scout: Open Case"
+            },
+            {
+                "command": "logScoutAnalyzer.refreshCases",
+                "title": "Scout: Refresh Cases",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "logScoutAnalyzer.deleteCase",
+                "title": "Scout: Delete Case",
+                "icon": "$(trash)"
+            },
+            {
+                "command": "logScoutAnalyzer.showCasesList",
+                "title": "Scout: Show Cases List"
+            },
+            {
+                "command": "logScoutAnalyzer.openCaseLogFile",
+                "title": "Scout: Open Log File",
+                "icon": "$(go-to-file)"
+            },
+            {
+                "command": "logScoutAnalyzer.revealCaseInExplorer",
+                "title": "Scout: Reveal Case in Explorer",
+                "icon": "$(folder-opened)"
+            },
+            {
+                "command": "logScoutAnalyzer.openExtensionLog",
+                "title": "Scout: Open Extension Log",
+                "icon": "$(file-text)"
+            },
+            {
+                "command": "logScoutAnalyzer.openLSPLog",
+                "title": "Scout: Open LSP Server Log",
+                "icon": "$(file-code)"
+            },
+            {
+                "command": "logScoutAnalyzer.showLogPaths",
+                "title": "Scout: Show Log File Paths",
+                "icon": "$(info)"
             }
         ],
         "menus": {
@@ -608,6 +709,31 @@
                     "group": "1_grouping@4"
                 },
                 {
+                    "command": "logScoutAnalyzer.sortByLine",
+                    "when": "view == scoutResults",
+                    "group": "2_sorting@1"
+                },
+                {
+                    "command": "logScoutAnalyzer.sortBySeverity",
+                    "when": "view == scoutResults",
+                    "group": "2_sorting@2"
+                },
+                {
+                    "command": "logScoutAnalyzer.sortByTime",
+                    "when": "view == scoutResults",
+                    "group": "2_sorting@3"
+                },
+                {
+                    "command": "logScoutAnalyzer.sortByFile",
+                    "when": "view == scoutResults",
+                    "group": "2_sorting@4"
+                },
+                {
+                    "command": "logScoutAnalyzer.sortByCategory",
+                    "when": "view == scoutResults",
+                    "group": "2_sorting@5"
+                },
+                {
                     "command": "logScoutAnalyzer.exportResults",
                     "when": "view == scoutResults || view == scoutCategories || view == scoutTimeline",
                     "group": "navigation"
@@ -626,6 +752,26 @@
                     "command": "logScoutAnalyzer.clearCache",
                     "when": "view == scoutCachedFiles",
                     "group": "navigation"
+                },
+                {
+                    "command": "logScoutAnalyzer.viewCacheMetadata",
+                    "when": "view == scoutCachedFiles",
+                    "group": "1_metadata@1"
+                },
+                {
+                    "command": "logScoutAnalyzer.downloadCase",
+                    "when": "view == scoutCases",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "logScoutAnalyzer.importCase",
+                    "when": "view == scoutCases",
+                    "group": "navigation@2"
+                },
+                {
+                    "command": "logScoutAnalyzer.refreshCases",
+                    "when": "view == scoutCases",
+                    "group": "navigation@3"
                 }
             ],
             "view/item/context": [
@@ -645,9 +791,9 @@
                     "group": "2_copy@1"
                 },
                 {
-                    "command": "logScoutAnalyzer.removeCachedFile",
-                    "when": "viewItem == cachedFile",
-                    "group": "inline"
+                    "command": "logScoutAnalyzer.showCacheData",
+                    "when": "viewItem == result",
+                    "group": "3_analysis@1"
                 },
                 {
                     "command": "logScoutAnalyzer.openCachedFile",
@@ -663,6 +809,11 @@
                     "command": "logScoutAnalyzer.revealInExplorer",
                     "when": "viewItem == cachedFile",
                     "group": "2_explorer@1"
+                },
+                {
+                    "command": "logScoutAnalyzer.removeCachedFile",
+                    "when": "viewItem == cachedFile",
+                    "group": "3_remove@1"
                 },
                 {
                     "command": "logScoutAnalyzer.copyFilePath",
@@ -705,7 +856,7 @@
                     "group": "1_actions@1"
                 },
                 {
-                    "command": "logScoutAnalyzer.showVersion",
+                    "command": "logScoutAnalyzer.showAbout",
                     "when": "viewItem == version",
                     "group": "1_actions@1"
                 },
@@ -713,6 +864,26 @@
                     "command": "logScoutAnalyzer.copyVersionInfo",
                     "when": "viewItem == version",
                     "group": "2_copy@1"
+                },
+                {
+                    "command": "logScoutAnalyzer.openCase",
+                    "when": "viewItem == case",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "logScoutAnalyzer.openCaseLogFile",
+                    "when": "viewItem == logFile",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "logScoutAnalyzer.revealCaseInExplorer",
+                    "when": "viewItem == case",
+                    "group": "actions@1"
+                },
+                {
+                    "command": "logScoutAnalyzer.deleteCase",
+                    "when": "viewItem == case",
+                    "group": "actions@2"
                 }
             ]
         }

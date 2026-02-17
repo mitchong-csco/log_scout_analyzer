@@ -69,13 +69,17 @@ async fn main() {
                     println!("─────────────────────────────────");
                     let fetch_start = Instant::now();
                     match client.fetch_all_annotations().await {
-                        Ok(annotations) => {
-                            println!("✓ Fetched {} annotations", annotations.len());
+                        Ok(annotations_with_products) => {
+                            println!("✓ Fetched {} annotations from {} products", 
+                                annotations_with_products.len(),
+                                annotations_with_products.iter().map(|(p, _)| p).collect::<std::collections::HashSet<_>>().len()
+                            );
                             println!("⏱  Time: {:?}", fetch_start.elapsed());
 
-                            if !annotations.is_empty() {
+                            if !annotations_with_products.is_empty() {
                                 println!("\n  Sample annotation:");
-                                let sample = &annotations[0];
+                                let (product, sample) = &annotations_with_products[0];
+                                println!("    • Product: {}", product);
                                 println!("    • Template: {}", sample.template);
                                 println!("    • Severity: {}", sample.severity);
                                 println!("    • Category: {:?}", sample.category);

@@ -94,16 +94,16 @@ pub enum ConditionOperator {
 pub struct SeverityTrigger {
     /// Field name to check (e.g., "state", "status", "code")
     pub field: String,
-    
+
     /// Operator to use for comparison
     pub operator: ConditionOperator,
-    
+
     /// Expected value to match
     pub value: String,
-    
+
     /// Severity to use when condition matches
     pub severity: Severity,
-    
+
     /// Description of why this trigger exists
     #[serde(default)]
     pub description: Option<String>,
@@ -130,8 +130,10 @@ pub struct Pattern {
     /// Human-readable name
     pub name: String,
 
-    /// Description of what this pattern detects
-    pub description: String,
+    /// Annotation/message template from TagScout (with {{ FIELD }} placeholders)
+    /// Stored as "description" in JSON for backward compatibility
+    #[serde(rename = "description")]
+    pub annotation: String,
 
     /// Regular expression pattern
     pub pattern: String,
@@ -182,6 +184,10 @@ pub struct Pattern {
     /// Parameter extraction regexes (from TagScout)
     #[serde(default)]
     pub parameter_extractors: Vec<ParameterExtractor>,
+
+    /// Original TagScout annotation metadata (if from TagScout)
+    #[serde(default)]
+    pub tagscout_metadata: Option<serde_json::Value>,
 }
 
 /// Parameter extractor for field extraction (from TagScout parameters)
@@ -233,7 +239,9 @@ impl CompiledPattern {
                 Err(e) => {
                     tracing::warn!(
                         "Failed to compile parameter regex '{}' for {}: {}",
-                        extractor.name, pattern.id, e
+                        extractor.name,
+                        pattern.id,
+                        e
                     );
                 }
             }
@@ -276,9 +284,21 @@ impl CompiledPattern {
     pub fn detect_log_level(line: &str) -> Option<LogLevel> {
         // Common log level patterns
         let level_patterns = [
-            "FATAL", "CRITICAL", "CRIT", "ERROR", "ERR", 
-            "WARN", "WARNING", "INFO", "INFORMATION",
-            "DEBUG", "DBG", "TRACE", "TRC", "VERBOSE", "VERB"
+            "FATAL",
+            "CRITICAL",
+            "CRIT",
+            "ERROR",
+            "ERR",
+            "WARN",
+            "WARNING",
+            "INFO",
+            "INFORMATION",
+            "DEBUG",
+            "DBG",
+            "TRACE",
+            "TRC",
+            "VERBOSE",
+            "VERB",
         ];
 
         for level_str in &level_patterns {
@@ -291,26 +311,67 @@ impl CompiledPattern {
     }
 
     /// Extract named capture group values and apply parameter extractors
-    pub fn extract_fields(&self, captures: &regex::Captures) -> HashMap<String, String> {
+    /// `captures` - The regex match with capture groups
+    /// `full_line` - The complete log line (for parameter extraction)
+    pub fn extract_fields(
+        &self,
+        captures: &regex::Captures,
+        full_line: &str,
+    ) -> HashMap<String, String> {
         let mut fields = HashMap::new();
-        
+
+        tracing::info!("=== EXTRACT_FIELDS ===");
+        tracing::info!("  Pattern ID: {}", self.pattern.id);
+        tracing::info!(
+            "  Pattern has {} parameter extractors",
+            self.parameter_regexes.len()
+        );
+
         // First, extract named capture groups from main regex
+        let capture_count = self.regex.capture_names().flatten().count();
+        tracing::info!("  Regex has {} named capture groups", capture_count);
+
         for name in self.regex.capture_names().flatten() {
             if let Some(value) = captures.name(name) {
+                tracing::info!(
+                    "  Extracted named capture '{}' = '{}'",
+                    name,
+                    value.as_str()
+                );
                 fields.insert(name.to_string(), value.as_str().to_string());
             }
         }
 
-        // Then, apply parameter extractors to the matched text
-        let matched_text = captures.get(0).unwrap().as_str();
+        // Then, apply parameter extractors to the FULL LINE
+        // (not just matched_text, since patterns like "RTP STATS" only match a small part
+        // but parameters are in the rest of the line)
+        tracing::info!("  Full line for parameter extraction: '{}'", full_line);
+
         for (param_name, param_regex) in &self.parameter_regexes {
-            if let Some(cap) = param_regex.captures(matched_text) {
+            tracing::info!(
+                "  Trying parameter extractor '{}' with regex: {}",
+                param_name,
+                param_regex.as_str()
+            );
+            if let Some(cap) = param_regex.captures(full_line) {
                 // Get first capture group (the extracted value)
                 if let Some(value) = cap.get(1) {
+                    tracing::info!(
+                        "    SUCCESS: Extracted '{}' = '{}'",
+                        param_name,
+                        value.as_str()
+                    );
                     fields.insert(param_name.clone(), value.as_str().to_string());
+                } else {
+                    tracing::warn!("    FAILED: Regex matched but no capture group 1 found");
                 }
+            } else {
+                tracing::info!("    No match for parameter '{}'", param_name);
             }
         }
+
+        tracing::info!("  Total fields extracted: {}", fields.len());
+        tracing::info!("=== END EXTRACT_FIELDS ===");
 
         fields
     }
@@ -342,14 +403,18 @@ impl CompiledPattern {
                         }
                     }
                     ConditionOperator::GreaterThan => {
-                        if let (Ok(v), Ok(threshold)) = (value.parse::<f64>(), trigger.value.parse::<f64>()) {
+                        if let (Ok(v), Ok(threshold)) =
+                            (value.parse::<f64>(), trigger.value.parse::<f64>())
+                        {
                             v > threshold
                         } else {
                             false
                         }
                     }
                     ConditionOperator::LessThan => {
-                        if let (Ok(v), Ok(threshold)) = (value.parse::<f64>(), trigger.value.parse::<f64>()) {
+                        if let (Ok(v), Ok(threshold)) =
+                            (value.parse::<f64>(), trigger.value.parse::<f64>())
+                        {
                             v < threshold
                         } else {
                             false
@@ -421,15 +486,19 @@ pub struct PatternEngine {
     pattern_map: HashMap<String, Arc<CompiledPattern>>,
 
     /// Detection threshold (0.0 - 1.0)
-    threshold: f32,
+    _threshold: f32,
 
     /// Context window for multi-line patterns
-    context_window: usize,
+    _context_window: usize,
 }
 
 impl PatternEngine {
     /// Create a new pattern engine with the given patterns
-    pub fn new(patterns: Vec<Pattern>, threshold: f32, context_window: usize) -> Result<Self, PatternError> {
+    pub fn new(
+        patterns: Vec<Pattern>,
+        threshold: f32,
+        context_window: usize,
+    ) -> Result<Self, PatternError> {
         let mut compiled_patterns = Vec::new();
         let mut pattern_map = HashMap::new();
 
@@ -446,8 +515,8 @@ impl PatternEngine {
         Ok(PatternEngine {
             patterns: compiled_patterns,
             pattern_map,
-            threshold: threshold.clamp(0.0, 1.0),
-            context_window,
+            _threshold: threshold.clamp(0.0, 1.0),
+            _context_window: context_window,
         })
     }
 
@@ -464,20 +533,21 @@ impl PatternEngine {
                     // Get all regex captures for this pattern
                     for cap in compiled_pattern.regex.captures_iter(line) {
                         let full_match = cap.get(0).unwrap();
-                        
-                        // Extract named field values
-                        let field_values = compiled_pattern.extract_fields(&cap);
-                        
+
+                        // Extract named field values (pass full line for parameter extraction)
+                        let field_values = compiled_pattern.extract_fields(&cap, line);
+
                         // Evaluate final severity based on log level and conditions
-                        let final_severity = compiled_pattern.evaluate_severity(log_level, &field_values);
-                        
+                        let final_severity =
+                            compiled_pattern.evaluate_severity(log_level, &field_values);
+
                         // Extract all capture groups as strings
                         let captures: Vec<String> = cap
                             .iter()
                             .skip(1)
                             .filter_map(|m| m.map(|m| m.as_str().to_string()))
                             .collect();
-                        
+
                         detections.push(Detection {
                             pattern: Arc::new(compiled_pattern.pattern.clone()),
                             line_number,
@@ -516,9 +586,7 @@ impl PatternEngine {
     pub fn get_patterns_by_service(&self, service: &str) -> Vec<&CompiledPattern> {
         self.patterns
             .iter()
-            .filter(|p| {
-                p.pattern.service.as_ref().map_or(false, |s| s == service)
-            })
+            .filter(|p| p.pattern.service.as_ref().map_or(false, |s| s == service))
             .map(|arc| arc.as_ref())
             .collect()
     }
@@ -567,18 +635,11 @@ impl ContextProcessor {
     /// Get the current context window
     pub fn get_context(&self, lines: usize) -> Vec<String> {
         let start = self.context_buffer.len().saturating_sub(lines);
-        self.context_buffer
-            .iter()
-            .skip(start)
-            .cloned()
-            .collect()
+        self.context_buffer.iter().skip(start).cloned().collect()
     }
 
     /// Check multi-line patterns against current context
-    pub fn check_multiline_patterns(
-        &self,
-        patterns: &[Arc<CompiledPattern>],
-    ) -> Vec<Detection> {
+    pub fn check_multiline_patterns(&self, patterns: &[Arc<CompiledPattern>]) -> Vec<Detection> {
         let mut detections = Vec::new();
 
         for pattern in patterns {
@@ -592,20 +653,20 @@ impl ContextProcessor {
                 // Get all regex captures
                 for cap in pattern.regex.captures_iter(&combined) {
                     let full_match = cap.get(0).unwrap();
-                    
-                    // Extract named field values
-                    let field_values = pattern.extract_fields(&cap);
-                    
+
+                    // Extract named field values (pass combined text for parameter extraction)
+                    let field_values = pattern.extract_fields(&cap, &combined);
+
                     // Evaluate final severity
                     let final_severity = pattern.evaluate_severity(log_level, &field_values);
-                    
+
                     // Extract capture groups
                     let captures: Vec<String> = cap
                         .iter()
                         .skip(1)
                         .filter_map(|m| m.map(|m| m.as_str().to_string()))
                         .collect();
-                    
+
                     detections.push(Detection {
                         pattern: Arc::new(pattern.pattern.clone()),
                         line_number: self.current_line,
@@ -641,7 +702,7 @@ mod tests {
         let pattern = Pattern {
             id: "test-error".to_string(),
             name: "Test Error".to_string(),
-            description: "Test error pattern".to_string(),
+            annotation: "Test error pattern".to_string(),
             pattern: r"ERROR:\s+(.+)".to_string(),
             mode: PatternMode::SingleLine,
             severity: Severity::Error,
@@ -666,7 +727,7 @@ mod tests {
         let pattern = Pattern {
             id: "test-error".to_string(),
             name: "Test Error".to_string(),
-            description: "Test error pattern".to_string(),
+            annotation: "Test error pattern".to_string(),
             pattern: r"ERROR:\s+(.+)".to_string(),
             mode: PatternMode::SingleLine,
             severity: Severity::Error,
@@ -689,26 +750,24 @@ mod tests {
 
     #[test]
     fn test_pattern_engine_processing() {
-        let patterns = vec![
-            Pattern {
-                id: "error-pattern".to_string(),
-                name: "Error Pattern".to_string(),
-                description: "Matches error lines".to_string(),
-                pattern: r"ERROR".to_string(),
-                mode: PatternMode::SingleLine,
-                severity: Severity::Error,
-                category: "errors".to_string(),
-                service: None,
-                tags: vec![],
-                action: None,
-                expected_frequency: None,
-                enabled: true,
-                log_level_triggers: std::collections::HashMap::new(),
-                condition_triggers: Vec::new(),
-                capture_fields: Vec::new(),
-                parameter_extractors: Vec::new(),
-            },
-        ];
+        let patterns = vec![Pattern {
+            id: "error-pattern".to_string(),
+            name: "Error Pattern".to_string(),
+            annotation: "Matches error lines".to_string(),
+            pattern: r"ERROR".to_string(),
+            mode: PatternMode::SingleLine,
+            severity: Severity::Error,
+            category: "errors".to_string(),
+            service: None,
+            tags: vec![],
+            action: None,
+            expected_frequency: None,
+            enabled: true,
+            log_level_triggers: std::collections::HashMap::new(),
+            condition_triggers: Vec::new(),
+            capture_fields: Vec::new(),
+            parameter_extractors: Vec::new(),
+        }];
 
         let engine = PatternEngine::new(patterns, 0.85, 10).unwrap();
         let detections = engine.process_line("ERROR: Test error message", 1);

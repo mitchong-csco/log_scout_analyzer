@@ -9,6 +9,11 @@ export interface AnnotatedLine {
     timestamp?: Date;
     category?: string;
     pattern?: string;
+    // New structured fields from LSP
+    template?: string;           // Raw template with {{ FIELD }} placeholders
+    mergedTemplate?: string;     // Template with field values substituted
+    extractedFields?: Record<string, string>; // Map of field names to values
+    patternRegex?: string;       // Regex pattern (for debugging)
 }
 
 interface SyncConfig {

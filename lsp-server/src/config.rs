@@ -192,23 +192,24 @@ pub fn validate_config(config: &Config) -> Result<(), PatternError> {
     let mut seen_ids = std::collections::HashSet::new();
     for pattern in &config.patterns {
         if !seen_ids.insert(&pattern.id) {
-            return Err(PatternError::ConfigError(
-                format!("Duplicate pattern ID: {}", pattern.id)
-            ));
+            return Err(PatternError::ConfigError(format!(
+                "Duplicate pattern ID: {}",
+                pattern.id
+            )));
         }
     }
 
     // Validate threshold range
     if config.settings.detection_threshold < 0.0 || config.settings.detection_threshold > 1.0 {
         return Err(PatternError::ConfigError(
-            "Detection threshold must be between 0.0 and 1.0".to_string()
+            "Detection threshold must be between 0.0 and 1.0".to_string(),
         ));
     }
 
     // Validate context window
     if config.settings.multiline_context_window == 0 {
         return Err(PatternError::ConfigError(
-            "Context window must be greater than 0".to_string()
+            "Context window must be greater than 0".to_string(),
         ));
     }
 
@@ -306,39 +307,45 @@ patterns:
 
     #[test]
     fn test_merge_patterns() {
-        let set1 = vec![
-            Pattern {
-                id: "p1".to_string(),
-                name: "Pattern 1".to_string(),
-                description: "First".to_string(),
-                pattern: "TEST1".to_string(),
-                mode: PatternMode::SingleLine,
-                severity: Severity::Error,
-                category: "test".to_string(),
-                service: None,
-                tags: vec![],
-                action: None,
-                expected_frequency: None,
-                enabled: true,
-            },
-        ];
+        let set1 = vec![Pattern {
+            id: "p1".to_string(),
+            name: "Pattern 1".to_string(),
+            annotation: "First".to_string(),
+            pattern: "TEST1".to_string(),
+            mode: PatternMode::SingleLine,
+            severity: Severity::Error,
+            category: "test".to_string(),
+            service: None,
+            tags: vec![],
+            action: None,
+            expected_frequency: None,
+            enabled: true,
+            log_level_triggers: std::collections::HashMap::new(),
+            condition_triggers: Vec::new(),
+            capture_fields: Vec::new(),
+            parameter_extractors: Vec::new(),
+            tagscout_metadata: None,
+        }];
 
-        let set2 = vec![
-            Pattern {
-                id: "p2".to_string(),
-                name: "Pattern 2".to_string(),
-                description: "Second".to_string(),
-                pattern: "TEST2".to_string(),
-                mode: PatternMode::SingleLine,
-                severity: Severity::Warning,
-                category: "test".to_string(),
-                service: None,
-                tags: vec![],
-                action: None,
-                expected_frequency: None,
-                enabled: true,
-            },
-        ];
+        let set2 = vec![Pattern {
+            id: "p2".to_string(),
+            name: "Pattern 2".to_string(),
+            annotation: "Second".to_string(),
+            pattern: "TEST2".to_string(),
+            mode: PatternMode::SingleLine,
+            severity: Severity::Warning,
+            category: "test".to_string(),
+            service: None,
+            tags: vec![],
+            action: None,
+            expected_frequency: None,
+            enabled: true,
+            log_level_triggers: std::collections::HashMap::new(),
+            condition_triggers: Vec::new(),
+            capture_fields: Vec::new(),
+            parameter_extractors: Vec::new(),
+            tagscout_metadata: None,
+        }];
 
         let merged = merge_patterns(vec![set1, set2]);
         assert_eq!(merged.len(), 2);

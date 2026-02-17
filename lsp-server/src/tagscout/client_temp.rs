@@ -1,4 +1,4 @@
-﻿//! TagScout MongoDB Client
+//! TagScout MongoDB Client
 //!
 //! Provides connectivity to the TagScout MongoDB database for fetching
 //! curated log annotation patterns.
@@ -144,10 +144,10 @@ impl Default for TagScoutConfig {
         // Get MongoDB connection from environment or use BDB production default
         let connection_string = std::env::var("TAGSCOUT_MONGODB_URI")
             .unwrap_or_else(|_| "mongodb://TagScoutLibrary_ro:4d6e2f2a60b17c87c2574fa3c1d39a18093a04d4@bdb-int-prod-mongos-1.cisco.com:27017,bdb-int-prod-mongos-2.cisco.com:27017/task_TagScoutLibrary?tls=true".to_string());
-
+        
         let database = std::env::var("TAGSCOUT_DATABASE")
             .unwrap_or_else(|_| "task_TagScoutLibrary".to_string());
-
+        
         Self {
             connection_string,
             database,
@@ -163,14 +163,14 @@ impl Default for TagScoutConfig {
 
 /// Product configuration data
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TagScoutConfigData {
+pub struct TagScoutConfig_Data {
     #[serde(rename = "_id")]
     pub id: bson::oid::ObjectId,
-
+    
     /// Valid categories for this product
     #[serde(default)]
     pub categories: Vec<String>,
-
+    
     /// Valid severities for this product
     #[serde(default)]
     pub severities: Vec<String>,
@@ -181,14 +181,14 @@ pub struct TagScoutConfigData {
 pub struct TagScoutEnum {
     #[serde(rename = "_id")]
     pub id: bson::oid::ObjectId,
-
+    
     /// Enum name/identifier
     pub name: String,
-
+    
     /// Production ready flag
     #[serde(default)]
     pub production: bool,
-
+    
     /// Enum value mappings
     pub r#enum: std::collections::HashMap<String, String>,
 }
@@ -197,7 +197,7 @@ pub struct TagScoutEnum {
 pub struct TagScoutClient {
     client: Client,
     database_name: String,
-    _config: TagScoutConfig,
+    config: TagScoutConfig,
 }
 
 impl TagScoutClient {
@@ -231,7 +231,7 @@ impl TagScoutClient {
         Ok(Self {
             client,
             database_name: config.database.clone(),
-            _config: config,
+            config,
         })
     }
 
@@ -252,51 +252,45 @@ impl TagScoutClient {
     pub async fn list_products(&self) -> Result<Vec<String>, TagScoutError> {
         let db = self.client.database(&self.database_name);
         let collections = db.list_collection_names(None).await?;
-
+        
         let mut products = std::collections::HashSet::new();
         for collection in collections {
             // Extract product name from collection name (e.g., "jabber_prt_annotations" -> "jabber_prt")
             if let Some(pos) = collection.rfind('_') {
-                let table_type = &collection[pos + 1..];
+                let table_type = &collection[pos+1..];
                 if table_type == "annotations" || table_type == "config" || table_type == "enums" {
                     let product = &collection[..pos];
                     products.insert(product.to_string());
                 }
             }
         }
-
+        
         Ok(products.into_iter().collect())
     }
-
+    
     /// Fetch annotations from all products
-    /// Returns tuples of (product_name, annotation) to preserve product context
-    pub async fn fetch_all_annotations(
-        &self,
-    ) -> Result<Vec<(String, TagScoutAnnotation)>, TagScoutError> {
+    pub async fn fetch_all_annotations(&self) -> Result<Vec<TagScoutAnnotation>, TagScoutError> {
         let products = self.list_products().await?;
         tracing::info!("Found {} products in TagScout database", products.len());
-
+        
         let mut all_annotations = Vec::new();
-
+        
         for product in products {
             match self.fetch_product_annotations(&product).await {
-                Ok(annotations) => {
+                Ok(mut annotations) => {
                     tracing::info!("Fetched {} annotations from {}", annotations.len(), product);
-                    // Tag each annotation with its product
-                    for annotation in annotations {
-                        all_annotations.push((product.clone(), annotation));
-                    }
+                    all_annotations.append(&mut annotations);
                 }
                 Err(e) => {
                     tracing::warn!("Failed to fetch annotations from {}: {}", product, e);
                 }
             }
         }
-
+        
         tracing::info!("Total annotations fetched: {}", all_annotations.len());
         Ok(all_annotations)
     }
-
+    
     /// Fetch annotations from a specific product
     pub async fn fetch_product_annotations(
         &self,
@@ -305,9 +299,8 @@ impl TagScoutClient {
         let collection_name = format!("{}_annotations", product);
         let db = self.client.database(&self.database_name);
         let collection: Collection<TagScoutAnnotation> = db.collection(&collection_name);
-
-        self.fetch_from_collection(&collection, doc! { "production": true })
-            .await
+        
+        self.fetch_from_collection(&collection, doc! { "production": true }).await
     }
 
     /// Generic fetch from collection
@@ -321,7 +314,7 @@ impl TagScoutClient {
     {
         let mut cursor = collection.find(filter, None).await?;
         let mut items = Vec::new();
-
+        
         while let Some(result) = cursor.next().await {
             match result {
                 Ok(item) => items.push(item),
@@ -331,23 +324,23 @@ impl TagScoutClient {
                 }
             }
         }
-
+        
         Ok(items)
     }
-
+    
     /// Fetch config data from a specific product
     pub async fn fetch_product_config(
         &self,
         product: &str,
-    ) -> Result<Option<TagScoutConfigData>, TagScoutError> {
+    ) -> Result<Option<TagScoutConfig_Data>, TagScoutError> {
         let collection_name = format!("{}_config", product);
         let db = self.client.database(&self.database_name);
-        let collection: Collection<TagScoutConfigData> = db.collection(&collection_name);
-
+        let collection: Collection<TagScoutConfig_Data> = db.collection(&collection_name);
+        
         let mut items = self.fetch_from_collection(&collection, doc! {}).await?;
         Ok(items.pop())
     }
-
+    
     /// Fetch enums from a specific product
     pub async fn fetch_product_enums(
         &self,
@@ -356,32 +349,29 @@ impl TagScoutClient {
         let collection_name = format!("{}_enums", product);
         let db = self.client.database(&self.database_name);
         let collection: Collection<TagScoutEnum> = db.collection(&collection_name);
-
-        self.fetch_from_collection(&collection, doc! { "production": true })
-            .await
+        
+        self.fetch_from_collection(&collection, doc! { "production": true }).await
     }
-
+    
     /// Fetch all config data from all products
-    pub async fn fetch_all_configs(
-        &self,
-    ) -> Result<Vec<(String, TagScoutConfigData)>, TagScoutError> {
+    pub async fn fetch_all_configs(&self) -> Result<Vec<(String, TagScoutConfig_Data)>, TagScoutError> {
         let products = self.list_products().await?;
         let mut all_configs = Vec::new();
-
+        
         for product in products {
             if let Ok(Some(config)) = self.fetch_product_config(&product).await {
                 all_configs.push((product, config));
             }
         }
-
+        
         Ok(all_configs)
     }
-
+    
     /// Fetch all enums from all products
     pub async fn fetch_all_enums(&self) -> Result<Vec<(String, Vec<TagScoutEnum>)>, TagScoutError> {
         let products = self.list_products().await?;
         let mut all_enums = Vec::new();
-
+        
         for product in products {
             if let Ok(enums) = self.fetch_product_enums(&product).await {
                 if !enums.is_empty() {
@@ -389,92 +379,6 @@ impl TagScoutClient {
                 }
             }
         }
-
+        
         Ok(all_enums)
     }
-
-    /// Get statistics about the annotation library
-    pub async fn get_statistics(&self) -> Result<LibraryStatistics, TagScoutError> {
-        let products = self.list_products().await?;
-        let all_annotations_with_product = self.fetch_all_annotations().await?;
-        let active_annotations = all_annotations_with_product.len() as u64;
-
-        // Gather unique categories
-        let mut categories_set = std::collections::HashSet::new();
-        for (_product, annotation) in &all_annotations_with_product {
-            for category in &annotation.category {
-                categories_set.insert(category.clone());
-            }
-        }
-        let categories: Vec<String> = categories_set.into_iter().collect();
-
-        Ok(LibraryStatistics {
-            total_annotations: active_annotations,
-            active_annotations,
-            unique_products: products.len(),
-            unique_categories: categories.len(),
-            products,
-            categories,
-        })
-    }
-}
-
-/// Library statistics
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LibraryStatistics {
-    pub total_annotations: u64,
-    pub active_annotations: u64,
-    pub unique_products: usize,
-    pub unique_categories: usize,
-    pub products: Vec<String>,
-    pub categories: Vec<String>,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_default_config() {
-        let config = TagScoutConfig::default();
-        assert_eq!(config.database, "task_TagScoutLibrary");
-        assert_eq!(config.collection, "jabber_prt_annotations");
-        assert_eq!(config.connection_timeout, 10);
-    }
-
-    #[tokio::test]
-    #[ignore] // Only run when MongoDB is available
-    async fn test_connection() {
-        let client = TagScoutClient::new().await;
-        match client {
-            Ok(client) => {
-                let result = client.test_connection().await;
-                assert!(result.is_ok());
-            }
-            Err(e) => {
-                eprintln!("Connection test skipped: {}", e);
-            }
-        }
-    }
-
-    #[tokio::test]
-    #[ignore] // Only run when MongoDB is available
-    async fn test_fetch_annotations() {
-        let client = TagScoutClient::new().await;
-        match client {
-            Ok(client) => {
-                let result = client.fetch_all_annotations().await;
-                match result {
-                    Ok(annotations) => {
-                        println!("Fetched {} annotations", annotations.len());
-                        assert!(!annotations.is_empty());
-                    }
-                    Err(e) => eprintln!("Fetch test skipped: {}", e),
-                }
-            }
-            Err(e) => {
-                eprintln!("Connection test skipped: {}", e);
-            }
-        }
-    }
-}
