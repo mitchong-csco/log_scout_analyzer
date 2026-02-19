@@ -17,7 +17,3 @@ thiserror = { workspace = true }
 
 [dev-dependencies]
 tokio-test = { workspace = true }
-
-[[bench]]
-name = "pattern_matching"
-harness = false

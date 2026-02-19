@@ -5,9 +5,14 @@
 resolver = "2"
 members = [
     "lsp-server",
+    "crates/core",
+    "crates/pattern-engine",
+    "crates/pattern-loader",
+    "crates/quality-system",
+    "crates/tagscout-integration",
+    "crates/lsp-server",
 ]
 exclude = [
-    "crates",
     "archive",
 ]
 
