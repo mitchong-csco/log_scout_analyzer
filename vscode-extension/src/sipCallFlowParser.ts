@@ -1,473 +1,757 @@
 import * as vscode from "vscode";
-import { LadderDiagramEvent } from "./timelineVisualization";
 
 /**
- * SIP Call Flow Parser
- * Extracts SIP messages and call flows from logs for ladder diagram visualization
+ * Interface for SIP message extraction with boundary-based detection
  */
-export class SipCallFlowParser {
-    /**
-     * Parse SIP messages from document
-     */
-    public static parseSipMessages(
-        document: vscode.TextDocument,
-    ): LadderDiagramEvent[] {
-        const events: LadderDiagramEvent[] = [];
-        const text = document.getText();
-        const lines = text.split("\n");
+export interface BoundaryBasedSipMessage {
+    service: 'jabber' | 'sdl' | 'sip-proxy';
+    startBoundaryLine: string;
+    endBoundaryLine: string;
+    startLineNumber: number;
+    endLineNumber: number;
+    intermediateLines: string[];
+    extractedParams: ExtractedParams;
+    sipContent?: string;
+}
 
+/**
+ * Interface for extracted parameters
+ */
+export interface ExtractedParams {
+    [key: string]: string;
+}
+
+/**
+ * Interface for boundary service patterns
+ */
+export interface BoundaryServicePattern {
+    service: 'jabber' | 'sdl' | 'sip-proxy';
+    startBoundaryPattern: string;
+    endBoundaryPattern: string;
+    parameterExtractors: ParameterExtractor[];
+    description: string;
+}
+
+/**
+ * Interface for parameter extractors
+ */
+export interface ParameterExtractor {
+    name: string;
+    regex: string;
+}
+
+/**
+ * Enhanced SIP extraction with boundary-based multi-line detection
+ * 
+ * This class provides comprehensive SIP message extraction using:
+ * - Service-specific boundary patterns
+ * - Multi-line message capture
+ * - Rich parameter extraction including SDP payloads
+ * - RFC-compliant parsing
+ */
+export class BoundaryBasedSipExtractor {
+    private patterns: Map<string, BoundaryServicePattern> = new Map();
+
+    constructor() {
+        this.initializePatterns();
+    }
+
+    /**
+     * Initialize known service patterns
+     * 
+     * Jabber: sipio-(sent|recv)(--->|<---) to ::End-Of-Sip-Message::
+     * SDL: Incoming SIP (TCP|UDP) Message to Outgoing SIP (TCP|UDP) Message
+     * SIP-Proxy: Incoming SIP (TCP|UDP) Message to End-Of-Sip-Message
+     */
+    private initializePatterns(): void {
+        // Register Jabber boundary-based SIP pattern
+        this.patterns.set('jabber', {
+            service: 'jabber',
+            startBoundaryPattern: 'sipio-(sent|recv)(--->|<---)',
+            endBoundaryPattern: '::End-Of-Sip-Message::',
+            parameterExtractors: this.getJabberBoundaryExtractors(),
+            description: 'Cisco Jabber boundary-based SIP debug format'
+        });
+        
+        // Register SDL boundary-based SIP pattern
+        this.patterns.set('sdl', {
+            service: 'sdl',
+            startBoundaryPattern: 'Incoming SIP (TCP|UDP) Message',
+            endBoundaryPattern: 'Outgoing SIP (TCP|UDP) Message',
+            parameterExtractors: this.getSdlBoundaryExtractors(),
+            description: 'CUCM SDL boundary-based SIP debug format'
+        });
+        
+        // Register SIP-Proxy boundary-based SIP pattern
+        this.patterns.set('sip-proxy', {
+            service: 'sip-proxy',
+            startBoundaryPattern: 'Incoming SIP (TCP|UDP) Message',
+            endBoundaryPattern: 'End-Of-Sip-Message',
+            parameterExtractors: this.getSipProxyBoundaryExtractors(),
+            description: 'CUCM boundary-based SIP proxy logs'
+        });
+    }
+
+    /**
+     * Get boundary extractors for Jabber service
+     * 
+     * Includes log metadata, SIP headers, and SDP extraction
+     */
+    private getJabberBoundaryExtractors(): ParameterExtractor[] {
+        return [
+            { name: 'logTimestamp', regex: '^\\d{4}-\\d{2}-\\d{2}\\s\\d{2}:\\d{2}[.,]\\d{3}\\s+(DEBUG|INFO|WARN|ERROR)' },
+            { name: 'logLevel', regex: '\\[(DEBUG|INFO|WARN|ERROR)\\]' },
+            { name: 'threadId', regex: '\\[0x[0-9a-fA-F]+\\]' },
+            { name: 'transportDirection', regex: 'sipio-(sent|recv)' },
+            { name: 'messageDirection', regex: '(--->|<---)' },
+            { name: 'sipMethod', regex: '(?:<---|--->)\\s+(INVITE|BYE|ACK|CANCEL|REGISTER|OPTIONS|INFO|SUBSCRIBE|NOTIFY|REFER|UPDATE|PRACK|MESSAGE)\\s' },
+            { name: 'sipVersion', regex: '(?:<---|--->)\\s+(SIP/2\\.0)\\s' },
+            { name: 'sipUri', regex: '(?:<---|--->)\\s+(?:SIP/2\\.0\\s+)?(sip:[^\\s]+)' },
+            { name: 'fromHeader', regex: 'From:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'toHeader', regex: 'To:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'callId', regex: 'Call-ID:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'cseq', regex: 'CSeq:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'viaHeader', regex: 'Via:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'maxForwards', regex: 'Max-Forwards:\\s*(\\d+)(?:\\r?\\n|$)' },
+            { name: 'dateHeader', regex: 'Date:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'userAgent', regex: 'User-Agent:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'contactHeader', regex: 'Contact:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'supportedHeader', regex: 'Supported:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'expiresHeader', regex: 'Expires:\\s*(\\d+)(?:\\r?\\n|$)' },
+            { name: 'contentLength', regex: 'Content-Length:\\s*(\\d+)(?:\\r?\\n|$)' },
+            { name: 'sdpPayload', regex: 'Content-Disposition:\\s*session.*?([\\s\\S]).*?\\s*v=0' },
+            { name: 'sdpComplete', regex: 'v=0.*?(?=\\n\\n|$|\\r?\\n\\r)' },
+            { name: 'sdpMediaCount', regex: 'm=(audio|video|application).*?(?=\\n|m=|$)' },
+            { name: 'sdpAudioCodecs', regex: 'a=rtpmap:(\\d+)\\s+([^\\s;]+)' },
+            { name: 'sdpVideoCodecs', regex: 'm=video.*?(?=\\n|m=|$)' },
+            { name: 'sdpTransport', regex: 'c=IN\\s+IP4\\s+([^\\s]+)' },
+            { name: 'sdpIce', regex: 'a=ice.*?(?=\\n|$)' },
+            { name: 'sdpFingerprint', regex: 'a=fingerprint:([^\\s]+)' },
+            { name: 'cucmStatus', regex: 'CUCM.*?:(.*)' },
+            { name: 'stunStatus', regex: 'stun.*?CUCM.*?(LOST|FOUND)' }
+        ];
+    }
+
+    /**
+     * Get boundary extractors for SDL service
+     * 
+     * Includes SDL-specific patterns and CUCM status extraction
+     */
+    private getSdlBoundaryExtractors(): ParameterExtractor[] {
+        return [
+            { name: 'sdlTimestamp', regex: '^\\d{4}-\\d{2}-\\d{2}\\s\\d{2}:\\d{2}[.,]\\d{3}\\s+(DEBUG|INFO|WARN|ERROR)' },
+            { name: 'sdlLogLevel', regex: '\\[(DEBUG|INFO|WARN|ERROR)\\]' },
+            { name: 'sdlThreadId', regex: '\\[0x[0-9a-fA-F]+\\]' },
+            { name: 'sdlDirection', regex: '(Incoming|Outgoing)\\s+SIP\\s+(TCP|UDP)\\s+Message' },
+            { name: 'sdlTransport', regex: 'SIP\\s+(TCP|UDP)' },
+            { name: 'sipMethod', regex: '(?:Incoming|Outgoing).*?\\s+(INVITE|BYE|ACK|CANCEL|REGISTER|OPTIONS|INFO|SUBSCRIBE|NOTIFY|REFER|UPDATE|PRACK|MESSAGE)' },
+            { name: 'sipVersion', regex: 'SIP/2\\.0' },
+            { name: 'fromHeader', regex: 'From:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'toHeader', regex: 'To:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'callId', regex: 'Call-ID:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'cseq', regex: 'CSeq:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'viaHeader', regex: 'Via:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'maxForwards', regex: 'Max-Forwards:\\s*(\\d+)(?:\\r?\\n|$)' },
+            { name: 'dateHeader', regex: 'Date:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'userAgent', regex: 'User-Agent:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'contactHeader', regex: 'Contact:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'supportedHeader', regex: 'Supported:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'expiresHeader', regex: 'Expires:\\s*(\\d+)(?:\\r?\\n|$)' },
+            { name: 'contentLength', regex: 'Content-Length:\\s*(\\d+)(?:\\r?\\n|$)' },
+            { name: 'sdpPayload', regex: 'Content-Disposition:\\s*session.*?([\\s\\S]).*?\\s*v=0' },
+            { name: 'sdpComplete', regex: 'v=0.*?(?=\\n\\n|$|\\r?\\n\\r)' },
+            { name: 'sdpMediaCount', regex: 'm=(audio|video|application).*?(?=\\n|m=|$)' },
+            { name: 'sdpAudioCodecs', regex: 'a=rtpmap:(\\d+)\\s+([^\\s;]+)' },
+            { name: 'sdpVideoCodecs', regex: 'm=video.*?(?=\\n|m=|$)' },
+            { name: 'sdpTransport', regex: 'c=IN\\s+IP4\\s+([^\\s]+)' },
+            { name: 'sdpIce', regex: 'a=ice.*?(?=\\n|$)' },
+            { name: 'sdpFingerprint', regex: 'a=fingerprint:([^\\s]+)' },
+            { name: 'cucmStatus', regex: 'CUCM.*?:(.*)' },
+            { name: 'stunStatus', regex: 'stun.*?CUCM.*?(LOST|FOUND)' }
+        ];
+    }
+
+    /**
+     * Get boundary extractors for SIP-Proxy service
+     * 
+     * Includes SIP proxy patterns and CUCM-specific headers
+     */
+    private getSipProxyBoundaryExtractors(): ParameterExtractor[] {
+        return [
+            { name: 'logTimestamp', regex: '^\\d{4}-\\d{2}-\\d{2}\\s\\d{2}:\\d{2}[.,]\\d{3}\\s+(DEBUG|INFO|WARN|ERROR)' },
+            { name: 'logLevel', regex: '\\[(DEBUG|INFO|WARN|ERROR)\\]' },
+            { name: 'threadId', regex: '\\[0x[0-9a-fA-F]+\\]' },
+            { name: 'transportDirection', regex: 'sipio-(sent|recv)' },
+            { name: 'messageDirection', regex: '(--->|<---)' },
+            { name: 'sipMethod', regex: '(?:<---|--->)\\s+(INVITE|BYE|ACK|CANCEL|REGISTER|OPTIONS|INFO|SUBSCRIBE|NOTIFY|REFER|UPDATE|PRACK|MESSAGE)\\s' },
+            { name: 'sipVersion', regex: '(?:<---|--->)\\s+(SIP/2\\.0)\\s' },
+            { name: 'sipUri', regex: '(?:<---|--->)\\s+(?:SIP/2\\.0\\s+)?(sip:[^\\s]+)' },
+            { name: 'fromHeader', regex: 'From:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'toHeader', regex: 'To:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'callId', regex: 'Call-ID:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'cseq', regex: 'CSeq:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'viaHeader', regex: 'Via:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'maxForwards', regex: 'Max-Forwards:\\s*(\\d+)(?:\\r?\\n|$)' },
+            { name: 'dateHeader', regex: 'Date:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'userAgent', regex: 'User-Agent:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'contactHeader', regex: 'Contact:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'supportedHeader', regex: 'Supported:\\s*(.+?)(?:\\r?\\n|$)' },
+            { name: 'expiresHeader', regex: 'Expires:\\s*(\\d+)(?:\\r?\\n|$)' },
+            { name: 'contentLength', regex: 'Content-Length:\\s*(\\d+)(?:\\r?\\n|$)' },
+            { name: 'sdpPayload', regex: 'Content-Disposition:\\s*session.*?([\\s\\S]).*?\\s*v=0' },
+            { name: 'sdpComplete', regex: 'v=0.*?(?=\\n\\n|$|\\r?\\n\\r)' },
+            { name: 'sdpMediaCount', regex: 'm=(audio|video|application).*?(?=\\n|m=|$)' },
+            { name: 'sdpAudioCodecs', regex: 'a=rtpmap:(\\d+)\\s+([^\\s;]+)' },
+            { name: 'sdpVideoCodecs', regex: 'm=video.*?(?=\\n|m=|$)' },
+            { name: 'sdpTransport', regex: 'c=IN\\s+IP4\\s+([^\\s]+)' },
+            { name: 'sdpIce', regex: 'a=ice.*?(?=\\n|$)' },
+            { name: 'sdpFingerprint', regex: 'a=fingerprint:([^\\s]+)' }
+        ];
+    }
+
+    /**
+     * Extract clean SIP content from intermediate lines
+     */
+    private extractCleanSipContent(lines: string[], service: 'jabber' | 'sdl' | 'sip-proxy'): string {
+        const cleanLines: string[] = [];
+        
+        for (const line of lines) {
+            const trimmed = line.trim();
+            
+            // Handle SDL format where SIP content is mixed with boundary line
+            if (service === 'sdl') {
+                // Extract SIP content from SDL boundary lines like "[INCOMING] 157 Unknown"
+                const sipMatch = trimmed.match(/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}[.,]\d{3}\s+\[INCOMING\]\s+\d+\s+\w+\s+(.+)$/);
+                if (sipMatch) {
+                    // Extract everything after the SDL prefix
+                    const sipContent = sipMatch[1].trim();
+                    if (sipContent && !sipContent.startsWith('[')) {
+                        cleanLines.push(sipContent);
+                    }
+                }
+                
+                // Also check for plain SIP headers in SDL lines
+                const cleanSipLine = trimmed.replace(/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}[.,]\d{3}\s+\[INCOMING\]\s+\d+\s+\w+\s+/, '');
+                if (cleanSipLine && cleanSipLine.trim() !== '') {
+                    cleanLines.push(cleanSipLine.trim());
+                }
+                continue;
+            }
+            
+            // Skip Jabber metadata lines
+            if (service === 'jabber') {
+                if (trimmed.includes('sipio-') || trimmed.includes('::End-Of-Sip-Message::')) {
+                    continue;
+                }
+            }
+            
+            // Skip SIP-Proxy metadata lines  
+            if (service === 'sip-proxy') {
+                if (trimmed.includes('Incoming SIP') || trimmed.includes('End-Of-Sip-Message')) {
+                    continue;
+                }
+            }
+            
+            // Add the line if it looks like SIP content
+            if (trimmed && 
+                (trimmed.startsWith('Via:') || 
+                 trimmed.startsWith('From:') || 
+                 trimmed.startsWith('To:') || 
+                 trimmed.startsWith('Call-ID:') || 
+                 trimmed.startsWith('CSeq:') || 
+                 trimmed.startsWith('Content-Length:') ||
+                 trimmed.startsWith('Contact:') ||
+                 trimmed.startsWith('User-Agent:') ||
+                 trimmed.startsWith('Max-Forwards:') ||
+                 trimmed.startsWith('Content-Type:') ||
+                 trimmed.startsWith('SIP/2.0') ||
+                 trimmed.match(/^(INVITE|BYE|ACK|CANCEL|REGISTER|OPTIONS|INFO|SUBSCRIBE|NOTIFY|REFER|UPDATE|PRACK|MESSAGE)\s+/))) {
+                cleanLines.push(trimmed);
+            }
+        }
+        
+        const result = cleanLines.join('\n');
+        console.log(`[DEBUG] Extracted SIP content for ${service}:`, result);
+        return result;
+    }
+
+    /**
+     * Extract parameters from log content using configured extractors
+     * 
+     * @param text - Log content to extract from
+     * @param extractors - Array of parameter extractors
+     * @returns Map of parameter names to extracted values
+     */
+    private extractParameters(text: string, extractors: ParameterExtractor[]): ExtractedParams {
+        const extracted: ExtractedParams = {};
+        
+        for (const extractor of extractors) {
+            const match = text.match(new RegExp(extractor.regex, 'gi'));
+            if (match) {
+                extracted[extractor.name] = match[1] || match[0];
+            }
+        }
+        return extracted;
+    }
+
+    /**
+     * Extract boundary-based SIP messages from document
+     * 
+     * @param document - VS Code document to analyze
+     * @param service - Service type for boundary detection
+     * @returns Array of complete SIP messages with full context
+     */
+    public extractBoundaryBasedMessages(
+        document: vscode.TextDocument,
+        service: 'jabber' | 'sdl' | 'sip-proxy'
+    ): BoundaryBasedSipMessage[] {
+        const pattern = this.patterns.get(service);
+        if (!pattern) return [];
+        
+        const messages: BoundaryBasedSipMessage[] = [];
+        const text = document.getText();
+        const lines = text.split('\n');
+        
+        let currentMessage: Partial<BoundaryBasedSipMessage> | null = null;
+        
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
-
-            // Try to parse SIP message
-            const sipEvent = this.parseSipLine(line, i);
-            if (sipEvent) {
-                events.push(sipEvent);
-                continue;
+            
+            // Check for start boundary
+            if (new RegExp(pattern.startBoundaryPattern).test(line)) {
+                currentMessage = {
+                    service,
+                    startBoundaryLine: line,
+                    startLineNumber: i,
+                    intermediateLines: [],
+                    extractedParams: {}
+                };
             }
-
-            // Try to parse call event
-            const callEvent = this.parseCallEvent(line, i);
-            if (callEvent) {
-                events.push(callEvent);
-                continue;
-            }
-
-            // Try to parse generic message exchange
-            const messageEvent = this.parseMessageExchange(line, i);
-            if (messageEvent) {
-                events.push(messageEvent);
+            
+            // Check for end boundary
+            if (currentMessage && new RegExp(pattern.endBoundaryPattern).test(line)) {
+                currentMessage.endBoundaryLine = line;
+                currentMessage.endLineNumber = i;
+                
+                // Extract clean SIP content from intermediate lines
+                const sipContent = this.extractCleanSipContent(currentMessage.intermediateLines || [], service);
+                currentMessage.sipContent = sipContent;
+                
+                // Extract parameters from complete message
+                const messageText = [currentMessage.startBoundaryLine, ...(currentMessage.intermediateLines || []), currentMessage.endBoundaryLine].join('\n');
+                currentMessage.extractedParams = this.extractParameters(messageText, pattern.parameterExtractors);
+                
+                messages.push(currentMessage as BoundaryBasedSipMessage);
+                currentMessage = null;
+            } else if (currentMessage && currentMessage.intermediateLines) {
+                // Add intermediate lines
+                currentMessage.intermediateLines.push(line);
             }
         }
 
-        return events;
+        return messages;
     }
 
     /**
-     * Parse SIP protocol line
+     * Get extractors for a specific service
      */
-    private static parseSipLine(
-        line: string,
-        lineNumber: number,
-    ): LadderDiagramEvent | null {
-        // Pattern 1: SIP request line (INVITE, BYE, ACK, etc.)
-        // Example: "2024-01-15 10:23:45.123 [SIP] Sending INVITE from alice@domain.com to bob@domain.com"
-        const requestPattern =
-            /(?:sending|sent|transmit|tx|->|outgoing).*?(INVITE|BYE|ACK|CANCEL|REGISTER|OPTIONS|INFO|SUBSCRIBE|NOTIFY|REFER|UPDATE|PRACK|MESSAGE).*?(?:from|src).*?([^\s@]+@[^\s]+).*?(?:to|dst|dest).*?([^\s@]+@[^\s]+)/i;
-        const requestMatch = line.match(requestPattern);
+    public getExtractors(service: 'jabber' | 'sdl' | 'sip-proxy'): ParameterExtractor[] {
+        const pattern = this.patterns.get(service);
+        return pattern ? pattern.parameterExtractors : [];
+    }
 
-        if (requestMatch) {
-            const method = requestMatch[1].toUpperCase();
-            const from = this.cleanEndpoint(requestMatch[2]);
-            const to = this.cleanEndpoint(requestMatch[3]);
-            const timestamp = this.extractTimestamp(line);
+    /**
+     * Get available services
+     */
+    public getAvailableServices(): string[] {
+        return Array.from(this.patterns.keys());
+    }
 
-            if (timestamp) {
-                return {
-                    timestamp,
-                    line: lineNumber,
-                    from,
-                    to,
-                    message: `SIP ${method}`,
-                    method,
-                    direction: "outgoing",
-                };
-            }
+    /**
+     * Check if a line matches a service boundary
+     */
+    public isBoundaryLine(line: string, service: 'jabber' | 'sdl' | 'sip-proxy'): boolean {
+        const pattern = this.patterns.get(service);
+        if (!pattern) return false;
+        
+        return new RegExp(pattern.startBoundaryPattern).test(line) || 
+               new RegExp(pattern.endBoundaryPattern).test(line);
+    }
+}
+
+// Legacy SipCallFlowParser class for backward compatibility
+export class SipCallFlowParser {
+    private static boundaryExtractor = new BoundaryBasedSipExtractor();
+
+    /**
+     * Extract SIP messages using enhanced boundary-based detection
+     */
+    public static extractSipMessages(document: vscode.TextDocument): any[] {
+        // Try to auto-detect service type
+        const text = document.getText();
+        
+        console.log(`[DEBUG] SIP Extraction - Document length: ${text.length}`);
+        console.log(`[DEBUG] SIP Extraction - Contains 'sipio-': ${text.includes('sipio-')}`);
+        console.log(`[DEBUG] SIP Extraction - Contains '::End-Of-Sip-Message::': ${text.includes('::End-Of-Sip-Message::')}`);
+        console.log(`[DEBUG] SIP Extraction - Contains 'Incoming SIP': ${text.includes('Incoming SIP')}`);
+        console.log(`[DEBUG] SIP Extraction - Contains 'Outgoing SIP': ${text.includes('Outgoing SIP')}`);
+        console.log(`[DEBUG] SIP Extraction - Contains 'End-Of-Sip-Message': ${text.includes('End-Of-Sip-Message')}`);
+        
+        // Check for Jabber patterns
+        if (text.includes('sipio-') && text.includes('::End-Of-Sip-Message::')) {
+            console.log('[DEBUG] SIP Extraction - Detected Jabber format');
+            return this.boundaryExtractor.extractBoundaryBasedMessages(document, 'jabber');
+        }
+        
+        // Check for SDL patterns (more lenient - just need Incoming SIP)
+        if (text.includes('Incoming SIP')) {
+            console.log('[DEBUG] SIP Extraction - Detected SDL format');
+            return this.boundaryExtractor.extractBoundaryBasedMessages(document, 'sdl');
+        }
+        
+        // Check for SIP-Proxy patterns
+        if (text.includes('Incoming SIP') && text.includes('End-Of-Sip-Message')) {
+            console.log('[DEBUG] SIP Extraction - Detected SIP-Proxy format');
+            return this.boundaryExtractor.extractBoundaryBasedMessages(document, 'sip-proxy');
+        }
+        
+        // Fallback to Jabber
+        console.log('[DEBUG] SIP Extraction - Fallback to Jabber format');
+        return this.boundaryExtractor.extractBoundaryBasedMessages(document, 'jabber');
+    }
+
+    /**
+     * Generate raw SIP file content from extracted messages (original boundary lines)
+     */
+    public static generateRawSipFile(messages: any[]): string {
+        if (!messages || messages.length === 0) {
+            return '// No SIP messages found\n';
         }
 
-        // Pattern 2: SIP response line (100, 180, 200, etc.)
-        // Example: "2024-01-15 10:23:46.456 [SIP] Received 200 OK from bob@domain.com to alice@domain.com"
-        const responsePattern =
-            /(?:receiv|recv|rx|<-|incoming).*?(\d{3})\s*(\w+)?.*?(?:from|src).*?([^\s@]+@[^\s]+).*?(?:to|dst|dest).*?([^\s@]+@[^\s]+)/i;
-        const responseMatch = line.match(responsePattern);
+        let content = '';
+        content += '// Raw SIP Messages Extracted by Log Scout Analyzer\n';
+        content += `// Generated: ${new Date().toISOString()}\n`;
+        content += `// Total Messages: ${messages.length}\n`;
+        content += '// ======================================\n\n';
 
-        if (responseMatch) {
-            const code = parseInt(responseMatch[1]);
-            const reasonPhrase = responseMatch[2] || this.getReasonPhrase(code);
-            const from = this.cleanEndpoint(responseMatch[3]);
-            const to = this.cleanEndpoint(responseMatch[4]);
-            const timestamp = this.extractTimestamp(line);
-
-            if (timestamp) {
-                return {
-                    timestamp,
-                    line: lineNumber,
-                    from,
-                    to,
-                    message: `${code} ${reasonPhrase}`,
-                    responseCode: code,
-                    direction: "incoming",
-                };
+        for (let i = 0; i < messages.length; i++) {
+            const message = messages[i];
+            content += `// Message ${i + 1} - ${message.service || 'unknown'}\n`;
+            
+            // Output raw boundary lines and intermediate content exactly as found
+            if (message.startBoundaryLine) {
+                content += message.startBoundaryLine + '\n';
             }
+            
+            if (message.intermediateLines && message.intermediateLines.length > 0) {
+                for (const intermediateLine of message.intermediateLines) {
+                    content += intermediateLine + '\n';
+                }
+            }
+            
+            if (message.endBoundaryLine) {
+                content += message.endBoundaryLine + '\n';
+            }
+            
+            content += '\n';
+            
+            // Add extracted parameters as comments
+            if (message.extractedParams && Object.keys(message.extractedParams).length > 0) {
+                content += '// Extracted Parameters:\n';
+                for (const [key, value] of Object.entries(message.extractedParams)) {
+                    content += `// ${key}: ${value}\n`;
+                }
+                content += '\n';
+            }
+            
+            content += '// ======================================\n\n';
         }
 
-        // Pattern 3: Compact SIP notation
-        // Example: "10:23:45 SIP: alice@example.com -> bob@example.com: INVITE"
-        const compactPattern =
-            /SIP[:\s]+([^\s@]+@[^\s]+)\s*(?:->|→)\s*([^\s@]+@[^\s]+)[:\s]+(\w+)/i;
-        const compactMatch = line.match(compactPattern);
+        return content;
+    }
 
-        if (compactMatch) {
-            const from = this.cleanEndpoint(compactMatch[1]);
-            const to = this.cleanEndpoint(compactMatch[2]);
-            const methodOrCode = compactMatch[3];
-            const timestamp = this.extractTimestamp(line);
+    /**
+     * Generate SIP ladder diagram from extracted messages
+     */
+    public static generateLadderDiagram(messages: any[]): string {
+        if (!messages || messages.length === 0) {
+            return '// No SIP messages found for ladder diagram\n';
+        }
 
-            if (timestamp) {
-                // Check if it's a response code or method
-                const code = parseInt(methodOrCode);
-                if (!isNaN(code) && code >= 100 && code <= 699) {
-                    return {
-                        timestamp,
-                        line: lineNumber,
-                        from,
-                        to,
-                        message: `${code} ${this.getReasonPhrase(code)}`,
-                        responseCode: code,
-                        direction: "incoming",
-                    };
-                } else {
-                    return {
-                        timestamp,
-                        line: lineNumber,
-                        from,
-                        to,
-                        message: `SIP ${methodOrCode}`,
-                        method: methodOrCode.toUpperCase(),
-                        direction: "outgoing",
-                    };
+        let content = '';
+        content += '// SIP Ladder Diagram\n';
+        content += `// Generated: ${new Date().toISOString()}\n`;
+        content += `// Messages: ${messages.length}\n`;
+        content += '// ======================================\n\n';
+
+        // Group messages by call flow
+        const callFlows = this.groupMessagesByCall(messages);
+        
+        for (const [callId, flowMessages] of Object.entries(callFlows)) {
+            content += `// Call Flow: ${callId}\n`;
+            content += '// ======================================\n';
+            
+            // Extract unique participants
+            const participants = this.extractParticipants(flowMessages);
+            
+            // Create header
+            content += '     ';
+            for (const participant of participants) {
+                content += `| ${participant} `;
+            }
+            content += '\n';
+            content += '-----';
+            for (let i = 0; i < participants.length; i++) {
+                content += '--------';
+            }
+            content += '\n';
+            
+            // Add each message to the ladder
+            for (const message of flowMessages) {
+                const from = this.extractParticipant(message, 'from');
+                const to = this.extractParticipant(message, 'to');
+                const method = this.extractMethod(message);
+                const timestamp = this.extractTimestamp(message);
+                
+                const fromIndex = participants.indexOf(from);
+                const toIndex = participants.indexOf(to);
+                
+                // Create message line
+                content += '     |';
+                for (let i = 0; i < participants.length; i++) {
+                    if (i === fromIndex) {
+                        content += `--- ${method} -->`;
+                    } else if (i === toIndex) {
+                        content += `<-- ${method} ---`;
+                    } else {
+                        content += '               ';
+                    }
+                    content += '|';
+                }
+                content += '\n';
+                
+                // Add timestamp
+                if (timestamp) {
+                    content += `     | ${timestamp}\n`;
+                }
+                content += '     |';
+                for (let i = 0; i < participants.length; i++) {
+                    if (i === fromIndex || i === toIndex) {
+                        content += '---------------';
+                    } else {
+                        content += '               ';
+                    }
+                    content += '|';
+                }
+                content += '\n\n';
+            }
+            
+            content += '\n';
+        }
+
+        return content;
+    }
+
+    /**
+     * Group messages by Call-ID for ladder diagram
+     */
+    private static groupMessagesByCall(messages: any[]): Record<string, any[]> {
+        const callGroups: Record<string, any[]> = {};
+        
+        for (const message of messages) {
+            const callId = this.extractCallId(message);
+            if (callId) {
+                if (!callGroups[callId]) {
+                    callGroups[callId] = [];
+                }
+                callGroups[callId].push(message);
+            }
+        }
+        
+        return callGroups;
+    }
+
+    /**
+     * Extract unique participants from messages
+     */
+    private static extractParticipants(messages: any[]): string[] {
+        const participants = new Set<string>();
+        
+        for (const message of messages) {
+            const from = this.extractParticipant(message, 'from');
+            const to = this.extractParticipant(message, 'to');
+            if (from) participants.add(from);
+            if (to) participants.add(to);
+        }
+        
+        return Array.from(participants);
+    }
+
+    /**
+     * Extract participant from message
+     */
+    private static extractParticipant(message: any, type: 'from' | 'to'): string {
+        // Try extracted params first
+        if (message.extractedParams) {
+            const fromHeader = message.extractedParams.fromHeader;
+            const toHeader = message.extractedParams.toHeader;
+            
+            if (type === 'from' && fromHeader) {
+                // Extract URI from From header
+                const match = fromHeader.match(/sip:([^;@\s]+)/);
+                return match ? match[1] : fromHeader;
+            }
+            
+            if (type === 'to' && toHeader) {
+                // Extract URI from To header
+                const match = toHeader.match(/sip:([^;@\s]+)/);
+                return match ? match[1] : toHeader;
+            }
+        }
+        
+        // Fallback to service-based extraction
+        if (message.service === 'jabber') {
+            const lines = message.intermediateLines || [];
+            for (const line of lines) {
+                if (line.includes('From:')) {
+                    const match = line.match(/entity="([^"]+)"/);
+                    return match ? match[1] : 'Unknown';
+                }
+                if (line.includes('To:')) {
+                    const match = line.match(/="([^"]+)"/);
+                    return match ? match[1] : 'Unknown';
                 }
             }
         }
-
-        return null;
+        
+        return type === 'from' ? 'Unknown' : 'Unknown';
     }
 
     /**
-     * Parse call event (non-SIP but call-related)
+     * Extract SIP method from message
      */
-    private static parseCallEvent(
-        line: string,
-        lineNumber: number,
-    ): LadderDiagramEvent | null {
-        // Pattern: Call initiation
-        // Example: "10:23:45 User alice@example.com initiated call to bob@example.com"
-        const callInitPattern =
-            /(?:user|caller|from)[:\s]+([^\s@]+@[^\s]+).*?(?:initiat|start|plac|dial|call).*?(?:to|with)[:\s]+([^\s@]+@[^\s]+)/i;
-        const callInitMatch = line.match(callInitPattern);
-
-        if (callInitMatch) {
-            const from = this.cleanEndpoint(callInitMatch[1]);
-            const to = this.cleanEndpoint(callInitMatch[2]);
-            const timestamp = this.extractTimestamp(line);
-
-            if (timestamp) {
-                return {
-                    timestamp,
-                    line: lineNumber,
-                    from,
-                    to,
-                    message: "Call Initiated",
-                    method: "CALL_START",
-                    direction: "outgoing",
-                };
+    private static extractMethod(message: any): string {
+        if (message.extractedParams && message.extractedParams.sipMethod) {
+            return message.extractedParams.sipMethod;
+        }
+        
+        // Fallback to parsing intermediate lines
+        const lines = message.intermediateLines || [];
+        for (const line of lines) {
+            const match = line.match(/\b(INVITE|BYE|ACK|CANCEL|REGISTER|OPTIONS|INFO|SUBSCRIBE|NOTIFY|REFER|UPDATE|PRACK|MESSAGE)\b/);
+            if (match) {
+                return match[1];
             }
         }
-
-        // Pattern: Call termination
-        const callEndPattern =
-            /(?:call|session).*?(?:end|terminat|disconnect|hung\s*up|complet).*?(?:between|from|with)[:\s]+([^\s@]+@[^\s]+).*?(?:and|to)[:\s]+([^\s@]+@[^\s]+)/i;
-        const callEndMatch = line.match(callEndPattern);
-
-        if (callEndMatch) {
-            const from = this.cleanEndpoint(callEndMatch[1]);
-            const to = this.cleanEndpoint(callEndMatch[2]);
-            const timestamp = this.extractTimestamp(line);
-
-            if (timestamp) {
-                return {
-                    timestamp,
-                    line: lineNumber,
-                    from,
-                    to,
-                    message: "Call Ended",
-                    method: "CALL_END",
-                    direction: "outgoing",
-                };
-            }
-        }
-
-        // Pattern: Call answered
-        const callAnswerPattern =
-            /([^\s@]+@[^\s]+).*?(?:answer|accept|pick).*?(?:call|from)[:\s]+([^\s@]+@[^\s]+)/i;
-        const callAnswerMatch = line.match(callAnswerPattern);
-
-        if (callAnswerMatch) {
-            const from = this.cleanEndpoint(callAnswerMatch[2]);
-            const to = this.cleanEndpoint(callAnswerMatch[1]);
-            const timestamp = this.extractTimestamp(line);
-
-            if (timestamp) {
-                return {
-                    timestamp,
-                    line: lineNumber,
-                    from,
-                    to,
-                    message: "Call Answered",
-                    method: "CALL_ANSWER",
-                    direction: "incoming",
-                };
-            }
-        }
-
-        return null;
+        
+        return 'UNKNOWN';
     }
 
     /**
-     * Parse generic message exchange
+     * Extract Call-ID from message
      */
-    private static parseMessageExchange(
-        line: string,
-        lineNumber: number,
-    ): LadderDiagramEvent | null {
-        // Pattern: Generic message format
-        // Example: "Client -> Server: REGISTER" or "Server -> Client: OK"
-        const messagePattern =
-            /([A-Za-z0-9_\-\.@]+)\s*(?:->|→|⟶|=>)\s*([A-Za-z0-9_\-\.@]+)[:\s]+(.+?)(?:\s|$)/;
-        const messageMatch = line.match(messagePattern);
-
-        if (messageMatch) {
-            const from = this.cleanEndpoint(messageMatch[1]);
-            const to = this.cleanEndpoint(messageMatch[2]);
-            const message = messageMatch[3].trim();
-            const timestamp = this.extractTimestamp(line);
-
-            if (timestamp && from && to) {
-                return {
-                    timestamp,
-                    line: lineNumber,
-                    from,
-                    to,
-                    message,
-                    direction: "outgoing",
-                };
+    private static extractCallId(message: any): string {
+        // First try extracted params
+        if (message.extractedParams && message.extractedParams.callId) {
+            console.log(`[DEBUG] Found extracted Call-ID: ${message.extractedParams.callId}`);
+            return message.extractedParams.callId;
+        }
+        
+        // Fallback: parse from clean SIP content
+        if (message.sipContent) {
+            const callIdMatch = message.sipContent.match(/Call-ID:\s*([^\r\n]+)/i);
+            if (callIdMatch) {
+                const callId = callIdMatch[1].trim();
+                console.log(`[DEBUG] Extracted Call-ID from SIP content: ${callId}`);
+                return callId;
             }
         }
-
-        // Pattern: Sent/Received format
-        // Example: "Sent to Server: REGISTER" or "Received from Client: OK"
-        const sentRecvPattern =
-            /(?:sent|transmit|tx)\s+(?:to|toward)[:\s]+([A-Za-z0-9_\-\.@]+)[:\s]+(.+?)(?:\s|$)|(?:receiv|rx|from)\s+(?:from)?[:\s]+([A-Za-z0-9_\-\.@]+)[:\s]+(.+?)(?:\s|$)/i;
-        const sentRecvMatch = line.match(sentRecvPattern);
-
-        if (sentRecvMatch) {
-            const timestamp = this.extractTimestamp(line);
-            if (timestamp) {
-                if (sentRecvMatch[1]) {
-                    // Sent message
-                    return {
-                        timestamp,
-                        line: lineNumber,
-                        from: "Local",
-                        to: this.cleanEndpoint(sentRecvMatch[1]),
-                        message: sentRecvMatch[2].trim(),
-                        direction: "outgoing",
-                    };
-                } else if (sentRecvMatch[3]) {
-                    // Received message
-                    return {
-                        timestamp,
-                        line: lineNumber,
-                        from: this.cleanEndpoint(sentRecvMatch[3]),
-                        to: "Local",
-                        message: sentRecvMatch[4].trim(),
-                        direction: "incoming",
-                    };
-                }
+        
+        // Fallback: parse from intermediate lines
+        const lines = message.intermediateLines || [];
+        for (const line of lines) {
+            const match = line.match(/Call-ID:\s*([^\r\n]+)/i);
+            if (match) {
+                const callId = match[1].trim();
+                console.log(`[DEBUG] Extracted Call-ID from intermediate lines: ${callId}`);
+                return callId;
             }
         }
-
-        return null;
+        
+        console.log(`[DEBUG] No Call-ID found, returning 'unknown-call'`);
+        return 'unknown-call';
     }
 
     /**
-     * Extract timestamp from line
+     * Extract timestamp from message
      */
-    private static extractTimestamp(line: string): Date | null {
-        // Pattern 1: ISO format (2024-01-15T10:23:45.123Z or 2024-01-15 10:23:45.123)
-        const isoPattern =
-            /(\d{4}[-\/]\d{2}[-\/]\d{2}[T\s]\d{2}:\d{2}:\d{2}(?:\.\d{3})?(?:Z|[+-]\d{2}:?\d{2})?)/;
-        const isoMatch = line.match(isoPattern);
-        if (isoMatch) {
-            const date = new Date(isoMatch[1].replace(" ", "T"));
-            if (!isNaN(date.getTime())) {
-                return date;
-            }
+    private static extractTimestamp(message: any): string {
+        if (message.extractedParams && message.extractedParams.logTimestamp) {
+            return message.extractedParams.logTimestamp;
+        }
+        
+        // Try to extract from start boundary line
+        if (message.startBoundaryLine) {
+            const match = message.startBoundaryLine.match(/\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}/);
+            return match ? match[0] : '';
+        }
+        
+        return '';
+    }
+
+    /**
+     * Generate SIP file content from extracted messages
+     */
+    public static generateSipFile(messages: any[]): string {
+        if (!messages || messages.length === 0) {
+            return '// No SIP messages found\n';
         }
 
-        // Pattern 2: Time only (HH:MM:SS.mmm)
-        const timePattern = /(\d{2}):(\d{2}):(\d{2})(?:\.(\d{3}))?/;
-        const timeMatch = line.match(timePattern);
-        if (timeMatch) {
-            const now = new Date();
-            now.setHours(parseInt(timeMatch[1]));
-            now.setMinutes(parseInt(timeMatch[2]));
-            now.setSeconds(parseInt(timeMatch[3]));
-            now.setMilliseconds(timeMatch[4] ? parseInt(timeMatch[4]) : 0);
-            return now;
-        }
+        let content = '';
+        content += '// SIP Messages Extracted by Log Scout Analyzer\n';
+        content += `// Generated: ${new Date().toISOString()}\n`;
+        content += `// Total Messages: ${messages.length}\n`;
+        content += '// ======================================\n\n';
 
-        // Pattern 3: Timestamp in milliseconds
-        const timestampPattern = /\b(\d{13})\b/;
-        const timestampMatch = line.match(timestampPattern);
-        if (timestampMatch) {
-            const date = new Date(parseInt(timestampMatch[1]));
-            if (!isNaN(date.getTime())) {
-                return date;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Clean endpoint string
-     */
-    private static cleanEndpoint(endpoint: string): string {
-        // Remove common prefixes/suffixes
-        let cleaned = endpoint
-            .replace(/^(sip:|sips:|tel:)/i, "")
-            .replace(/[;\s].*$/, "") // Remove parameters
-            .trim();
-
-        // Extract username if full URI
-        const uriMatch = cleaned.match(/^([^@]+)@/);
-        if (uriMatch) {
-            return uriMatch[1];
-        }
-
-        // Remove port numbers
-        cleaned = cleaned.replace(/:\d+$/, "");
-
-        return cleaned || endpoint;
-    }
-
-    /**
-     * Get reason phrase for SIP response code
-     */
-    private static getReasonPhrase(code: number): string {
-        const phrases: Record<number, string> = {
-            // 1xx Provisional
-            100: "Trying",
-            180: "Ringing",
-            181: "Call Is Being Forwarded",
-            182: "Queued",
-            183: "Session Progress",
-
-            // 2xx Success
-            200: "OK",
-            202: "Accepted",
-
-            // 3xx Redirection
-            300: "Multiple Choices",
-            301: "Moved Permanently",
-            302: "Moved Temporarily",
-            305: "Use Proxy",
-            380: "Alternative Service",
-
-            // 4xx Client Error
-            400: "Bad Request",
-            401: "Unauthorized",
-            402: "Payment Required",
-            403: "Forbidden",
-            404: "Not Found",
-            405: "Method Not Allowed",
-            406: "Not Acceptable",
-            407: "Proxy Authentication Required",
-            408: "Request Timeout",
-            410: "Gone",
-            413: "Request Entity Too Large",
-            414: "Request-URI Too Long",
-            415: "Unsupported Media Type",
-            416: "Unsupported URI Scheme",
-            420: "Bad Extension",
-            421: "Extension Required",
-            423: "Interval Too Brief",
-            480: "Temporarily Unavailable",
-            481: "Call/Transaction Does Not Exist",
-            482: "Loop Detected",
-            483: "Too Many Hops",
-            484: "Address Incomplete",
-            485: "Ambiguous",
-            486: "Busy Here",
-            487: "Request Terminated",
-            488: "Not Acceptable Here",
-            491: "Request Pending",
-            493: "Undecipherable",
-
-            // 5xx Server Error
-            500: "Server Internal Error",
-            501: "Not Implemented",
-            502: "Bad Gateway",
-            503: "Service Unavailable",
-            504: "Server Time-out",
-            505: "Version Not Supported",
-            513: "Message Too Large",
-
-            // 6xx Global Failure
-            600: "Busy Everywhere",
-            603: "Decline",
-            604: "Does Not Exist Anywhere",
-            606: "Not Acceptable",
-        };
-
-        return phrases[code] || "Unknown";
-    }
-
-    /**
-     * Filter events by call ID or session
-     */
-    public static filterByCallId(
-        events: LadderDiagramEvent[],
-        _callId: string,
-    ): LadderDiagramEvent[] {
-        // This would require parsing Call-ID from SIP headers
-        // For now, return all events
-        return events;
-    }
-
-    /**
-     * Group events into call sessions
-     */
-    public static groupIntoSessions(
-        events: LadderDiagramEvent[],
-    ): LadderDiagramEvent[][] {
-        const sessions: LadderDiagramEvent[][] = [];
-        let currentSession: LadderDiagramEvent[] = [];
-
-        for (const event of events) {
-            if (event.method === "INVITE" || event.method === "CALL_START") {
-                // Start new session
-                if (currentSession.length > 0) {
-                    sessions.push(currentSession);
-                }
-                currentSession = [event];
-            } else if (event.method === "BYE" || event.method === "CALL_END") {
-                // End current session
-                currentSession.push(event);
-                sessions.push(currentSession);
-                currentSession = [];
+        for (let i = 0; i < messages.length; i++) {
+            const message = messages[i];
+            content += `// Message ${i + 1} - ${message.service || 'unknown'}\n`;
+            
+            // Use clean SIP content if available, otherwise fall back to raw
+            if (message.sipContent) {
+                content += message.sipContent + '\n';
             } else {
-                // Add to current session
-                currentSession.push(event);
+                // Fallback to original boundary-based output
+                if (message.startBoundaryLine) {
+                    content += message.startBoundaryLine + '\n';
+                }
+                
+                if (message.intermediateLines && message.intermediateLines.length > 0) {
+                    // Add all intermediate lines to preserve complete message
+                    for (const intermediateLine of message.intermediateLines) {
+                        content += intermediateLine + '\n';
+                    }
+                }
+                
+                if (message.endBoundaryLine) {
+                    content += message.endBoundaryLine + '\n';
+                }
             }
+            
+            content += '\n';
+            
+            // Add extracted parameters as comments
+            if (message.extractedParams && Object.keys(message.extractedParams).length > 0) {
+                content += '// Extracted Parameters:\n';
+                for (const [key, value] of Object.entries(message.extractedParams)) {
+                    content += `// ${key}: ${value}\n`;
+                }
+                content += '\n';
+            }
+            
+            content += '// ======================================\n\n';
         }
 
-        // Add remaining session
-        if (currentSession.length > 0) {
-            sessions.push(currentSession);
-        }
-
-        return sessions;
+        return content;
     }
 }

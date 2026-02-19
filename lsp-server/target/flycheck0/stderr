@@ -1,0 +1,8 @@
+error: failed to load manifest for workspace member `C:\Users\mitchong\code\log_scout_analyzer\crates/case-management`
+referenced by workspace at `C:\Users\mitchong\code\log_scout_analyzer\Cargo.toml`
+
+Caused by:
+  failed to read `C:\Users\mitchong\code\log_scout_analyzer\crates\case-management\Cargo.toml`
+
+Caused by:
+  The system cannot find the path specified. (os error 3)

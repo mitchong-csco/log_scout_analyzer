@@ -2,9 +2,7 @@
 ///
 /// Monitors patterns during LSP processing and automatically marks them
 /// for improvement when quality issues are detected.
-use crate::pattern_loader::{
-    IssueCategory, MarkingStatus, OverrideFile, PatternOverride, Priority,
-};
+use crate::pattern_loader::{IssueCategory, MarkingStatus, PatternOverride, Priority};
 use chrono::Utc;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
@@ -292,7 +290,7 @@ pub fn mark_patterns_from_runtime_issues(
 /// Export runtime issues to override file
 pub fn export_runtime_issues(
     monitor: &RuntimeQualityMonitor,
-    mut overrides: HashMap<String, PatternOverride>,
+    overrides: HashMap<String, PatternOverride>,
     output_path: &str,
 ) -> Result<usize, Box<dyn std::error::Error>> {
     // Mark patterns based on runtime issues

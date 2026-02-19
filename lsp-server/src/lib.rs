@@ -2,9 +2,11 @@
 //!
 //! Core modules for the Language Server Protocol implementation.
 
+pub mod bundle;
 pub mod config;
 pub mod diagnostics;
 pub mod document;
+pub mod mongodb;
 pub mod pattern_engine;
 pub mod pattern_loader;
 pub mod pattern_quality_evaluator;

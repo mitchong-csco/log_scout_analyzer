@@ -37,33 +37,34 @@ exports.activate = activate;
 exports.deactivate = deactivate;
 const vscode = __importStar(require("vscode"));
 const path = __importStar(require("path"));
-const fs = __importStar(require("fs"));
 const buildInfo_1 = require("./buildInfo");
 const resultsTreeProvider_1 = require("./resultsTreeProvider");
 const categoriesTreeProvider_1 = require("./categoriesTreeProvider");
-const timelineTreeProvider_1 = require("./timelineTreeProvider");
 const analyzerTreeProvider_1 = require("./analyzerTreeProvider");
+const filterTreeProvider_1 = require("./filterTreeProvider");
 const fileLogger_1 = require("./fileLogger");
 const gutterDecorator_1 = require("./gutterDecorator");
 const splitViewProvider_1 = require("./splitViewProvider");
 const timelineVisualization_1 = require("./timelineVisualization");
-const sipCallFlowParser_1 = require("./sipCallFlowParser");
 const lspClient_1 = require("./lspClient");
+const sipCallFlowParser_1 = require("./sipCallFlowParser");
 const patternViewerPanel_1 = require("./patternViewerPanel");
 const scoutAnalyzerPanel_1 = require("./scoutAnalyzerPanel");
 const annotationDashboardPanel_1 = require("./annotationDashboardPanel");
 const scenarioManager_1 = require("./scenarioManager");
 const patternOverrideManager_1 = require("./patternOverrideManager");
-const scoutInventorProvider_1 = require("./scoutInventorProvider");
-const annotationRenderer_1 = require("./annotationRenderer");
-const cachedFilesTreeProvider_1 = require("./cachedFilesTreeProvider");
+const patternOverrideUI_1 = require("./patternOverrideUI");
+const patternOverrideTreeProvider_1 = require("./patternOverrideTreeProvider");
+const patternOverrideCodeActions_1 = require("./patternOverrideCodeActions");
+const bundleTreeProvider_1 = require("./bundleTreeProvider");
 let outputChannel;
 let statusBarItem;
+let patternStatusBarItem;
 let resultsTreeProvider;
 let categoriesTreeProvider;
-let timelineTreeProvider;
 let cachedFilesTreeProvider;
 let analyzerTreeProvider;
+let filterTreeProvider;
 let fileLogger;
 let gutterDecorator;
 let annotationRenderer;
@@ -74,6 +75,10 @@ let highlightDecoration;
 let highlightTimeout;
 let splitViewProvider;
 let timelineVisualization;
+let caseManager;
+let casesTreeProvider;
+let patternOverrideTreeProvider;
+let bundleTreeProvider;
 // Store all results from last analysis for category filtering
 let allResults = [];
 // Analysis cache: stores results per file URI
@@ -81,7 +86,7 @@ const analysisCache = new Map();
 // Constants for cache management
 const MAX_CACHE_ENTRIES = 50;
 const CACHE_MAX_AGE_DAYS = 7;
-const CACHE_STORAGE_KEY = 'logScoutAnalyzer.persistedCache';
+const CACHE_STORAGE_KEY = "logScoutAnalyzer.persistedCache";
 let saveTimeout;
 let extensionContext;
 // Load persisted cache from storage
@@ -126,9 +131,9 @@ async function loadPersistedCache(context) {
             }
         }
         if (outputChannel && loadedCount > 0) {
-            outputChannel.appendLine(`📦 Restored ${loadedCount} cached file${loadedCount !== 1 ? 's' : ''} from storage`);
+            outputChannel.appendLine(`📦 Restored ${loadedCount} cached file${loadedCount !== 1 ? "s" : ""} from storage`);
             if (expiredCount > 0) {
-                outputChannel.appendLine(`   Skipped ${expiredCount} expired entr${expiredCount !== 1 ? 'ies' : 'y'}`);
+                outputChannel.appendLine(`   Skipped ${expiredCount} expired entr${expiredCount !== 1 ? "ies" : "y"}`);
             }
         }
         // Update UI if cache was restored
@@ -181,8 +186,7 @@ function pruneCache() {
         return;
     }
     // Sort by timestamp (newest first), keep only MAX_CACHE_ENTRIES
-    const sorted = Array.from(analysisCache.entries())
-        .sort((a, b) => b[1].timestamp.getTime() - a[1].timestamp.getTime());
+    const sorted = Array.from(analysisCache.entries()).sort((a, b) => b[1].timestamp.getTime() - a[1].timestamp.getTime());
     analysisCache.clear();
     sorted.slice(0, MAX_CACHE_ENTRIES).forEach(([uri, entry]) => {
         analysisCache.set(uri, entry);
@@ -190,7 +194,7 @@ function pruneCache() {
     if (outputChannel) {
         const pruned = sorted.length - MAX_CACHE_ENTRIES;
         if (pruned > 0) {
-            outputChannel.appendLine(`🧹 Pruned ${pruned} old cache entr${pruned !== 1 ? 'ies' : 'y'}`);
+            outputChannel.appendLine(`🧹 Pruned ${pruned} old cache entr${pruned !== 1 ? "ies" : "y"}`);
         }
     }
 }
@@ -216,19 +220,220 @@ async function shouldUseCachedResults(uri, cachedEntry) {
     }
 }
 // Wait for LSP diagnostics to be available (with timeout)
-async function waitForDiagnostics(uri, maxWaitMs = 5000) {
-    const startTime = Date.now();
-    const pollInterval = 100; // Check every 100ms
-    while (Date.now() - startTime < maxWaitMs) {
-        const diagnostics = vscode.languages.getDiagnostics(uri);
-        if (diagnostics.length > 0) {
-            return diagnostics;
-        }
-        // Wait before polling again
-        await new Promise(resolve => setTimeout(resolve, pollInterval));
+/**
+ * =============================================================================
+ * UNIFIED ANALYSIS FLOW ARCHITECTURE
+ * =============================================================================
+ *
+ * This extension uses a unified, event-driven flow for log analysis:
+ *
+ * 1. LSP SERVER AUTO-ANALYZES
+ *    - When any log file is opened, the LSP server automatically analyzes it
+ *    - LSP server publishes diagnostics to VS Code
+ *    - Result: Problems panel is automatically populated
+ *
+ * 2. DIAGNOSTICS CHANGE EVENT
+ *    - VS Code fires onDidChangeDiagnostics event
+ *    - handleDiagnosticsChange() is called with the diagnostics
+ *    - Diagnostics are converted to ResultItems
+ *    - Results are cached in analysisCache (in-memory + persistent)
+ *    - If file is active editor: Results tree, gutter decorations, etc. are updated
+ *
+ * 3. MANUAL COMMANDS
+ *    - "Analyze File" command: Calls analyzeDocument() to force UI refresh from cache
+ *    - Directory analysis: Opens files, waits for LSP diagnostics, lets auto-flow handle caching
+ *
+ * This eliminates duplicate analysis logic and ensures a single source of truth.
+ * =============================================================================
+ */
+/**
+ * Unified diagnostic handler - converts LSP diagnostics to ResultItems and updates UI
+ * This is event-driven and eliminates polling
+ */
+function handleDiagnosticsChange(uri, diagnostics) {
+    const fileName = uri.fsPath.split(/[\\\/]/).pop();
+    if (outputChannel) {
+        outputChannel.appendLine(`[${new Date().toISOString()}] 📊 handleDiagnosticsChange()`);
+        outputChannel.appendLine(`   → File: ${fileName}`);
+        outputChannel.appendLine(`   → Diagnostics: ${diagnostics.length}`);
     }
-    // Timeout reached - return whatever we have (might be empty)
-    return vscode.languages.getDiagnostics(uri);
+    // Get document from workspace
+    const document = vscode.workspace.textDocuments.find((doc) => doc.uri.toString() === uri.toString());
+    if (!document) {
+        if (outputChannel) {
+            outputChannel.appendLine(`   ⚠️ Document not found in workspace`);
+        }
+        return;
+    }
+    // Check if this is a log file
+    if (!isLogFile(document)) {
+        if (outputChannel) {
+            outputChannel.appendLine(`   ℹ️ Not a log file, skipping`);
+        }
+        return;
+    }
+    const editor = vscode.window.activeTextEditor;
+    const isActiveEditor = editor && editor.document.uri.toString() === uri.toString();
+    // Convert diagnostics to ResultItems
+    const results = diagnostics.map((diag) => {
+        const severity = diag.severity === vscode.DiagnosticSeverity.Error
+            ? "error"
+            : diag.severity === vscode.DiagnosticSeverity.Warning
+                ? "warning"
+                : diag.severity === vscode.DiagnosticSeverity.Hint
+                    ? "debug"
+                    : "info";
+        const line = document.lineAt(diag.range.start.line);
+        const messageLines = diag.message.split("\n");
+        const mainMessage = messageLines[0];
+        const extractedTimestamp = extractTimestamp(line.text);
+        let category = undefined;
+        let patternId = undefined;
+        let patternName = undefined;
+        const diagWithData = diag;
+        if (diagWithData.data &&
+            typeof diagWithData.data === "object" &&
+            "category" in diagWithData.data) {
+            category = diagWithData.data.category;
+        }
+        if (!category) {
+            category = extractCategory(line.text);
+        }
+        if (diagWithData.data &&
+            typeof diagWithData.data === "object" &&
+            "patternName" in diagWithData.data) {
+            patternName = diagWithData.data.patternName;
+        }
+        if (diag.code && typeof diag.code === "string") {
+            patternId = diag.code;
+        }
+        // Extract matched text - prefer from LSP data, fallback to range extraction
+        let matchedText;
+        if (diagWithData.data &&
+            typeof diagWithData.data === "object" &&
+            "matchedText" in diagWithData.data &&
+            typeof diagWithData.data.matchedText === "string") {
+            matchedText = diagWithData.data.matchedText;
+        }
+        else {
+            // Fallback: extract from line using range
+            matchedText =
+                line.text
+                    .substring(diag.range.start.character, Math.min(diag.range.end.character, diag.range.start.character + 100))
+                    .trim() || line.text.trim();
+        }
+        // Extract new structured fields from LSP (snake_case standard)
+        const template = diagWithData.data?.template;
+        const merged_template = diagWithData.data?.merged_template;
+        const pattern_regex = diagWithData.data?.pattern_regex;
+        // Extract ALL diagnostic data (includes all TagScout annotation fields)
+        const allDiagnosticData = diagWithData.data
+            ? { ...diagWithData.data }
+            : undefined;
+        // Debug logging
+        if (outputChannel) {
+            outputChannel.appendLine(`[DEBUG] Diagnostic data keys: ${diagWithData.data ? Object.keys(diagWithData.data).join(", ") : "none"}`);
+            outputChannel.appendLine(`[DEBUG] Raw diagnostic data:`);
+            outputChannel.appendLine(`  template: ${diagWithData.data?.template}`);
+            outputChannel.appendLine(`  merged_template: ${diagWithData.data?.merged_template}`);
+            outputChannel.appendLine(`  matched_text: ${diagWithData.data?.matched_text}`);
+            outputChannel.appendLine(`  log_line: ${diagWithData.data?.log_line}`);
+            if (merged_template) {
+                outputChannel.appendLine(`[DEBUG] Final merged_template value: ${merged_template}`);
+            }
+            else {
+                outputChannel.appendLine(`[DEBUG] merged_template is undefined/null`);
+            }
+        }
+        return {
+            severity,
+            line: diag.range.start.line,
+            column: diag.range.start.character,
+            message: merged_template || mainMessage, // Prefer merged_template from LSP
+            matchedText: matchedText,
+            context: line.text,
+            timestamp: extractedTimestamp,
+            category: category,
+            patternId: patternId,
+            patternName: patternName,
+            uri: document.uri,
+            template: template,
+            merged_template: merged_template,
+            extracted_parameters: diagWithData.data?.extracted_parameters,
+            pattern_regex: pattern_regex,
+            log_line: diagWithData.data?.log_line,
+            // Include ALL diagnostic data from LSP (all TagScout fields)
+            diagnosticData: allDiagnosticData,
+        };
+    });
+    // Count by severity
+    const errorCount = results.filter((r) => r.severity === "error").length;
+    const warningCount = results.filter((r) => r.severity === "warning").length;
+    const infoCount = results.filter((r) => r.severity === "info").length;
+    const debugCount = results.filter((r) => r.severity === "debug").length;
+    // Cache results
+    analysisCache.set(uri.toString(), {
+        results,
+        timestamp: new Date(),
+        errorCount,
+        warningCount,
+        infoCount,
+        debugCount,
+    });
+    if (outputChannel) {
+        outputChannel.appendLine(`   ✓ Cached: ${errorCount}E ${warningCount}W ${infoCount}I ${debugCount}D`);
+    }
+    // Persist cache
+    if (extensionContext) {
+        debouncedSaveCache(extensionContext);
+    }
+    // Update Results tree views for all log files
+    allResults = results;
+    // Feed all results to filter provider - it will apply filters and update Results tree
+    filterTreeProvider?.setResults(results);
+    // Legacy views still updated for backward compatibility
+    categoriesTreeProvider?.setResults(results);
+    if (outputChannel) {
+        outputChannel.appendLine(`   ✓ Updated Results/Filters/Categories/Timeline views`);
+    }
+    // Update gutter decorations only for the active editor
+    if (isActiveEditor && editor && gutterDecorator) {
+        const fileName = editor.document.uri.fsPath.split(/[\\\/]/).pop();
+        const annotations = results.map((r) => ({
+            line: r.line,
+            severity: r.severity,
+            message: r.message,
+            matchedText: r.matchedText,
+            context: r.context,
+            timestamp: r.timestamp,
+            category: r.category,
+            pattern: undefined,
+            patternId: r.patternId,
+            fileName: fileName,
+            // New structured fields from LSP (snake_case standard)
+            template: r.template,
+            merged_template: r.merged_template,
+            extracted_parameters: r.extracted_parameters,
+            pattern_regex: r.pattern_regex,
+            log_line: r.log_line,
+        }));
+        gutterDecorator.updateDecorations(editor, annotations);
+        if (annotationRenderer) {
+            annotationRenderer.render(editor, annotations);
+        }
+        if (outputChannel) {
+            outputChannel.appendLine(`   ✓ Updated gutter decorations (active editor)`);
+        }
+    }
+    else if (outputChannel) {
+        outputChannel.appendLine(`   ℹ️ Skipped gutter decorations (not active editor)`);
+    }
+    // Always update cached files view
+    updateCachedFilesView();
+    updateStatusBar();
+    if (outputChannel) {
+        outputChannel.appendLine(`   ✓ Updated CachedFiles view and status bar`);
+    }
 }
 function activate(context) {
     // Store context for cache persistence
@@ -254,6 +459,15 @@ function activate(context) {
             outputChannel.appendLine(`⚠ Cache load failed: ${error.message}`);
         }
     });
+    // Initialize File Logger first (needed by LSP client)
+    fileLogger = new fileLogger_1.FileLogger(context);
+    context.subscriptions.push({
+        dispose: () => fileLogger?.dispose(),
+    });
+    fileLogger.log("Log Scout Analyzer initialized");
+    fileLogger.log(`Build: ${buildInfo_1.BUILD_INFO.version} (${buildInfo_1.BUILD_INFO.buildTimestamp})`);
+    // Connect file logger to LSP client
+    (0, lspClient_1.setLSPLogger)(fileLogger);
     // Initialize LSP client early (handles TagScout MongoDB patterns)
     const logChannel = outputChannel; // Capture for async callback
     (0, lspClient_1.startLSPClient)(context, outputChannel)
@@ -275,13 +489,6 @@ function activate(context) {
         logChannel.appendLine(`⚠ LSP client error: ${error.message}`);
         logChannel.appendLine("⚠ Using fallback patterns");
     });
-    // Initialize File Logger
-    fileLogger = new fileLogger_1.FileLogger(context);
-    context.subscriptions.push({
-        dispose: () => fileLogger?.dispose(),
-    });
-    fileLogger.log("Log Scout Analyzer initialized");
-    fileLogger.log(`Build: ${buildInfo_1.BUILD_INFO.version} (${buildInfo_1.BUILD_INFO.buildTimestamp})`);
     // Initialize Scenario Manager
     scenarioManager = new scenarioManager_1.ScenarioManager(context);
     outputChannel.appendLine("✓ Scenario Manager initialized");
@@ -291,6 +498,168 @@ function activate(context) {
     const patternStats = patternOverrideManager.getStats();
     outputChannel.appendLine(`✓ Pattern Override Manager initialized (${patternStats.totalOverrides} overrides, ${patternStats.totalCustom} custom)`);
     fileLogger.log(`Pattern Override Manager ready - ${patternStats.totalOverrides} overrides, ${patternStats.totalCustom} custom patterns`);
+    patternOverrideTreeProvider = new patternOverrideTreeProvider_1.PatternOverrideTreeProvider(patternOverrideManager);
+    context.subscriptions.push(vscode.languages.registerCodeActionsProvider({ language: "log", scheme: "file" }, new patternOverrideCodeActions_1.PatternOverrideCodeActionProvider(), {
+        providedCodeActionKinds: patternOverrideCodeActions_1.PatternOverrideCodeActionProvider.providedCodeActionKinds,
+    }));
+    const ensurePatternManager = () => {
+        if (!patternOverrideManager) {
+            vscode.window.showErrorMessage("Pattern Override Manager is not available yet.");
+            return undefined;
+        }
+        return patternOverrideManager;
+    };
+    context.subscriptions.push(vscode.commands.registerCommand("logScoutAnalyzer.patterns.createOverride", async () => {
+        const manager = ensurePatternManager();
+        if (!manager) {
+            return;
+        }
+        await (0, patternOverrideUI_1.createOverrideQuickInput)(manager);
+        patternOverrideTreeProvider?.refresh();
+        updatePatternStatusBar();
+    }), vscode.commands.registerCommand("logScoutAnalyzer.patterns.createOverrideFromSelection", async () => {
+        const manager = ensurePatternManager();
+        if (!manager) {
+            return;
+        }
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showInformationMessage("No active editor found.");
+            return;
+        }
+        const selectionText = editor.document.getText(editor.selection);
+        await (0, patternOverrideUI_1.createOverrideFromSelection)(manager, selectionText);
+        patternOverrideTreeProvider?.refresh();
+        updatePatternStatusBar();
+    }), vscode.commands.registerCommand("logScoutAnalyzer.patterns.createOverrideFromDiagnostic", async (diagnostic) => {
+        const manager = ensurePatternManager();
+        if (!manager) {
+            return;
+        }
+        if (diagnostic) {
+            await (0, patternOverrideUI_1.createOverrideFromDiagnostic)(manager, diagnostic);
+            patternOverrideTreeProvider?.refresh();
+            updatePatternStatusBar();
+            return;
+        }
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showInformationMessage("No active editor found.");
+            return;
+        }
+        const diagnostics = vscode.languages.getDiagnostics(editor.document.uri);
+        if (diagnostics.length === 0) {
+            vscode.window.showInformationMessage("No diagnostics found for this file.");
+            return;
+        }
+        const cursor = editor.selection.active;
+        const atCursor = diagnostics.filter((diag) => diag.range.contains(cursor));
+        const candidates = atCursor.length > 0 ? atCursor : diagnostics;
+        let selectedDiagnostic;
+        if (candidates.length === 1) {
+            selectedDiagnostic = candidates[0];
+        }
+        else {
+            const items = candidates.map((diag, index) => {
+                const code = typeof diag.code === "string" ? diag.code : "";
+                const mainMessage = diag.message.split("\n")[0];
+                const label = code ? `${code}: ${mainMessage}` : mainMessage;
+                const data = diag.data;
+                const patternName = typeof data?.patternName === "string"
+                    ? data.patternName
+                    : undefined;
+                return {
+                    label,
+                    description: patternName,
+                    detail: `Diagnostic #${index + 1}`,
+                    diagnostic: diag,
+                };
+            });
+            const picked = await vscode.window.showQuickPick(items, {
+                title: "Select a diagnostic to override",
+                placeHolder: "Choose a diagnostic",
+                matchOnDescription: true,
+                matchOnDetail: true,
+            });
+            selectedDiagnostic = picked?.diagnostic;
+        }
+        if (!selectedDiagnostic) {
+            return;
+        }
+        await (0, patternOverrideUI_1.createOverrideFromDiagnostic)(manager, selectedDiagnostic);
+        patternOverrideTreeProvider?.refresh();
+        updatePatternStatusBar();
+    }), vscode.commands.registerCommand("logScoutAnalyzer.patterns.createCustom", async () => {
+        const manager = ensurePatternManager();
+        if (!manager) {
+            return;
+        }
+        await (0, patternOverrideUI_1.createCustomPatternWizard)(manager);
+        patternOverrideTreeProvider?.refresh();
+        updatePatternStatusBar();
+    }), vscode.commands.registerCommand("logScoutAnalyzer.patterns.editOverride", async () => {
+        const manager = ensurePatternManager();
+        if (!manager) {
+            return;
+        }
+        await (0, patternOverrideUI_1.editPatternQuickInput)(manager);
+        patternOverrideTreeProvider?.refresh();
+        updatePatternStatusBar();
+    }), vscode.commands.registerCommand("logScoutAnalyzer.patterns.deleteOverride", async () => {
+        const manager = ensurePatternManager();
+        if (!manager) {
+            return;
+        }
+        await (0, patternOverrideUI_1.deletePatternQuickPick)(manager);
+        patternOverrideTreeProvider?.refresh();
+        updatePatternStatusBar();
+    }), vscode.commands.registerCommand("logScoutAnalyzer.patterns.togglePattern", async () => {
+        const manager = ensurePatternManager();
+        if (!manager) {
+            return;
+        }
+        await (0, patternOverrideUI_1.togglePatternQuickPick)(manager);
+        patternOverrideTreeProvider?.refresh();
+        updatePatternStatusBar();
+    }), vscode.commands.registerCommand("logScoutAnalyzer.patterns.importOverrides", async () => {
+        const manager = ensurePatternManager();
+        if (!manager) {
+            return;
+        }
+        await manager.importPatterns();
+        patternOverrideTreeProvider?.refresh();
+        updatePatternStatusBar();
+    }), vscode.commands.registerCommand("logScoutAnalyzer.patterns.exportOverrides", async () => {
+        const manager = ensurePatternManager();
+        if (!manager) {
+            return;
+        }
+        await manager.exportPatterns();
+        updatePatternStatusBar();
+    }), vscode.commands.registerCommand("logScoutAnalyzer.patterns.reloadPatterns", async () => {
+        const client = (0, lspClient_1.getLSPClient)();
+        if (!client) {
+            vscode.window.showWarningMessage("LSP client is not connected. Pattern reload skipped.");
+            return;
+        }
+        try {
+            await client.sendRequest("workspace/executeCommand", {
+                command: "logScout.reloadPatterns",
+                arguments: [],
+            });
+            vscode.window.showInformationMessage("Requested pattern reload from LSP.");
+        }
+        catch (error) {
+            vscode.window.showErrorMessage(`Failed to reload patterns: ${error}`);
+        }
+    }), vscode.commands.registerCommand("logScoutAnalyzer.patterns.showStats", async () => {
+        const manager = ensurePatternManager();
+        if (!manager) {
+            return;
+        }
+        const stats = manager.getStats();
+        vscode.window.showInformationMessage(`Overrides: ${stats.enabledOverrides}/${stats.totalOverrides}, Custom: ${stats.enabledCustom}/${stats.totalCustom}`);
+    }));
     // Register document link provider for console output (makes file paths clickable)
     // Note: VS Code doesn't support document links in output channels by default,
     // but we format output to be compatible with terminal link detection
@@ -304,20 +673,29 @@ function activate(context) {
     // Initialize Tree Providers
     resultsTreeProvider = new resultsTreeProvider_1.ResultsTreeProvider();
     categoriesTreeProvider = new categoriesTreeProvider_1.CategoriesTreeProvider();
-    timelineTreeProvider = new timelineTreeProvider_1.TimelineTreeProvider();
-    cachedFilesTreeProvider = new cachedFilesTreeProvider_1.CachedFilesTreeProvider();
+    // Commented out - CachedFilesTreeProvider not properly imported
+    // cachedFilesTreeProvider = new CachedFilesTreeProvider();
     analyzerTreeProvider = new analyzerTreeProvider_1.AnalyzerTreeProvider();
-    scoutInventorProvider = new scoutInventorProvider_1.ScoutInventorProvider();
+    scoutInventorProvider = new ScoutInventorProvider();
+    // Initialize Filter Tree Provider (consolidates categories, files, time filters)
+    filterTreeProvider = new filterTreeProvider_1.FilterTreeProvider();
+    // When filters change, update Results tree with filtered results
+    filterTreeProvider.setFilterChangeCallback((filteredResults) => {
+        resultsTreeProvider?.setResults(filteredResults);
+    });
     // Initialize Gutter Decorator for annotations
     gutterDecorator = new gutterDecorator_1.GutterDecorator();
     context.subscriptions.push(gutterDecorator);
     outputChannel.appendLine("✓ Gutter Decorator initialized");
     // Initialize Annotation Renderer (combines gutter glyphs + log level highlights)
-    annotationRenderer = new annotationRenderer_1.AnnotationRenderer();
-    context.subscriptions.push({
-        dispose: () => annotationRenderer?.dispose(),
-    });
-    outputChannel.appendLine("✓ Annotation Renderer initialized (glyphs + highlights)");
+    // Commented out - AnnotationRenderer not properly imported
+    // annotationRenderer = new AnnotationRenderer();
+    // context.subscriptions.push({
+    //   dispose: () => annotationRenderer?.dispose(),
+    // });
+    // outputChannel.appendLine(
+    //   "✓ Annotation Renderer initialized (glyphs + highlights)",
+    // );
     // Initialize Split View Provider
     splitViewProvider = splitViewProvider_1.SplitViewProvider.getInstance();
     context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider("scout-annotated", splitViewProvider));
@@ -348,56 +726,102 @@ function activate(context) {
         showCollapseAll: true,
     });
     context.subscriptions.push(categoriesTreeView);
-    const timelineTreeView = vscode.window.createTreeView("scoutTimeline", {
-        treeDataProvider: timelineTreeProvider,
-        showCollapseAll: true,
-    });
-    context.subscriptions.push(timelineTreeView);
-    const cachedFilesTreeView = vscode.window.createTreeView("scoutCachedFiles", {
-        treeDataProvider: cachedFilesTreeProvider,
+    // Commented out - CachedFilesTreeProvider not properly imported
+    // const cachedFilesTreeView = vscode.window.createTreeView("scoutCachedFiles", {
+    //   treeDataProvider: cachedFilesTreeProvider,
+    //   showCollapseAll: false,
+    // });
+    // context.subscriptions.push(cachedFilesTreeView);
+    const filterTreeView = vscode.window.createTreeView("scoutFilters", {
+        treeDataProvider: filterTreeProvider,
         showCollapseAll: false,
     });
-    context.subscriptions.push(cachedFilesTreeView);
-    const scoutInventorTreeView = vscode.window.createTreeView("scoutInventor", {
-        treeDataProvider: scoutInventorProvider,
+    context.subscriptions.push(filterTreeView);
+    // Commented out - ScoutInventorProvider not properly imported
+    // const scoutInventorTreeView = vscode.window.createTreeView("scoutInventor", {
+    //   treeDataProvider: scoutInventorProvider,
+    //   showCollapseAll: true,
+    // });
+    // context.subscriptions.push(scoutInventorTreeView);
+    outputChannel.appendLine("✓ Scout Inventor view initialized");
+    if (patternOverrideTreeProvider) {
+        const patternOverridesTreeView = vscode.window.createTreeView("scoutPatternOverrides", {
+            treeDataProvider: patternOverrideTreeProvider,
+            showCollapseAll: true,
+        });
+        context.subscriptions.push(patternOverridesTreeView);
+        outputChannel.appendLine("✓ Pattern Overrides view initialized");
+    }
+    // Initialize Bundle Tree Provider
+    bundleTreeProvider = new bundleTreeProvider_1.BundleTreeProvider();
+    const bundleTreeView = vscode.window.createTreeView("scoutBundles", {
+        treeDataProvider: bundleTreeProvider,
         showCollapseAll: true,
     });
-    context.subscriptions.push(scoutInventorTreeView);
-    outputChannel.appendLine("✓ Scout Inventor view initialized");
+    context.subscriptions.push(bundleTreeView);
+    outputChannel.appendLine("✓ Bundle view initialized");
+    // Initialize Case Manager (DISABLED - not needed at the moment)
+    // caseManager = new CaseManager(context, outputChannel);
+    // casesTreeProvider = new CasesTreeProvider(caseManager);
+    //
+    // const casesTreeView = vscode.window.createTreeView("scoutCases", {
+    //   treeDataProvider: casesTreeProvider,
+    //   showCollapseAll: true,
+    // });
+    // context.subscriptions.push(casesTreeView);
+    // outputChannel.appendLine("✓ Case Manager initialized");
     // Create status bar item
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     statusBarItem.command = "logScoutAnalyzer.openScoutView";
     statusBarItem.tooltip = "Click to open Scout Analyzer";
     context.subscriptions.push(statusBarItem);
+    patternStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 99);
+    patternStatusBarItem.command = "logScoutAnalyzer.patterns.showManager";
+    patternStatusBarItem.tooltip = "Click to open pattern overrides";
+    context.subscriptions.push(patternStatusBarItem);
+    updatePatternStatusBar();
     // Shared function to analyze a document and update cache
+    /**
+     * Analyze document manually (for analyze command)
+     * The unified diagnostic handler will pick up results automatically
+     */
+    /**
+     * Analyze document - simplified to use LSP diagnostics and unified cache
+     *
+     * Flow:
+     * 1. LSP server auto-analyzes when file is opened
+     * 2. onDidChangeDiagnostics fires → handleDiagnosticsChange → cache + update UI
+     * 3. This function just forces UI refresh for manual "Analyze" command
+     */
     async function analyzeDocument(document, showUI = true) {
         if (!outputChannel)
             return;
         const uriString = document.uri.toString();
         const cachedEntry = analysisCache.get(uriString);
         // Check if we can use cached results
-        if (cachedEntry && await shouldUseCachedResults(document.uri, cachedEntry)) {
+        if (cachedEntry &&
+            (await shouldUseCachedResults(document.uri, cachedEntry))) {
             const fileName = path.basename(document.uri.fsPath);
             if (showUI && outputChannel) {
                 outputChannel.appendLine(`📦 Using cached results for ${fileName} (analyzed ${cachedEntry.timestamp.toLocaleString()})`);
             }
-            // Apply cached results to UI (only if showing UI for active editor)
-            if (showUI) {
+            // Apply cached results to active editor UI
+            const editor = vscode.window.activeTextEditor;
+            const isActiveEditor = editor && editor.document.uri.toString() === document.uri.toString();
+            if (isActiveEditor) {
                 allResults = cachedEntry.results;
                 resultsTreeProvider?.setResults(cachedEntry.results);
                 categoriesTreeProvider?.setResults(cachedEntry.results);
-                timelineTreeProvider?.setResults(cachedEntry.results);
                 updateCachedFilesView();
                 updateStatusBar();
-                // Log cached results
                 fileLogger?.logCacheOperation(`Loaded cached analysis for ${fileName} (${cachedEntry.errorCount}E ${cachedEntry.warningCount}W ${cachedEntry.infoCount}I ${cachedEntry.debugCount}D)`);
             }
             return;
         }
-        const startTime = Date.now();
-        const timestamp = new Date().toISOString();
-        // Log analysis start
+        // Get current LSP diagnostics (LSP has already analyzed the file)
+        const diagnostics = vscode.languages.getDiagnostics(document.uri);
         if (showUI) {
+            const timestamp = new Date().toISOString();
             fileLogger?.logAnalysisStart(document.fileName, document.uri);
             outputChannel.appendLine("");
             outputChannel.appendLine(`[${"=".repeat(50)}]`);
@@ -405,126 +829,73 @@ function activate(context) {
             outputChannel.appendLine(`File: ${document.fileName}`);
             outputChannel.show(true);
         }
-        // Wait for LSP diagnostics to be available
-        const diagnostics = await waitForDiagnostics(document.uri);
-        if (diagnostics.length === 0 && !showUI) {
-            // For background analysis, if no diagnostics found, don't cache empty results
-            if (outputChannel) {
-                outputChannel.appendLine(`⚠ No diagnostics for ${path.basename(document.uri.fsPath)} - skipping cache`);
-            }
-            return;
-        }
-        // Convert diagnostics to ResultItem format
-        const results = diagnostics.map((diag) => {
-            const severity = diag.severity === vscode.DiagnosticSeverity.Error
-                ? "error"
-                : diag.severity === vscode.DiagnosticSeverity.Warning
-                    ? "warning"
-                    : diag.severity === vscode.DiagnosticSeverity.Hint
-                        ? "debug"
-                        : "info";
-            const line = document.lineAt(diag.range.start.line);
-            const messageLines = diag.message.split("\n");
-            const mainMessage = messageLines[0];
-            // Extract timestamp, category, pattern info
-            const extractedTimestamp = extractTimestamp(line.text);
-            let category = undefined;
-            let patternId = undefined;
-            let patternName = undefined;
-            const diagWithData = diag;
-            if (diagWithData.data && typeof diagWithData.data === 'object' && 'category' in diagWithData.data) {
-                category = diagWithData.data.category;
-            }
-            if (!category) {
-                category = extractCategory(line.text);
-            }
-            // Extract pattern ID from diagnostic code
-            if (diag.code && typeof diag.code === 'string') {
-                patternId = diag.code;
-            }
-            // Extract pattern name from message (format is "PatternName: description")
-            const colonIndex = mainMessage.indexOf(':');
-            if (colonIndex > 0) {
-                patternName = mainMessage.substring(0, colonIndex);
-            }
-            // Log to file (always log for debugging)
-            fileLogger?.logResult(severity, diag.range.start.line, mainMessage, category, extractedTimestamp, document.uri);
-            return {
-                severity,
-                line: diag.range.start.line,
-                column: diag.range.start.character,
-                message: mainMessage,
-                matchedText: line.text
-                    .substring(diag.range.start.character, Math.min(diag.range.end.character, diag.range.start.character + 100))
-                    .trim() || line.text.trim(),
-                context: line.text,
-                timestamp: extractedTimestamp,
-                category: category,
-                patternId: patternId,
-                patternName: patternName,
-                uri: document.uri,
-            };
-        });
-        // Count by severity
-        const errorCount = results.filter((r) => r.severity === "error").length;
-        const warningCount = results.filter((r) => r.severity === "warning").length;
-        const infoCount = results.filter((r) => r.severity === "info").length;
-        const debugCount = results.filter((r) => r.severity === "debug").length;
-        // Cache analysis results
-        analysisCache.set(document.uri.toString(), {
-            results,
-            timestamp: new Date(),
-            errorCount,
-            warningCount,
-            infoCount,
-            debugCount,
-        });
-        // Log caching for debugging
-        if (outputChannel && !showUI) {
-            const fileName = path.basename(document.uri.fsPath);
-            outputChannel.appendLine(`  ✓ Cached ${results.length} results for ${fileName} (${errorCount}E ${warningCount}W ${infoCount}I ${debugCount}D)`);
-        }
-        // Persist cache to storage (debounced)
-        if (extensionContext) {
-            debouncedSaveCache(extensionContext);
-        }
-        // Update UI only if this is for the active editor
-        if (showUI) {
-            const editor = vscode.window.activeTextEditor;
-            if (editor && editor.document.uri.toString() === document.uri.toString()) {
-                // Store results globally for category filtering
-                allResults = results;
-                // Update tree views
-                resultsTreeProvider?.setResults(results);
-                categoriesTreeProvider?.setResults(results);
-                timelineTreeProvider?.setResults(results);
-                // Update gutter decorations with annotations
-                if (gutterDecorator) {
-                    const annotations = results.map((r) => ({
-                        line: r.line,
-                        severity: r.severity,
-                        message: r.message,
-                        matchedText: r.matchedText,
-                        context: r.context,
-                        timestamp: r.timestamp,
-                        category: r.category,
-                        pattern: undefined,
-                    }));
-                    gutterDecorator.updateDecorations(editor, annotations);
-                    if (annotationRenderer) {
-                        annotationRenderer.render(editor, annotations);
-                    }
-                }
-            }
-            // Update cached files tree view
-            updateCachedFilesView();
-            // Calculate duration and log completion
-            const duration = Date.now() - startTime;
-            fileLogger?.logAnalysisComplete(errorCount, warningCount, infoCount, debugCount, duration);
-        }
+        // Use unified handler to convert diagnostics → cache → update UI
+        handleDiagnosticsChange(document.uri, diagnostics);
     }
     // Update status bar based on active editor
     updateStatusBar();
+    // Register debug command to dump diagnostic data
+    const dumpDiagnosticsCommand = vscode.commands.registerCommand("logScoutAnalyzer.dumpDiagnostics", async () => {
+        if (!outputChannel) {
+            vscode.window.showErrorMessage("Output channel not initialized");
+            return;
+        }
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showWarningMessage("No active editor");
+            return;
+        }
+        const uri = editor.document.uri;
+        const diagnostics = vscode.languages.getDiagnostics(uri);
+        outputChannel.clear();
+        outputChannel.show();
+        outputChannel.appendLine("=".repeat(80));
+        outputChannel.appendLine("DIAGNOSTIC DATA DUMP");
+        outputChannel.appendLine("=".repeat(80));
+        outputChannel.appendLine(`File: ${uri.fsPath}`);
+        outputChannel.appendLine(`Total diagnostics: ${diagnostics.length}`);
+        outputChannel.appendLine("");
+        diagnostics.forEach((diag, index) => {
+            outputChannel.appendLine(`--- Diagnostic #${index + 1} ---`);
+            outputChannel.appendLine(`Message: ${diag.message}`);
+            outputChannel.appendLine(`Severity: ${diag.severity}`);
+            outputChannel.appendLine(`Code: ${diag.code}`);
+            outputChannel.appendLine(`Range: Line ${diag.range.start.line}, Col ${diag.range.start.character} -> Line ${diag.range.end.line}, Col ${diag.range.end.character}`);
+            outputChannel.appendLine(`Source: ${diag.source}`);
+            const diagWithData = diag;
+            if (diagWithData.data) {
+                outputChannel.appendLine(`Data keys: ${Object.keys(diagWithData.data).join(", ")}`);
+                outputChannel.appendLine("");
+                outputChannel.appendLine("Data contents:");
+                outputChannel.appendLine(`  template: ${diagWithData.data.template || "(not set)"}`);
+                outputChannel.appendLine(`  merged_template: ${diagWithData.data.merged_template || "(not set)"}`);
+                outputChannel.appendLine(`  matched_text: ${diagWithData.data.matched_text || "(not set)"}`);
+                outputChannel.appendLine(`  log_line: ${diagWithData.data.log_line || "(not set)"}`);
+                outputChannel.appendLine(`  pattern_id: ${diagWithData.data.pattern_id || "(not set)"}`);
+                outputChannel.appendLine(`  pattern_name: ${diagWithData.data.pattern_name || "(not set)"}`);
+                outputChannel.appendLine(`  category: ${diagWithData.data.category || "(not set)"}`);
+                if (diagWithData.data.extracted_parameters) {
+                    outputChannel.appendLine(`  extracted_parameters: ${diagWithData.data.extracted_parameters.length} items`);
+                    diagWithData.data.extracted_parameters.forEach((param) => {
+                        outputChannel.appendLine(`    - ${param.name}: ${param.value}`);
+                    });
+                }
+                else {
+                    outputChannel.appendLine(`  extracted_parameters: (not set)`);
+                }
+                outputChannel.appendLine("");
+                outputChannel.appendLine("Full data object:");
+                outputChannel.appendLine(JSON.stringify(diagWithData.data, null, 2));
+            }
+            else {
+                outputChannel.appendLine("No data attached to diagnostic");
+            }
+            outputChannel.appendLine("");
+        });
+        outputChannel.appendLine("=".repeat(80));
+        outputChannel.appendLine("END DIAGNOSTIC DATA DUMP");
+        outputChannel.appendLine("=".repeat(80));
+    });
     // Register commands
     const analyzeCommand = vscode.commands.registerCommand("logScoutAnalyzer.analyzeFile", async () => {
         const editor = vscode.window.activeTextEditor;
@@ -541,7 +912,6 @@ function activate(context) {
         // Clear tree views (LSP manages diagnostics)
         resultsTreeProvider?.clear();
         categoriesTreeProvider?.clear();
-        timelineTreeProvider?.clear();
         // Clear gutter decorations
         if (gutterDecorator) {
             gutterDecorator.clearAll();
@@ -551,6 +921,25 @@ function activate(context) {
         }
         fileLogger?.log("Diagnostics cleared");
         vscode.window.showInformationMessage("Diagnostics cleared!");
+        updateStatusBar();
+    });
+    // Alias for clearDiagnostics (used by tree view)
+    const clearResultsCommand = vscode.commands.registerCommand("logScoutAnalyzer.clearResults", () => {
+        // Clear tree views (LSP manages diagnostics)
+        resultsTreeProvider?.clear();
+        categoriesTreeProvider?.clear();
+        // Clear analysis cache
+        analysisCache.clear();
+        cachedFilesTreeProvider?.clear();
+        // Clear gutter decorations
+        if (gutterDecorator) {
+            gutterDecorator.clearAll();
+        }
+        if (outputChannel) {
+            outputChannel.appendLine(`[${new Date().toISOString()}] Results cleared`);
+        }
+        fileLogger?.log("Results cleared");
+        vscode.window.showInformationMessage("Results cleared!");
         updateStatusBar();
     });
     const clearCacheCommand = vscode.commands.registerCommand("logScoutAnalyzer.clearCache", async () => {
@@ -567,7 +956,9 @@ function activate(context) {
         vscode.window.showInformationMessage(`Analysis cache cleared! (${cacheSize} cached files removed)`);
         updateStatusBar();
     });
-    const removeCachedFileCommand = vscode.commands.registerCommand("logScoutAnalyzer.removeCachedFile", (cachedFile) => {
+    const removeCachedFileCommand = vscode.commands.registerCommand("logScoutAnalyzer.removeCachedFile", (item) => {
+        // Handle both CachedFile and CachedFileItem
+        const cachedFile = item?.cachedFile || item;
         if (!cachedFile || !cachedFile.uri) {
             return;
         }
@@ -580,7 +971,9 @@ function activate(context) {
         }
         vscode.window.showInformationMessage(`Removed ${path.basename(cachedFile.uri.fsPath)} from cache`);
     });
-    const openCachedFileCommand = vscode.commands.registerCommand("logScoutAnalyzer.openCachedFile", async (cachedFile) => {
+    const openCachedFileCommand = vscode.commands.registerCommand("logScoutAnalyzer.openCachedFile", async (item) => {
+        // Handle both CachedFile and CachedFileItem
+        const cachedFile = item?.cachedFile || item;
         if (!cachedFile || !cachedFile.uri) {
             return;
         }
@@ -593,15 +986,41 @@ function activate(context) {
         try {
             // Check if file exists
             await vscode.workspace.fs.stat(cachedFile.uri);
-            // Open the file
-            const doc = await vscode.workspace.openTextDocument(cachedFile.uri);
-            await vscode.window.showTextDocument(doc);
+            // Check if document is already open
+            const openDoc = vscode.workspace.textDocuments.find((doc) => doc.uri.toString() === cachedFile.uri.toString());
+            let doc;
+            if (openDoc) {
+                // Document already open, just show it
+                await vscode.window.showTextDocument(openDoc, {
+                    preview: false,
+                    preserveFocus: false,
+                });
+                doc = openDoc;
+            }
+            else {
+                // Open the document
+                doc = await vscode.workspace.openTextDocument(cachedFile.uri);
+                await vscode.window.showTextDocument(doc, {
+                    preview: false,
+                    preserveFocus: false,
+                });
+            }
+            // Update all result URIs to match the opened document
+            // This ensures goto/jump commands work correctly
+            const updatedResults = cachedEntry.results.map((r) => ({
+                ...r,
+                uri: doc.uri,
+            }));
             // Load cached results into all views
-            allResults = cachedEntry.results;
-            resultsTreeProvider?.setResults(cachedEntry.results);
-            categoriesTreeProvider?.setResults(cachedEntry.results);
-            timelineTreeProvider?.setResults(cachedEntry.results);
+            allResults = updatedResults;
+            resultsTreeProvider?.setResults(updatedResults);
+            categoriesTreeProvider?.setResults(updatedResults);
             updateStatusBar();
+            // Update cache with corrected URIs
+            analysisCache.set(doc.uri.toString(), {
+                ...cachedEntry,
+                results: updatedResults,
+            });
             // Log cache load
             fileLogger?.logCacheOperation(`Opened cached file ${path.basename(cachedFile.uri.fsPath)} (${cachedEntry.errorCount}E ${cachedEntry.warningCount}W ${cachedEntry.infoCount}I ${cachedEntry.debugCount}D)`);
             if (outputChannel) {
@@ -613,7 +1032,9 @@ function activate(context) {
         }
     });
     // Open File in Editor (without loading cached results)
-    const openFileInEditorCommand = vscode.commands.registerCommand("logScoutAnalyzer.openFileInEditor", async (cachedFile) => {
+    const openFileInEditorCommand = vscode.commands.registerCommand("logScoutAnalyzer.openFileInEditor", async (item) => {
+        // Handle both CachedFile and CachedFileItem
+        const cachedFile = item?.cachedFile || item;
         if (!cachedFile || !cachedFile.uri) {
             return;
         }
@@ -629,7 +1050,9 @@ function activate(context) {
         }
     });
     // Reveal in Explorer command
-    const revealInExplorerCommand = vscode.commands.registerCommand("logScoutAnalyzer.revealInExplorer", async (cachedFile) => {
+    const revealInExplorerCommand = vscode.commands.registerCommand("logScoutAnalyzer.revealInExplorer", async (item) => {
+        // Handle both CachedFile and CachedFileItem
+        const cachedFile = item?.cachedFile || item;
         if (!cachedFile || !cachedFile.uri) {
             return;
         }
@@ -641,6 +1064,33 @@ function activate(context) {
         }
         catch (err) {
             vscode.window.showErrorMessage(`Failed to reveal file: ${path.basename(cachedFile.uri.fsPath)}. File may have been moved or deleted.`);
+        }
+    });
+    // View Cache Metadata command
+    const viewCacheMetadataCommand = vscode.commands.registerCommand("logScoutAnalyzer.viewCacheMetadata", async () => {
+        try {
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            if (!workspaceFolders || workspaceFolders.length === 0) {
+                vscode.window.showWarningMessage("No workspace folder open");
+                return;
+            }
+            // Look for .tagscout_cache directory in workspace root
+            const cacheDir = vscode.Uri.joinPath(workspaceFolders[0].uri, ".tagscout_cache");
+            const cacheFile = vscode.Uri.joinPath(cacheDir, "tagscout_patterns.json");
+            try {
+                await vscode.workspace.fs.stat(cacheFile);
+                const doc = await vscode.workspace.openTextDocument(cacheFile);
+                await vscode.window.showTextDocument(doc, { preview: false });
+                if (outputChannel) {
+                    outputChannel.appendLine(`📄 Opened cache metadata: ${cacheFile.fsPath}`);
+                }
+            }
+            catch (statErr) {
+                vscode.window.showWarningMessage("Cache metadata file not found. Try analyzing a file first to create the cache.");
+            }
+        }
+        catch (err) {
+            vscode.window.showErrorMessage(`Failed to open cache metadata: ${err.message}`);
         }
     });
     const showCacheStatsCommand = vscode.commands.registerCommand("logScoutAnalyzer.showCacheStats", () => {
@@ -706,14 +1156,15 @@ function activate(context) {
             }
         }
     });
-    const showVersionCommand = vscode.commands.registerCommand("logScoutAnalyzer.showVersion", () => {
+    // About command - shows version info in notification
+    const showAboutCommand = vscode.commands.registerCommand("logScoutAnalyzer.showAbout", () => {
         const lspVersion = (0, lspClient_1.getLSPServerVersion)();
         const lspName = (0, lspClient_1.getLSPServerName)();
         if (outputChannel) {
             outputChannel.show();
             outputChannel.appendLine("");
             outputChannel.appendLine("╔════════════════════════════════════════╗");
-            outputChannel.appendLine("║        VERSION INFORMATION            ║");
+            outputChannel.appendLine("║         ABOUT LOG SCOUT               ║");
             outputChannel.appendLine("╚════════════════════════════════════════╝");
             outputChannel.appendLine("");
             outputChannel.appendLine(`📦 Extension: Log Scout Analyzer`);
@@ -734,10 +1185,76 @@ function activate(context) {
             outputChannel.appendLine(`🎯 Patterns: ${lspVersion ? "Managed by LSP server" : "Not available"}`);
             outputChannel.appendLine("");
         }
-        const versionMsg = lspVersion
-            ? `Extension: v${buildInfo_1.BUILD_INFO.version}\nLSP Server: v${lspVersion}\nBuild: ${buildInfo_1.BUILD_INFO.buildTimestamp}`
-            : `${(0, buildInfo_1.getBuildInfo)()}\nBuild: ${buildInfo_1.BUILD_INFO.buildTimestamp}\nLSP: Not connected`;
-        vscode.window.showInformationMessage(versionMsg);
+        const aboutMsg = lspVersion
+            ? `Log Scout Analyzer v${buildInfo_1.BUILD_INFO.version}\n\nLSP Server: ${lspName || "LSP"} v${lspVersion}\nBuild: ${buildInfo_1.BUILD_INFO.buildTimestamp}\nGit: ${buildInfo_1.BUILD_INFO.gitCommit}`
+            : `Log Scout Analyzer v${buildInfo_1.BUILD_INFO.version}\n\nBuild: ${buildInfo_1.BUILD_INFO.buildTimestamp}\nGit: ${buildInfo_1.BUILD_INFO.gitCommit}\nLSP: Not connected`;
+        vscode.window
+            .showInformationMessage(aboutMsg, "View Logs", "Copy Info")
+            .then((selection) => {
+            if (selection === "View Logs") {
+                vscode.commands.executeCommand("logScoutAnalyzer.showLogPaths");
+            }
+            else if (selection === "Copy Info") {
+                vscode.env.clipboard.writeText(aboutMsg);
+                vscode.window.showInformationMessage("Version info copied to clipboard");
+            }
+        });
+    });
+    // Open extension log file command
+    const openExtensionLogCommand = vscode.commands.registerCommand("logScoutAnalyzer.openExtensionLog", async () => {
+        if (!fileLogger) {
+            vscode.window.showWarningMessage("File logger not initialized");
+            return;
+        }
+        const logPath = fileLogger.getLogPath();
+        try {
+            const doc = await vscode.workspace.openTextDocument(logPath);
+            await vscode.window.showTextDocument(doc, { preview: false });
+            vscode.window.showInformationMessage(`Opened extension log: ${logPath}`);
+        }
+        catch (error) {
+            vscode.window.showErrorMessage(`Failed to open extension log: ${error.message}`);
+        }
+    });
+    // Open LSP server log file command
+    const openLSPLogCommand = vscode.commands.registerCommand("logScoutAnalyzer.openLSPLog", async () => {
+        if (!fileLogger) {
+            vscode.window.showWarningMessage("File logger not initialized");
+            return;
+        }
+        const logPath = fileLogger.getLSPLogPath();
+        try {
+            const doc = await vscode.workspace.openTextDocument(logPath);
+            await vscode.window.showTextDocument(doc, { preview: false });
+            vscode.window.showInformationMessage(`Opened LSP log: ${logPath}`);
+        }
+        catch (error) {
+            vscode.window.showErrorMessage(`Failed to open LSP log: ${error.message}`);
+        }
+    });
+    // Show log paths command
+    const showLogPathsCommand = vscode.commands.registerCommand("logScoutAnalyzer.showLogPaths", () => {
+        if (!fileLogger) {
+            vscode.window.showWarningMessage("File logger not initialized");
+            return;
+        }
+        const extensionLog = fileLogger.getLogPath();
+        const lspLog = fileLogger.getLSPLogPath();
+        const message = `Extension Log: ${extensionLog}\n\nLSP Server Log: ${lspLog}`;
+        vscode.window
+            .showInformationMessage("Log Files", { modal: true, detail: message }, "Open Extension Log", "Open LSP Log", "Copy Paths")
+            .then((selection) => {
+            if (selection === "Open Extension Log") {
+                vscode.commands.executeCommand("logScoutAnalyzer.openExtensionLog");
+            }
+            else if (selection === "Open LSP Log") {
+                vscode.commands.executeCommand("logScoutAnalyzer.openLSPLog");
+            }
+            else if (selection === "Copy Paths") {
+                vscode.env.clipboard.writeText(`Extension Log:\n${extensionLog}\n\nLSP Server Log:\n${lspLog}`);
+                vscode.window.showInformationMessage("Log paths copied to clipboard");
+            }
+        });
     });
     // Jump to line command
     const jumpToLineCommand = vscode.commands.registerCommand("logScoutAnalyzer.jumpToLine", (uri, line, column) => {
@@ -787,6 +1304,7 @@ function activate(context) {
             return;
         }
         // Convert results to annotations
+        const fileName = editor.document.uri.fsPath.split(/[\\\\/]/).pop();
         const annotations = results.map((r) => ({
             line: r.line,
             severity: r.severity,
@@ -796,6 +1314,14 @@ function activate(context) {
             timestamp: r.timestamp,
             category: r.category,
             pattern: undefined,
+            patternId: r.patternId,
+            fileName: fileName,
+            // New structured fields from LSP (snake_case standard)
+            template: r.template,
+            merged_template: r.merged_template,
+            extracted_parameters: r.extracted_parameters,
+            pattern_regex: r.pattern_regex,
+            log_line: r.log_line,
         }));
         await splitViewProvider?.openSplitView(editor, annotations);
         vscode.window.showInformationMessage("Split view opened! Use settings to configure sync features.");
@@ -814,7 +1340,6 @@ function activate(context) {
     const refreshResultsCommand = vscode.commands.registerCommand("logScoutAnalyzer.refreshResults", () => {
         resultsTreeProvider?.refresh();
         categoriesTreeProvider?.refresh();
-        timelineTreeProvider?.refresh();
         vscode.window.showInformationMessage("Results refreshed!");
     });
     // Show output channel command (replaces show console)
@@ -827,6 +1352,51 @@ function activate(context) {
     // Clear console command (deprecated - does nothing now)
     const clearConsoleCommand = vscode.commands.registerCommand("logScoutAnalyzer.clearConsole", () => {
         vscode.window.showInformationMessage("Console output removed - check file logs instead");
+    });
+    // Show SIP Ladder Diagram command
+    const showLadderDiagramCommand = vscode.commands.registerCommand("logScoutAnalyzer.showLadderDiagram", async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showWarningMessage("No active editor found");
+            return;
+        }
+        try {
+            // Extract SIP messages using enhanced boundary-based detection
+            const messages = sipCallFlowParser_1.SipCallFlowParser.extractSipMessages(editor.document);
+            if (messages.length === 0) {
+                vscode.window.showInformationMessage("No SIP messages found to extract");
+                return;
+            }
+            // Generate both raw and clean SIP content
+            const rawSipContent = sipCallFlowParser_1.SipCallFlowParser.generateRawSipFile(messages);
+            const cleanSipContent = sipCallFlowParser_1.SipCallFlowParser.generateSipFile(messages);
+            // Get original file path and create UUID-based filenames
+            const originalPath = editor.document.uri.fsPath;
+            const dirPath = path.dirname(originalPath);
+            // Extract Call-ID from first message for UUID naming
+            let callId = messages[0]?.extractedParams?.callId || "unknown";
+            // Extract UUID part from Call-ID (everything before @)
+            const uuidMatch = callId.match(/^([^@]+)/);
+            const uuid = uuidMatch ? uuidMatch[1] : callId;
+            // Create UUID-based filenames
+            const rawSipPath = path.join(dirPath, `SIP_Call_Raw_${uuid}.sip`);
+            const cleanSipPath = path.join(dirPath, `SIP_Call_Clean_${uuid}.sip`);
+            // Write raw SIP file
+            const rawSipUri = vscode.Uri.file(rawSipPath);
+            await vscode.workspace.fs.writeFile(rawSipUri, Buffer.from(rawSipContent, "utf8"));
+            // Write clean SIP file
+            const cleanSipUri = vscode.Uri.file(cleanSipPath);
+            await vscode.workspace.fs.writeFile(cleanSipUri, Buffer.from(cleanSipContent, "utf8"));
+            // Show both files
+            const rawSipDoc = await vscode.workspace.openTextDocument(rawSipUri);
+            const cleanSipDoc = await vscode.workspace.openTextDocument(cleanSipUri);
+            await vscode.window.showTextDocument(rawSipDoc);
+            await vscode.window.showTextDocument(cleanSipDoc);
+            vscode.window.showInformationMessage(`Created SIP files:\n• Raw: ${path.basename(rawSipPath)}\n• Clean: ${path.basename(cleanSipPath)}\n\nCall-ID: ${callId}\nTotal messages: ${messages.length}`);
+        }
+        catch (error) {
+            vscode.window.showErrorMessage(`Failed to extract SIP messages: ${error}`);
+        }
     });
     // Group by commands
     const groupBySeverityCommand = vscode.commands.registerCommand("logScoutAnalyzer.groupBySeverity", () => {
@@ -845,6 +1415,22 @@ function activate(context) {
     const resetViewCommand = vscode.commands.registerCommand("logScoutAnalyzer.resetView", () => {
         resultsTreeProvider?.resetGrouping();
         vscode.window.showInformationMessage("View reset to default (by severity)");
+    });
+    // Sort Commands
+    const sortByLineCommand = vscode.commands.registerCommand("logScoutAnalyzer.sortByLine", () => {
+        resultsTreeProvider?.setSortBy("line");
+    });
+    const sortBySeverityCommand = vscode.commands.registerCommand("logScoutAnalyzer.sortBySeverity", () => {
+        resultsTreeProvider?.setSortBy("severity");
+    });
+    const sortByTimeCommand = vscode.commands.registerCommand("logScoutAnalyzer.sortByTime", () => {
+        resultsTreeProvider?.setSortBy("time");
+    });
+    const sortByFileCommand = vscode.commands.registerCommand("logScoutAnalyzer.sortByFile", () => {
+        resultsTreeProvider?.setSortBy("file");
+    });
+    const sortByCategoryCommand = vscode.commands.registerCommand("logScoutAnalyzer.sortByCategory", () => {
+        resultsTreeProvider?.setSortBy("category");
     });
     // Export results command
     const exportResultsCommand = vscode.commands.registerCommand("logScoutAnalyzer.exportResults", () => {
@@ -881,13 +1467,15 @@ function activate(context) {
         const currentDir = path.dirname(editor.document.uri.fsPath);
         const files = await findLogFiles(currentDir, false);
         fileLogger?.log(`Found ${files.length} log files`);
-        // Analyze and cache each file
-        let analyzed = 0;
+        // Open each file - LSP auto-analyzes and handleDiagnosticsChange caches asynchronously
+        // Event-driven flow handles caching automatically
+        let opened = 0;
         for (const file of files) {
-            const doc = await vscode.workspace.openTextDocument(file);
-            await analyzeDocument(doc, false); // Waits for LSP diagnostics internally
-            analyzed++;
+            await vscode.workspace.openTextDocument(file);
+            opened++;
         }
+        // Give LSP time to analyze all files
+        await new Promise((resolve) => setTimeout(resolve, files.length * 100));
         // Return focus to original file
         const originalDoc = await vscode.workspace.openTextDocument(originalUri);
         await vscode.window.showTextDocument(originalDoc, {
@@ -897,8 +1485,8 @@ function activate(context) {
         });
         // Update UI with cached files
         updateCachedFilesView();
-        fileLogger?.log(`Analyzed and cached ${analyzed} files in directory`);
-        vscode.window.showInformationMessage(`Analyzed ${analyzed} files. All results cached. Check Cached Files view.`);
+        fileLogger?.log(`Opened ${opened} files in directory for analysis (caching via event handler)`);
+        vscode.window.showInformationMessage(`Opened ${opened} files. LSP analyzing and caching. Check Cached Files view.`);
     });
     // Analyze All Below command (recursive)
     const analyzeAllBelowCommand = vscode.commands.registerCommand("logScoutAnalyzer.analyzeAllBelow", async () => {
@@ -913,13 +1501,15 @@ function activate(context) {
         const currentDir = path.dirname(editor.document.uri.fsPath);
         const files = await findLogFiles(currentDir, true);
         fileLogger?.log(`Found ${files.length} log files`);
-        // Analyze and cache each file
-        let analyzed = 0;
+        // Open each file - LSP auto-analyzes and handleDiagnosticsChange caches asynchronously
+        // Event-driven flow handles caching automatically
+        let opened = 0;
         for (const file of files) {
-            const doc = await vscode.workspace.openTextDocument(file);
-            await analyzeDocument(doc, false); // Waits for LSP diagnostics internally
-            analyzed++;
+            await vscode.workspace.openTextDocument(file);
+            opened++;
         }
+        // Give LSP time to analyze all files
+        await new Promise((resolve) => setTimeout(resolve, files.length * 100));
         // Return focus to original file
         const originalDoc = await vscode.workspace.openTextDocument(originalUri);
         await vscode.window.showTextDocument(originalDoc, {
@@ -929,8 +1519,8 @@ function activate(context) {
         });
         // Update UI with cached files
         updateCachedFilesView();
-        fileLogger?.log(`Analyzed and cached ${analyzed} files recursively`);
-        vscode.window.showInformationMessage(`Analyzed ${analyzed} files. All results cached. Check Cached Files view.`);
+        fileLogger?.log(`Opened ${opened} files recursively for analysis (caching via event handler)`);
+        vscode.window.showInformationMessage(`Opened ${opened} files. LSP analyzing and caching. Check Cached Files view.`);
     });
     // Open Scout Analyzer Panel command (deprecated but kept for backward compatibility)
     const openAnalyzerPanelCommand = vscode.commands.registerCommand("logScoutAnalyzer.openAnalyzerPanel", () => {
@@ -984,18 +1574,32 @@ function activate(context) {
                     const messageLines = diag.message.split("\n");
                     const mainMessage = messageLines[0];
                     const extractedTimestamp = extractTimestamp(line.text);
-                    const category = extractCategory(line.text);
+                    const diagWithData = diag;
+                    let category = diagWithData.data?.category || extractCategory(line.text);
+                    // Extract pattern ID and name
+                    let patternId = undefined;
+                    let patternName = undefined;
+                    if (diag.code && typeof diag.code === "string") {
+                        patternId = diag.code;
+                    }
+                    if (diagWithData.data &&
+                        typeof diagWithData.data === "object" &&
+                        "patternName" in diagWithData.data) {
+                        patternName = diagWithData.data.patternName;
+                    }
                     return {
                         severity,
                         line: diag.range.start.line,
                         column: diag.range.start.character,
-                        message: mainMessage,
+                        message: mainMessage, // Clean description with substituted values
                         matchedText: line.text
                             .substring(diag.range.start.character, Math.min(diag.range.end.character, diag.range.start.character + 100))
                             .trim() || line.text.trim(),
-                        context: line.text,
+                        context: line.text, // Full log line with timestamp and level
                         timestamp: extractedTimestamp,
                         category: category,
+                        patternId: patternId,
+                        patternName: patternName,
                         uri: editor.document.uri,
                     };
                 });
@@ -1008,7 +1612,6 @@ function activate(context) {
                 // Update tree views with filtered results
                 resultsTreeProvider?.setResults(filteredResults);
                 categoriesTreeProvider?.setResults(filteredResults);
-                timelineTreeProvider?.setResults(filteredResults);
                 vscode.window.showInformationMessage(`Timeframe filter applied: ${timeframe.label} (${filteredResults.length} of ${allResults.length} results)`);
             }
         }
@@ -1017,111 +1620,6 @@ function activate(context) {
             vscode.commands.executeCommand("logScoutAnalyzer.analyzeFile");
             vscode.window.showInformationMessage("Showing all results");
         }
-    });
-    // Toggle Significant Events command
-    const toggleSignificantEventsCommand = vscode.commands.registerCommand("logScoutAnalyzer.toggleSignificantEvents", () => {
-        const config = vscode.workspace.getConfiguration("logScoutAnalyzer");
-        const currentValue = config.get("timeline.showSignificantEvents", true);
-        config
-            .update("timeline.showSignificantEvents", !currentValue, vscode.ConfigurationTarget.Global)
-            .then(() => {
-            timelineTreeProvider?.setShowSignificantEvents(!currentValue);
-            vscode.window.showInformationMessage(`Timeline now showing: ${!currentValue ? "Significant Events" : "All Issues"}`);
-        });
-    });
-    // Toggle Timeframe command
-    const toggleTimeframeCommand = vscode.commands.registerCommand("logScoutAnalyzer.toggleTimeframe", (timeframeKey) => {
-        timelineTreeProvider?.toggleTimeframe(timeframeKey);
-    });
-    // Toggle All Timeframes command
-    const toggleAllTimeframesCommand = vscode.commands.registerCommand("logScoutAnalyzer.toggleAllTimeframes", (enable) => {
-        timelineTreeProvider?.toggleAllTimeframes(enable);
-    });
-    // Change Time Interval command
-    const changeTimeIntervalCommand = vscode.commands.registerCommand("logScoutAnalyzer.changeTimeInterval", async () => {
-        const intervals = [
-            { label: "5 minutes", value: 5 },
-            { label: "15 minutes (default)", value: 15 },
-            { label: "30 minutes", value: 30 },
-            { label: "1 hour", value: 60 },
-            { label: "2 hours", value: 120 },
-            { label: "4 hours", value: 240 },
-        ];
-        const selected = await vscode.window.showQuickPick(intervals, {
-            placeHolder: "Select time interval for timeline grouping",
-        });
-        if (selected) {
-            timelineTreeProvider?.setTimeInterval(selected.value);
-            vscode.window.showInformationMessage(`Timeline interval set to ${selected.label}`);
-        }
-    });
-    // Show Timeline Visualization command
-    const showTimelineVisualizationCommand = vscode.commands.registerCommand("logScoutAnalyzer.showTimelineVisualization", () => {
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            vscode.window.showWarningMessage("No active editor");
-            return;
-        }
-        // Get results and convert to timeline events
-        const diagnostics = vscode.languages.getDiagnostics(editor.document.uri);
-        const timelineEvents = [];
-        diagnostics.forEach((diag) => {
-            const line = editor.document.lineAt(diag.range.start.line);
-            const timestamp = extractTimestamp(line.text);
-            const category = extractCategory(line.text);
-            if (timestamp) {
-                const severity = diag.severity === vscode.DiagnosticSeverity.Error
-                    ? "error"
-                    : diag.severity === vscode.DiagnosticSeverity.Warning
-                        ? "warning"
-                        : "info";
-                // Determine event type
-                let eventType = severity;
-                const text = line.text.toLowerCase();
-                if (/\b(start|exit|restart|shutdown)\b/i.test(text)) {
-                    eventType = "lifecycle";
-                }
-                else if (/\b(login|logout|auth)\b/i.test(text)) {
-                    eventType = "authentication";
-                }
-                else if (/\b(call|invite|bye)\b/i.test(text)) {
-                    eventType = "call";
-                }
-                else if (/\b(connect|disconnect)\b/i.test(text)) {
-                    eventType = "connection";
-                }
-                timelineEvents.push({
-                    timestamp,
-                    line: diag.range.start.line,
-                    type: eventType,
-                    message: diag.message.split("\n")[0],
-                    category,
-                });
-            }
-        });
-        if (timelineEvents.length === 0) {
-            vscode.window.showInformationMessage("No timeline events with timestamps found");
-            return;
-        }
-        timelineVisualization?.showTimelinePanel(timelineEvents, editor.document);
-        vscode.window.showInformationMessage(`Timeline visualization opened with ${timelineEvents.length} events`);
-    });
-    // Show SIP Ladder Diagram command
-    const showLadderDiagramCommand = vscode.commands.registerCommand("logScoutAnalyzer.showLadderDiagram", () => {
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            vscode.window.showWarningMessage("No active editor");
-            return;
-        }
-        // Parse SIP messages from document
-        const sipEvents = sipCallFlowParser_1.SipCallFlowParser.parseSipMessages(editor.document);
-        if (sipEvents.length === 0) {
-            vscode.window.showInformationMessage("No SIP/call flow messages detected. Make sure your logs contain SIP protocol messages or call events.");
-            return;
-        }
-        timelineVisualization?.setLadderEvents(sipEvents);
-        timelineVisualization?.showLadderDiagram();
-        vscode.window.showInformationMessage(`SIP Ladder Diagram opened with ${sipEvents.length} messages`);
     });
     // Toggle Category command
     const toggleCategoryCommand = vscode.commands.registerCommand("logScoutAnalyzer.toggleCategory", (category) => {
@@ -1135,6 +1633,15 @@ function activate(context) {
         // Filter results view based on enabled categories
         filterResultsByCategories();
     });
+    // Toggle Filter command (unified - handles categories, files, etc.)
+    const toggleFilterCommand = vscode.commands.registerCommand("logScoutAnalyzer.toggleFilter", (filterType, filterValue) => {
+        if (filterType === "category") {
+            filterTreeProvider?.toggleCategory(filterValue);
+        }
+        else if (filterType === "file") {
+            filterTreeProvider?.toggleFile(filterValue);
+        }
+    });
     // Helper function to filter results based on enabled categories
     function filterResultsByCategories() {
         if (!categoriesTreeProvider || !allResults)
@@ -1145,7 +1652,7 @@ function activate(context) {
             resultsTreeProvider?.setResults([]);
             return;
         }
-        const filteredResults = allResults.filter(result => {
+        const filteredResults = allResults.filter((result) => {
             const category = result.category || "Uncategorized";
             return enabledCategories.has(category);
         });
@@ -1170,6 +1677,49 @@ function activate(context) {
         }
         await vscode.commands.executeCommand("vscode.openFolder", editor.document.uri, true);
     });
+    // Extract SIP Messages command
+    const extractSipMessagesCommand = vscode.commands.registerCommand("logScoutAnalyzer.extractSipMessages", async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showWarningMessage("No active editor");
+            return;
+        }
+        const document = editor.document;
+        if (document.languageId !== "log") {
+            vscode.window.showWarningMessage("This command only works with log files");
+            return;
+        }
+        try {
+            // Extract SIP messages using our parser
+            const sipMessages = sipCallFlowParser_1.SipCallFlowParser.extractSipMessages(document);
+            if (sipMessages.length === 0) {
+                vscode.window.showInformationMessage("No SIP messages found in this file");
+                return;
+            }
+            // Generate SIP file content
+            const sipContent = sipCallFlowParser_1.SipCallFlowParser.generateSipFile(sipMessages);
+            // Create .sip file in temp directory
+            const os = require("os");
+            const path = require("path");
+            const fs = require("fs");
+            const tempDir = os.tmpdir();
+            const originalFileName = path.basename(document.fileName, path.extname(document.fileName));
+            const sipFileName = `${originalFileName}_extracted.sip`;
+            const sipFilePath = path.join(tempDir, sipFileName);
+            // Write SIP file
+            fs.writeFileSync(sipFilePath, sipContent, "utf8");
+            // Open the .sip file in new tab
+            const sipDocument = await vscode.workspace.openTextDocument(sipFilePath);
+            await vscode.window.showTextDocument(sipDocument);
+            vscode.window.showInformationMessage(`Extracted ${sipMessages.length} SIP messages to ${sipFileName}`);
+            if (outputChannel) {
+                outputChannel.appendLine(`[${new Date().toISOString()}] SIP extraction: ${sipMessages.length} messages extracted from ${document.fileName}`);
+            }
+        }
+        catch (error) {
+            vscode.window.showErrorMessage(`Failed to extract SIP messages: ${error}`);
+        }
+    });
     // Copy Version Info command
     const copyVersionInfoCommand = vscode.commands.registerCommand("logScoutAnalyzer.copyVersionInfo", () => {
         const lspVersion = (0, lspClient_1.getLSPServerVersion)();
@@ -1187,35 +1737,236 @@ function activate(context) {
         const result = item.result;
         const fileName = result.uri.fsPath.split(/[\\/]/).pop();
         const lineNum = result.line + 1;
-        // Format result data as plain text similar to tooltip
-        let text = `${result.severity.toUpperCase()}\n`;
-        text += `─────────────────────\n\n`;
-        if (result.timestamp) {
-            const timestamp = result.timestamp instanceof Date
-                ? result.timestamp
-                : new Date(result.timestamp);
-            text += `Time: ${timestamp.toLocaleString()}\n`;
+        // Format matching tooltip: Category (left) | severity filename:line (right)
+        const category = result.category || "";
+        const rightParts = [];
+        rightParts.push(result.severity.toUpperCase());
+        rightParts.push(`${fileName}:${lineNum}`);
+        const rightSide = rightParts.join(" ");
+        // Build copyable text matching tooltip format (pattern ID below message)
+        let text = `${category}`.padEnd(40) + rightSide + "\n";
+        text += `${"─".repeat(80)}\n\n`;
+        text += `${result.message}\n\n`;
+        if (result.patternId) {
+            text += `Pattern: (${result.patternId})\n\n`;
         }
-        if (result.category) {
-            text += `Category: ${result.category}\n`;
-        }
-        if (result.patternName) {
-            text += `Pattern: ${result.patternName}\n`;
-        }
-        text += `File: ${fileName}\n`;
-        text += `Location: Line ${lineNum}, Column ${result.column + 1}\n\n`;
-        text += `─────────────────────\n\n`;
-        text += `Message:\n${result.message}\n\n`;
-        if (result.matchedText && result.matchedText !== result.message) {
-            text += `─────────────────────\n\n`;
-            text += `Matched Text:\n${result.matchedText}\n\n`;
-        }
-        if (result.context) {
-            text += `─────────────────────\n\n`;
-            text += `Context:\n${result.context}\n`;
-        }
+        text += `${"─".repeat(80)}\n\n`;
+        text += `${result.context}\n`;
         vscode.env.clipboard.writeText(text);
-        vscode.window.showInformationMessage("Issue details copied to clipboard");
+        vscode.window.showInformationMessage("Tooltip content copied to clipboard");
+    });
+    const copyDiagnosticAtCursorCommand = vscode.commands.registerCommand("logScoutAnalyzer.copyDiagnosticAtCursor", async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showWarningMessage("No active editor");
+            return;
+        }
+        const position = editor.selection.active;
+        const diagnostics = vscode.languages.getDiagnostics(editor.document.uri);
+        // Find diagnostic at cursor position
+        const diagnostic = diagnostics.find((diag) => diag.range.contains(position));
+        if (!diagnostic) {
+            vscode.window.showInformationMessage("No diagnostic at cursor position");
+            return;
+        }
+        // Extract data from diagnostic
+        const diagWithData = diagnostic;
+        const category = diagWithData.data?.category || "";
+        const patternId = typeof diagnostic.code === "string" ? diagnostic.code : "";
+        const fileName = editor.document.uri.fsPath.split(/[\\/]/).pop();
+        const lineNum = position.line + 1;
+        // Get the full log line
+        const logLine = editor.document.lineAt(position.line).text;
+        // Extract clean message (remove pattern name prefix if present)
+        let message = diagnostic.message;
+        const colonIndex = message.indexOf(":");
+        if (colonIndex > 0) {
+            message = message.substring(colonIndex + 1).trim();
+        }
+        // Format severity
+        const severityMap = {
+            0: "ERROR",
+            1: "WARNING",
+            2: "INFO",
+            3: "HINT",
+        };
+        const severity = severityMap[diagnostic.severity || 2] || "INFO";
+        // Build copyable text matching tooltip format (pattern ID below message)
+        const rightParts = [severity, `${fileName}:${lineNum}`].filter((p) => p);
+        const rightSide = rightParts.join(" ");
+        let text = `${category}`.padEnd(40) + rightSide + "\n";
+        text += `${"─".repeat(80)}\n\n`;
+        text += `${message}\n\n`;
+        if (patternId) {
+            text += `Pattern: (${patternId})\n\n`;
+        }
+        text += `${"─".repeat(80)}\n\n`;
+        text += `${logLine}\n`;
+        vscode.env.clipboard.writeText(text);
+        vscode.window.showInformationMessage("Diagnostic message copied to clipboard");
+    });
+    const showCacheDataCommand = vscode.commands.registerCommand("logScoutAnalyzer.showCacheData", (item) => {
+        if (!item || !item.result) {
+            vscode.window.showErrorMessage("No result item selected");
+            return;
+        }
+        const result = item.result;
+        const lineNum = result.line + 1;
+        // Create a document showing all cached analysis data
+        const output = vscode.window.createOutputChannel("Scout: Cache Data");
+        output.clear();
+        output.appendLine("═".repeat(80));
+        output.appendLine("📊 CACHED ANALYSIS DATA");
+        output.appendLine("═".repeat(80));
+        output.appendLine("");
+        output.appendLine("📍 LOCATION:");
+        output.appendLine(`   File: ${result.uri.fsPath}`);
+        output.appendLine(`   Line: ${lineNum} (0-based: ${result.line})`);
+        output.appendLine(`   Column: ${result.column}`);
+        output.appendLine("");
+        output.appendLine("🔍 DETECTION:");
+        output.appendLine(`   Severity: ${result.severity.toUpperCase()}`);
+        output.appendLine(`   Category: ${result.category || "(none)"}`);
+        output.appendLine(`   Pattern ID: ${result.patternId || "(none)"}`);
+        output.appendLine(`   Pattern Name: ${result.patternName || "(none)"}`);
+        output.appendLine("");
+        output.appendLine("💬 MESSAGE:");
+        output.appendLine(`   ${result.message}`);
+        output.appendLine("");
+        // ANNOTATION TEXT - the key field with values populated
+        if (result.mergedTemplate) {
+            output.appendLine("📝 ANNOTATION TEXT (with values):");
+            output.appendLine(`   ${result.mergedTemplate}`);
+            output.appendLine("");
+        }
+        if (result.template) {
+            output.appendLine("📋 TEMPLATE (Raw with placeholders):");
+            output.appendLine(`   ${result.template}`);
+            output.appendLine("");
+        }
+        if (result.extractedFields &&
+            Object.keys(result.extractedFields).length > 0) {
+            output.appendLine("🎯 EXTRACTED FIELDS:");
+            for (const [key, value] of Object.entries(result.extractedFields)) {
+                output.appendLine(`   ${key}: ${value}`);
+            }
+            output.appendLine("");
+        }
+        if (result.patternRegex) {
+            output.appendLine("🔧 PATTERN REGEX:");
+            output.appendLine(`   ${result.patternRegex}`);
+            output.appendLine("");
+        }
+        output.appendLine("📝 MATCHED TEXT:");
+        output.appendLine(`   ${result.matchedText || "(none)"}`);
+        output.appendLine("");
+        output.appendLine("📄 CONTEXT (Full Line):");
+        output.appendLine(`   ${result.context}`);
+        output.appendLine("");
+        if (result.timestamp) {
+            output.appendLine("🕐 TIMESTAMP:");
+            output.appendLine(`   ${result.timestamp}`);
+            output.appendLine("");
+        }
+        output.appendLine("═".repeat(80));
+        output.appendLine("Raw JSON Data:");
+        output.appendLine("═".repeat(80));
+        // Show complete diagnostic data if available
+        if (result.diagnosticData) {
+            output.appendLine("");
+            output.appendLine("FULL DIAGNOSTIC DATA (includes all TagScout annotation fields):");
+            output.appendLine(JSON.stringify(result.diagnosticData, null, 2));
+            output.appendLine("");
+            output.appendLine("═".repeat(80));
+        }
+        // Create output object with key annotation fields first
+        const jsonOutput = {
+            // KEY ANNOTATION FIELDS
+            mergedTemplate: result.mergedTemplate,
+            extractedFields: result.extractedFields,
+            template: result.template,
+            // Other fields
+            severity: result.severity,
+            line: result.line,
+            column: result.column,
+            message: result.message,
+            matchedText: result.matchedText,
+            context: result.context,
+            timestamp: result.timestamp,
+            category: result.category,
+            patternId: result.patternId,
+            patternName: result.patternName,
+            patternRegex: result.patternRegex,
+            uri: result.uri,
+        };
+        output.appendLine(JSON.stringify(jsonOutput, null, 2));
+        output.show();
+    });
+    const showPatternByIdCommand = vscode.commands.registerCommand("logScoutAnalyzer.showPatternById", async (patternId) => {
+        if (!patternId) {
+            vscode.window.showErrorMessage("No pattern ID provided");
+            return;
+        }
+        try {
+            const lspClient = (0, lspClient_1.getLSPClient)();
+            if (!lspClient) {
+                vscode.window.showWarningMessage("LSP client not connected. Cannot fetch pattern.");
+                return;
+            }
+            // Fetch all patterns
+            const allPatternsResult = await lspClient.sendRequest("workspace/executeCommand", {
+                command: "logScout.getPatterns",
+                arguments: [],
+            });
+            if (!allPatternsResult || !allPatternsResult.patterns) {
+                vscode.window.showWarningMessage("No patterns available");
+                return;
+            }
+            // Find the specific pattern by ID
+            const pattern = allPatternsResult.patterns.find((p) => p.id === patternId);
+            if (!pattern) {
+                vscode.window.showWarningMessage(`Pattern not found: ${patternId}`);
+                return;
+            }
+            // Create a JSON document with the pattern data for editing
+            const patternJson = JSON.stringify(pattern, null, 2);
+            const doc = await vscode.workspace.openTextDocument({
+                content: patternJson,
+                language: "json",
+            });
+            const editor = await vscode.window.showTextDocument(doc, {
+                preview: false,
+                viewColumn: vscode.ViewColumn.One,
+            });
+            if (outputChannel) {
+                outputChannel.appendLine(`✓ Opened pattern for editing: ${pattern.name} (${patternId})`);
+            }
+            // Show info message with option to save back
+            const action = await vscode.window.showInformationMessage(`Editing pattern: ${pattern.name}`, "Save Changes", "Close");
+            if (action === "Save Changes") {
+                // Get the edited content
+                const editedContent = editor.document.getText();
+                try {
+                    // Validate JSON
+                    JSON.parse(editedContent);
+                    // Here you would send the edited pattern back to LSP or save to file
+                    // For now, just show a message
+                    vscode.window.showInformationMessage("Pattern save functionality coming soon. For now, you can copy this JSON to your patterns file.");
+                    if (outputChannel) {
+                        outputChannel.appendLine(`Pattern edited:\n${editedContent}`);
+                    }
+                }
+                catch (parseError) {
+                    vscode.window.showErrorMessage(`Invalid JSON: ${parseError.message}`);
+                }
+            }
+        }
+        catch (error) {
+            vscode.window.showErrorMessage(`Failed to fetch pattern: ${error.message}`);
+            if (outputChannel) {
+                outputChannel.appendLine(`✗ Error fetching pattern: ${error.message}`);
+            }
+        }
     });
     const showPatternForResultCommand = vscode.commands.registerCommand("logScoutAnalyzer.showPatternForResult", async (item) => {
         if (!item || !item.result) {
@@ -1265,62 +2016,296 @@ function activate(context) {
             }
         }
     });
-    // Register all commands
-    context.subscriptions.push(analyzeCommand, clearCommand, clearCacheCommand, removeCachedFileCommand, openCachedFileCommand, openFileInEditorCommand, revealInExplorerCommand, showCacheStatsCommand, showPatternsCommand, showVersionCommand, jumpToLineCommand, refreshResultsCommand, showConsoleCommand, clearConsoleCommand, groupBySeverityCommand, groupByCategoryCommand, groupByFileCommand, resetViewCommand, exportResultsCommand, analyzeDirectoryCommand, analyzeAllBelowCommand, openAnalyzerPanelCommand, openScoutViewCommand, openActionPanelCommand, openAnnotationDashboardCommand, toggleConsoleLocationCommand, openSplitViewCommand, closeSplitViewCommand, setTimeframeCommand, toggleSignificantEventsCommand, toggleTimeframeCommand, toggleAllTimeframesCommand, changeTimeIntervalCommand, showTimelineVisualizationCommand, showLadderDiagramCommand, toggleCategoryCommand, toggleAllCategoriesCommand, copyFilePathCommand, openInNewWindowCommand, copyVersionInfoCommand, copyResultInfoCommand, showPatternForResultCommand);
-    // Register document change listeners - LSP handles analysis automatically
-    const onDidOpenTextDocument = vscode.workspace.onDidOpenTextDocument(async (document) => {
-        if (isLogFile(document) && outputChannel) {
-            outputChannel.appendLine("");
-            outputChannel.appendLine(`[${new Date().toISOString()}] 📂 Log file opened (LSP analyzing)`);
-            outputChannel.appendLine(`   → ${document.fileName}`);
-            // Analyze and cache (async, non-blocking)
-            const editor = vscode.window.activeTextEditor;
-            const isActiveEditor = editor && editor.document.uri.toString() === document.uri.toString();
-            // Don't await - let it run in background
-            analyzeDocument(document, isActiveEditor).catch(err => {
-                if (outputChannel) {
-                    outputChannel.appendLine(`⚠ Analysis failed for ${document.fileName}: ${err.message}`);
-                }
+    // ============================================================
+    // BUNDLE MANAGEMENT COMMANDS
+    // ============================================================
+    // Create Bundle Command
+    context.subscriptions.push(vscode.commands.registerCommand("logScoutAnalyzer.bundle.create", async () => {
+        const name = await vscode.window.showInputBox({
+            prompt: "Enter bundle name (e.g., INC-12345 or Case 700440257)",
+            placeHolder: "INC-12345: Presence Failure",
+        });
+        if (!name) {
+            return;
+        }
+        const description = await vscode.window.showInputBox({
+            prompt: "Enter description (optional)",
+            placeHolder: "User cannot see presence status",
+        });
+        const caseId = await vscode.window.showInputBox({
+            prompt: "Enter case ID (optional)",
+            placeHolder: "700440257",
+        });
+        if (bundleTreeProvider) {
+            const bundleId = await bundleTreeProvider.createBundle(name, description || undefined, caseId || undefined);
+            if (bundleId) {
+                vscode.window.showInformationMessage(`✅ Bundle created: ${name}`);
+                outputChannel?.appendLine(`✓ Created bundle: ${name} (${bundleId})`);
+            }
+        }
+    }));
+    // Import Package Command
+    context.subscriptions.push(vscode.commands.registerCommand("logScoutAnalyzer.bundle.importPackage", async (uri) => {
+        let packagePath;
+        if (uri) {
+            packagePath = uri.fsPath;
+        }
+        else {
+            const files = await vscode.window.showOpenDialog({
+                canSelectFiles: true,
+                canSelectMany: false,
+                filters: {
+                    "QCSONE Packages": ["zip"],
+                    "All Archives": ["zip", "tar.gz", "tgz", "tar", "gz"],
+                },
+                title: "Select Log Package (e.g., 700440257_qcsone_download_selected.zip)",
             });
+            if (files && files.length > 0) {
+                packagePath = files[0].fsPath;
+            }
         }
-        updateStatusBar();
-    });
-    const onDidChangeTextDocument = vscode.workspace.onDidChangeTextDocument(() => {
-        // LSP server handles document changes automatically
-        updateStatusBar();
-    });
-    const onDidSaveTextDocument = vscode.workspace.onDidSaveTextDocument((document) => {
-        if (isLogFile(document)) {
-            // LSP server re-analyzes on save automatically
-            updateStatusBar();
+        if (!packagePath) {
+            return;
         }
-    });
-    const onDidChangeActiveTextEditor = vscode.window.onDidChangeActiveTextEditor(() => {
-        updateStatusBar();
-        analyzerTreeProvider?.refresh();
-    });
-    // Listen for configuration changes to invalidate cache when patterns change
-    const onDidChangeConfiguration = vscode.workspace.onDidChangeConfiguration(async (e) => {
-        if (e.affectsConfiguration('logScoutAnalyzer.patterns') ||
-            e.affectsConfiguration('logScoutAnalyzer.lsp')) {
+        const filename = packagePath.split(/[\\/]/).pop() || packagePath;
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: `Importing ${filename}`,
+            cancellable: false,
+        }, async (progress) => {
+            progress.report({
+                message: "Extracting archive (including nested archives)...",
+            });
+            try {
+                if (bundleTreeProvider) {
+                    const result = await bundleTreeProvider.importPackage(packagePath);
+                    if (result) {
+                        let message = `✅ Bundle Created Successfully!\n\n`;
+                        if (result.caseId) {
+                            message += `📋 Case: ${result.caseId}\n`;
+                        }
+                        message += `📦 Imported: ${result.importedCount}/${result.totalFiles} files\n`;
+                        message += `🔍 Services Detected:\n`;
+                        Object.entries(result.serviceCounts).forEach(([service, count]) => {
+                            message += `   • ${service}: ${count} log(s)\n`;
+                        });
+                        const action = await vscode.window.showInformationMessage(message, "Open Bundle", "Analyze Now");
+                        if (action === "Analyze Now" && result.bundleId) {
+                            vscode.commands.executeCommand("logScoutAnalyzer.bundle.analyze", result.bundleId);
+                        }
+                        outputChannel?.appendLine(`✓ Imported package: ${filename} → ${result.bundleName}`);
+                        outputChannel?.appendLine(`  Note: Nested archives automatically extracted`);
+                    }
+                }
+            }
+            catch (error) {
+                vscode.window.showErrorMessage(`Import failed: ${error}`);
+                outputChannel?.appendLine(`✗ Import failed: ${error}`);
+            }
+        });
+    }));
+    // Add Current File to Bundle Command
+    context.subscriptions.push(vscode.commands.registerCommand("logScoutAnalyzer.bundle.addCurrentFile", async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showWarningMessage("No file is currently open");
+            return;
+        }
+        const filePath = editor.document.uri.fsPath;
+        const fileName = filePath.split(/[\\/]/).pop() || filePath;
+        // Check if it's a log file
+        if (!fileName.match(/\.(log|txt|trace|out|err)$/i)) {
+            const proceed = await vscode.window.showWarningMessage(`"${fileName}" doesn't appear to be a log file. Add it anyway?`, "Yes", "No");
+            if (proceed !== "Yes") {
+                return;
+            }
+        }
+        // Get list of bundles
+        const client = (0, lspClient_1.getLSPClient)();
+        if (!client) {
+            vscode.window.showErrorMessage("LSP client not available");
+            return;
+        }
+        try {
+            // List existing bundles
+            const response = await client.sendRequest("scout/bundle/list", {
+                logs: [filePath],
+            });
+            if (!response || !response.bundles || response.bundles.length === 0) {
+                // No bundles exist, offer to create one
+                const action = await vscode.window.showInformationMessage(`No bundles exist yet. Create a new bundle for "${fileName}"?`, "Create Bundle", "Cancel");
+                if (action === "Create Bundle") {
+                    // Trigger create bundle command, which will add this file
+                    await vscode.commands.executeCommand("logScoutAnalyzer.bundle.create");
+                }
+                return;
+            }
+            // Let user pick which bundle to add to
+            const items = response.bundles.map((bundle) => ({
+                label: bundle.name,
+                description: `${bundle.logs?.length || 0} logs`,
+                detail: bundle.description || "",
+                id: bundle.id,
+            }));
+            items.unshift({
+                label: "$(add) Create New Bundle",
+                description: "Create a new bundle for this log",
+                detail: "",
+                id: "__new__",
+            });
+            const selected = await vscode.window.showQuickPick(items, {
+                placeHolder: `Add "${fileName}" to bundle...`,
+                title: "Select Bundle",
+            });
+            if (!selected) {
+                return;
+            }
+            if (selected.id === "__new__") {
+                // Create new bundle
+                await vscode.commands.executeCommand("logScoutAnalyzer.bundle.create");
+                return;
+            }
+            // Add file to selected bundle
+            await client.sendRequest("scout/bundle/addLog", {
+                bundleId: selected.id,
+                logPath: filePath,
+            });
+            vscode.window.showInformationMessage(`✅ Added "${fileName}" to bundle "${selected.label}"`);
+            outputChannel?.appendLine(`✓ Added log to bundle: ${fileName} → ${selected.label}`);
+            // Refresh bundle view
+            bundleTreeProvider?.refresh();
+        }
+        catch (error) {
+            vscode.window.showErrorMessage(`Failed to add log: ${error}`);
+            outputChannel?.appendLine(`✗ Failed to add log: ${error}`);
+        }
+    }));
+    // Unified Add to Bundle Command (for Explorer context menu)
+    context.subscriptions.push(vscode.commands.registerCommand("logScoutAnalyzer.bundle.addToBundle", async (uri) => {
+        if (!uri) {
+            vscode.window.showWarningMessage("No file or folder selected");
+            return;
+        }
+        const fsPath = uri.fsPath;
+        const fileName = fsPath.split(/[\\/]/).pop() || fsPath;
+        const stats = await vscode.workspace.fs.stat(uri);
+        const isDirectory = stats.type === vscode.FileType.Directory;
+        // Determine what was selected
+        let actionType = "file";
+        if (isDirectory) {
+            actionType = "folder";
+        }
+        else if (fileName.match(/\.(zip|tar\.gz|tgz|tar|gz)$/i)) {
+            actionType = "archive";
+        }
+        // Handle based on type
+        switch (actionType) {
+            case "archive":
+                // Import as QCSONE package
+                await vscode.commands.executeCommand("logScoutAnalyzer.bundle.importPackage", uri);
+                break;
+            case "folder":
+                // Create bundle from folder
+                const folderName = fileName;
+                const bundleName = await vscode.window.showInputBox({
+                    prompt: `Create bundle from folder "${folderName}"`,
+                    value: folderName,
+                    placeHolder: "Enter bundle name",
+                });
+                if (!bundleName) {
+                    return;
+                }
+                const client = (0, lspClient_1.getLSPClient)();
+                if (!client) {
+                    vscode.window.showErrorMessage("LSP client not available");
+                    return;
+                }
+                try {
+                    const response = await client.sendRequest("scout/bundle/create", {
+                        name: bundleName,
+                        description: `Created from folder: ${folderName}`,
+                    });
+                    if (response && response.bundleId) {
+                        vscode.window.showInformationMessage(`✅ Bundle "${bundleName}" created!\n\nNow add log files from the folder.`);
+                        outputChannel?.appendLine(`✓ Created bundle: ${bundleName}`);
+                        bundleTreeProvider?.refresh();
+                    }
+                }
+                catch (error) {
+                    vscode.window.showErrorMessage(`Failed to create bundle: ${error}`);
+                }
+                break;
+            case "file":
+                // Add file to bundle (reuse existing logic)
+                const doc = await vscode.workspace.openTextDocument(uri);
+                await vscode.window.showTextDocument(doc);
+                await vscode.commands.executeCommand("logScoutAnalyzer.bundle.addCurrentFile");
+                break;
+        }
+    }));
+    // Refresh Bundles Command
+    context.subscriptions.push(vscode.commands.registerCommand("logScoutAnalyzer.bundle.refresh", () => {
+        bundleTreeProvider?.refresh();
+        outputChannel?.appendLine("✓ Bundles refreshed");
+    }));
+    // Analyze Bundle Command
+    context.subscriptions.push(vscode.commands.registerCommand("logScoutAnalyzer.bundle.analyze", async (bundleId) => {
+        if (!bundleTreeProvider) {
+            return;
+        }
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: "Analyzing Bundle",
+            cancellable: false,
+        }, async (progress) => {
+            progress.report({ message: "Running pattern analysis..." });
+            try {
+                if (!bundleTreeProvider) {
+                    throw new Error("Bundle tree provider not initialized");
+                }
+                const result = await bundleTreeProvider.analyzeBundle(bundleId);
+                if (result) {
+                    const message = `✅ Analysis Complete!\n\n` +
+                        `📊 Detections: ${result.totalDetections}\n` +
+                        `🔴 Errors: ${result.errorCount}\n` +
+                        `🟡 Warnings: ${result.warningCount}\n` +
+                        `🔵 Info: ${result.infoCount}`;
+                    vscode.window.showInformationMessage(message, "View Results");
+                    outputChannel?.appendLine(`✓ Analyzed bundle: ${bundleId}`);
+                    outputChannel?.appendLine(`  Detections: ${result.totalDetections}`);
+                }
+            }
+            catch (error) {
+                vscode.window.showErrorMessage(`Analysis failed: ${error}`);
+                outputChannel?.appendLine(`✗ Analysis failed: ${error}`);
+            }
+        });
+    }));
+    // Delete Bundle Command
+    context.subscriptions.push(vscode.commands.registerCommand("logScoutAnalyzer.bundle.delete", async (bundleId) => {
+        const confirm = await vscode.window.showWarningMessage("Delete this bundle? This action cannot be undone.", { modal: true }, "Delete");
+        if (confirm === "Delete" && bundleTreeProvider) {
+            const success = await bundleTreeProvider.deleteBundle(bundleId);
+            if (success) {
+                vscode.window.showInformationMessage("Bundle deleted");
+                outputChannel?.appendLine(`✓ Deleted bundle: ${bundleId}`);
+            }
+        }
+    }));
+    // ============================================================
+    // END BUNDLE MANAGEMENT COMMANDS
+    // ============================================================
+    // Process active editor if it already has diagnostics (reload scenario)
+    const activeEditor = vscode.window.activeTextEditor;
+    if (activeEditor && isLogFile(activeEditor.document)) {
+        const diagnostics = vscode.languages.getDiagnostics(activeEditor.document.uri);
+        if (diagnostics.length > 0) {
+            handleDiagnosticsChange(activeEditor.document.uri, diagnostics);
             if (outputChannel) {
-                outputChannel.appendLine(`[${new Date().toISOString()}] ⚙️ Configuration changed - invalidating cache`);
+                outputChannel.appendLine(`✓ Processed active file: ${activeEditor.document.uri.fsPath.split(/[\\\/]/).pop()} (${diagnostics.length} diagnostic(s))`);
+                outputChannel.appendLine("");
             }
-            analysisCache.clear();
-            cachedFilesTreeProvider?.clear();
-            // Clear persisted cache
-            if (extensionContext) {
-                await extensionContext.globalState.update(CACHE_STORAGE_KEY, undefined);
-            }
-            vscode.window.showInformationMessage('Pattern configuration changed. Cache cleared.');
         }
-    });
-    context.subscriptions.push(onDidOpenTextDocument, onDidChangeTextDocument, onDidSaveTextDocument, onDidChangeActiveTextEditor, onDidChangeConfiguration);
-    // Analyze currently open log files (LSP will handle automatically)
-    const openLogCount = vscode.workspace.textDocuments.filter(isLogFile).length;
-    if (outputChannel && openLogCount > 0) {
-        outputChannel.appendLine(`✓ ${openLogCount} log file(s) already open (LSP analyzing)`);
-        outputChannel.appendLine("");
     }
     if (outputChannel) {
         outputChannel.appendLine("─".repeat(60));
@@ -1343,9 +2328,13 @@ async function deactivate() {
         clearTimeout(saveTimeout);
         await saveCache(extensionContext);
         if (outputChannel) {
-            outputChannel.appendLine('💾 Cache persisted on shutdown');
+            outputChannel.appendLine("💾 Cache persisted on shutdown");
         }
     }
+    // Cleanup case manager (DISABLED)
+    // if (caseManager) {
+    //   caseManager.dispose();
+    // }
     // Stop LSP client
     await (0, lspClient_1.stopLSPClient)();
     if (outputChannel) {
@@ -1360,14 +2349,15 @@ async function deactivate() {
     if (statusBarItem) {
         statusBarItem.dispose();
     }
-    console.log(`${(0, buildInfo_1.getBuildInfo)()} deactivated`);
-    outputChannel = undefined;
-    statusBarItem = undefined;
+    if (patternStatusBarItem) {
+        patternStatusBarItem.dispose();
+    }
     resultsTreeProvider = undefined;
     categoriesTreeProvider = undefined;
-    timelineTreeProvider = undefined;
     fileLogger = undefined;
     gutterDecorator = undefined;
+    patternOverrideManager = undefined;
+    patternOverrideTreeProvider = undefined;
     if (highlightTimeout) {
         clearTimeout(highlightTimeout);
         highlightTimeout = undefined;
@@ -1375,226 +2365,5 @@ async function deactivate() {
     highlightDecoration = undefined;
     splitViewProvider = undefined;
     timelineVisualization = undefined;
-}
-function isLogFile(document) {
-    const config = vscode.workspace.getConfiguration("logScoutAnalyzer");
-    const enableDiagnostics = config.get("enableDiagnostics", true);
-    if (!enableDiagnostics) {
-        return false;
-    }
-    // Check language ID first
-    if (document.languageId === "log") {
-        return true;
-    }
-    // Check file extensions and patterns
-    const fileName = document.fileName.toLowerCase();
-    // Standard log file extensions
-    const logExtensions = [".log", ".txt", ".out", ".err"];
-    if (logExtensions.some((ext) => fileName.endsWith(ext))) {
-        return true;
-    }
-    // Check for numbered log files: log.1, log.2, etc.
-    if (/\blog\.\d+$/.test(fileName)) {
-        return true;
-    }
-    // Check for rotated logs with patterns like: app.log.1, syslog.2, etc.
-    if (/\.\d+$/.test(fileName)) {
-        return true;
-    }
-    // Check for files named "log" or "syslog" without extension
-    const baseName = fileName.split(/[\\/]/).pop() || "";
-    if (baseName === "log" || baseName === "syslog") {
-        return true;
-    }
-    return false;
-}
-function updateStatusBar() {
-    if (!statusBarItem) {
-        return;
-    }
-    // Check if status bar button is enabled in settings
-    const config = vscode.workspace.getConfiguration("logScoutAnalyzer");
-    const showStatusBar = config.get("showStatusBarButton", true);
-    if (!showStatusBar) {
-        statusBarItem.hide();
-        return;
-    }
-    const editor = vscode.window.activeTextEditor;
-    if (editor && isLogFile(editor.document)) {
-        const uriString = editor.document.uri.toString();
-        const cached = analysisCache.get(uriString);
-        const diagnostics = vscode.languages.getDiagnostics(editor.document.uri);
-        const errorCount = diagnostics.filter((d) => d.severity === vscode.DiagnosticSeverity.Error).length;
-        const warningCount = diagnostics.filter((d) => d.severity === vscode.DiagnosticSeverity.Warning).length;
-        const infoCount = diagnostics.filter((d) => d.severity === vscode.DiagnosticSeverity.Information).length;
-        // Get timeline event counts
-        let eventText = "";
-        if (timelineTreeProvider) {
-            const eventCounts = timelineTreeProvider.getEventCounts();
-            const eventParts = [];
-            if (eventCounts.lifecycle > 0) {
-                eventParts.push(`🔄${eventCounts.lifecycle}`);
-            }
-            if (eventCounts.authentication > 0) {
-                eventParts.push(`🔐${eventCounts.authentication}`);
-            }
-            if (eventCounts.call > 0) {
-                eventParts.push(`📞${eventCounts.call}`);
-            }
-            if (eventCounts.connection > 0) {
-                eventParts.push(`🔌${eventCounts.connection}`);
-            }
-            if (eventParts.length > 0) {
-                eventText = " | " + eventParts.join(" ");
-            }
-        }
-        // Add analysis badge if file has been cached
-        const analyzedBadge = cached ? "✓ " : "";
-        const cacheTime = cached ? ` (${formatTimeSince(cached.timestamp)})` : "";
-        if (diagnostics.length === 0) {
-            statusBarItem.text = `$(search) ${analyzedBadge}Scout: Analyze${eventText}`;
-            statusBarItem.backgroundColor = undefined;
-            statusBarItem.tooltip = cached
-                ? `File analyzed ${cacheTime}\nClick to re-analyze`
-                : "Click to analyze file";
-        }
-        else {
-            // Show all counts in status bar with events
-            statusBarItem.text = `$(search) ${analyzedBadge}Scout: 🔴 ${errorCount} 🟡 ${warningCount} 🔵 ${infoCount}${eventText}`;
-            statusBarItem.tooltip = `Analyzed ${cacheTime}\n${errorCount} errors, ${warningCount} warnings, ${infoCount} info\nClick to view details`;
-            if (errorCount > 0) {
-                statusBarItem.backgroundColor = new vscode.ThemeColor("statusBarItem.errorBackground");
-            }
-            else if (warningCount > 0) {
-                statusBarItem.backgroundColor = new vscode.ThemeColor("statusBarItem.warningBackground");
-            }
-            else {
-                statusBarItem.backgroundColor = undefined;
-            }
-        }
-    }
-    else {
-        // Show status bar even when no log file is open (permanent)
-        statusBarItem.text = "$(search) Scout Analyzer";
-        statusBarItem.backgroundColor = undefined;
-    }
-    // Always show status bar (permanent)
-    statusBarItem.show();
-}
-// Update the cached files tree view with current cache
-function updateCachedFilesView() {
-    if (!cachedFilesTreeProvider)
-        return;
-    const cachedFiles = new Map();
-    for (const [uriString, cacheEntry] of analysisCache.entries()) {
-        cachedFiles.set(uriString, {
-            uri: vscode.Uri.parse(uriString),
-            timestamp: cacheEntry.timestamp,
-            errorCount: cacheEntry.errorCount,
-            warningCount: cacheEntry.warningCount,
-            infoCount: cacheEntry.infoCount,
-            debugCount: cacheEntry.debugCount,
-            totalCount: cacheEntry.errorCount + cacheEntry.warningCount + cacheEntry.infoCount + cacheEntry.debugCount,
-        });
-    }
-    cachedFilesTreeProvider.setCachedFiles(cachedFiles);
-}
-// Pattern HTML generator removed - LSP server manages patterns
-function extractTimestamp(logLine) {
-    // Try various timestamp formats
-    const patterns = [
-        // ISO 8601: 2024-01-15T14:30:45.123Z or 2024-01-15 14:30:45
-        /(\d{4}-\d{2}-\d{2}[T\s]\d{2}:\d{2}:\d{2}(?:\.\d{3})?(?:Z|[+-]\d{2}:?\d{2})?)/,
-        // Common log format: [2024-01-15 14:30:45]
-        /\[(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\]/,
-        // Unix timestamp with milliseconds: 1705329045123
-        /\b(\d{13})\b/,
-        // Unix timestamp: 1705329045
-        /\b(\d{10})\b/,
-        // Month DD YYYY HH:MM:SS: Jan 15 2024 14:30:45
-        /((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}\s+\d{4}\s+\d{2}:\d{2}:\d{2})/i,
-        // MM/DD/YYYY HH:MM:SS
-        /(\d{1,2}\/\d{1,2}\/\d{4}\s+\d{2}:\d{2}:\d{2})/,
-    ];
-    for (const pattern of patterns) {
-        const match = logLine.match(pattern);
-        if (match) {
-            const dateStr = match[1];
-            // Handle Unix timestamps
-            if (/^\d{10}$/.test(dateStr)) {
-                return new Date(parseInt(dateStr) * 1000);
-            }
-            if (/^\d{13}$/.test(dateStr)) {
-                return new Date(parseInt(dateStr));
-            }
-            // Try parsing as date string
-            const date = new Date(dateStr);
-            if (!isNaN(date.getTime())) {
-                return date;
-            }
-        }
-    }
-    return undefined;
-}
-function formatTimeSince(date) {
-    const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-    if (seconds < 60) {
-        return `${seconds}s ago`;
-    }
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) {
-        return `${minutes}m ago`;
-    }
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) {
-        return `${hours}h ago`;
-    }
-    const days = Math.floor(hours / 24);
-    return `${days}d ago`;
-}
-function extractCategory(logLine) {
-    // Try to extract category/component/module from common patterns
-    const patterns = [
-        // [Category] or [CATEGORY]
-        /\[([A-Z][A-Za-z0-9_-]+)\]/,
-        // Category: or CATEGORY:
-        /^([A-Z][A-Za-z0-9_-]+):/,
-        // <Category> or <CATEGORY>
-        /<([A-Z][A-Za-z0-9_-]+)>/,
-        // category.function or Category.Function
-        /([A-Z][A-Za-z0-9_]+)\.[A-Za-z0-9_]+/,
-        // Common logging framework patterns
-        /(?:ERROR|WARN|INFO|DEBUG)\s+\[([A-Za-z0-9._-]+)\]/,
-        // Java-style: com.example.Service
-        /([a-z]+\.[a-z]+\.[A-Z][A-Za-z0-9]+)/,
-    ];
-    for (const pattern of patterns) {
-        const match = logLine.match(pattern);
-        if (match && match[1]) {
-            return match[1];
-        }
-    }
-    return undefined;
-}
-async function findLogFiles(directory, recursive) {
-    const logFiles = [];
-    const logExtensions = [".log", ".txt", ".out"];
-    async function scan(dir) {
-        const entries = await fs.promises.readdir(dir, { withFileTypes: true });
-        for (const entry of entries) {
-            const fullPath = path.join(dir, entry.name);
-            if (entry.isDirectory() && recursive) {
-                await scan(fullPath);
-            }
-            else if (entry.isFile()) {
-                const ext = path.extname(entry.name).toLowerCase();
-                if (logExtensions.includes(ext)) {
-                    logFiles.push(fullPath);
-                }
-            }
-        }
-    }
-    await scan(directory);
-    return logFiles;
 }
 //# sourceMappingURL=extension.js.map

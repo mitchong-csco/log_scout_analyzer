@@ -1,0 +1,26 @@
+{
+  "database": "task_log_scout_analyzer",
+  "mongoServers":
+    [
+      { "host": "10.118.12.173", "port": 27017, "isIPv6": false },
+      { "host": "10.118.10.197", "port": 27017, "isIPv6": false },
+      { "host": "10.118.11.131", "port": 27017, "isIPv6": false },
+    ],
+  "password": "DBAAS.glTMEGM8KuzwwN5BVO0h0ge6V7OX2B4DELrU3gOD",
+  "ro_password": "DBAAS.b6uz0o0oFHoOHYnZ8GWeVqCE0ErVetZopVHhsxNa",
+  "ro_username": "log_scout_analyzer_ro",
+  "username": "log_scout_analyzer",
+  "auto_backup":
+    {
+      "enabled": true,
+      "backup_on_change": true,
+      "backup_interval_minutes": 60,
+      "max_backups_per_user": 10,
+      "backup_triggers":
+        [
+          "extraction_policy_change",
+          "pattern_override_change",
+          "preferences_change",
+        ],
+    },
+}

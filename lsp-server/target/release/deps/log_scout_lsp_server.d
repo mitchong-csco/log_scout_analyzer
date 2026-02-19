@@ -4,4 +4,4 @@ C:\Users\mitchong\code\log_scout_analyzer\lsp-server\target\release\deps\log_sco
 
 src\main.rs:
 
-# env-dep:CARGO_PKG_VERSION=0.1.8
+# env-dep:CARGO_PKG_VERSION=0.1.10

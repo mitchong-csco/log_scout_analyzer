@@ -5,8 +5,7 @@
 /// - Usefulness assessment
 /// - Improvement recommendations
 use crate::pattern_engine::Pattern;
-use crate::pattern_loader::{IssueCategory, Priority};
-use std::collections::HashMap;
+use crate::pattern_loader::IssueCategory;
 
 /// Overall pattern quality score
 #[derive(Debug, Clone)]
@@ -197,7 +196,7 @@ impl PatternQualityEvaluator {
             let has_named_group = extractor.regex.contains("(?P<");
             let is_specific = !extractor.regex.contains(".*"); // .* is too generic
 
-            let mut quality = 50.0;
+            let mut quality: f64 = 50.0;
             if is_simple {
                 quality += 20.0;
             }
@@ -221,7 +220,7 @@ impl PatternQualityEvaluator {
         let has_examples = annotation.contains("example") || annotation.contains("e.g.");
         let is_detailed = len > 50;
 
-        let mut score = 40.0; // Base score
+        let mut score: f64 = 40.0; // Base score
         if is_detailed {
             score += 30.0;
         }
@@ -274,7 +273,7 @@ impl PatternQualityEvaluator {
         let has_ip = regex.contains("\\d{1,3}") || regex.contains("\\.");
         let is_service_pattern = !regex.contains(".*") && regex.len() > 10;
 
-        let mut score = 50.0;
+        let mut score: f64 = 50.0;
         if has_date {
             score += 10.0;
         }
@@ -305,7 +304,7 @@ impl PatternQualityEvaluator {
         let coverage_health = metrics.estimated_coverage;
 
         // Calculate weighted average
-        let overall = (regex_health * 0.2
+        let overall: f64 = (regex_health * 0.2
             + extractors_health * 0.25
             + description_health * 0.15
             + specificity_health * 0.15
@@ -358,7 +357,7 @@ impl PatternQualityEvaluator {
     /// Generate improvement recommendations
     fn generate_recommendations(
         improvements: &[ImprovementArea],
-        metrics: &QualityMetrics,
+        _metrics: &QualityMetrics,
     ) -> Vec<String> {
         let mut recommendations = Vec::new();
 

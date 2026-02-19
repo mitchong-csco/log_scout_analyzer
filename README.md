@@ -60,7 +60,46 @@ cd zed-extension
 
 ### Other Editors
 
-The LSP server works with any LSP client. See [ARCHITECTURE.md](ARCHITECTURE.md) for details.
+The LSP server works with any LSP client. See [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) for details.
+
+## 📚 Documentation
+
+### Quick Links
+- **[Documentation Index](docs/README.md)** - Complete documentation map
+- **[Quick Start Guide](docs/guides/QUICK_START.md)** - Get started in 5 minutes
+- **[Build & Install](docs/guides/BUILD_AND_INSTALL.md)** - Detailed build instructions
+- **[Architecture Overview](docs/architecture/ARCHITECTURE.md)** - System design
+- **[Contributing Guide](docs/guides/CONTRIBUTING.md)** - How to contribute
+- **[Style Guide](docs/guides/STYLE_GUIDE.md)** - Code and documentation standards
+
+### Feature Documentation
+Each feature crate has its own documentation:
+- **[Core](crates/core/README.md)** - Shared types and utilities
+- **[Pattern Engine](crates/pattern-engine/README.md)** - Pattern matching and analysis
+- **[Pattern Loader](crates/pattern-loader/README.md)** - Pattern loading and overrides
+- **[Quality System](crates/quality-system/README.md)** - Quality monitoring and agentic decisions
+- **[LSP Server](crates/lsp-server/README.md)** - LSP orchestrator
+
+### Project Structure
+
+```
+log_scout_analyzer/
+├── crates/                      # Feature crates (Rust monorepo)
+│   ├── core/                    # Shared types and utilities
+│   ├── pattern-engine/          # Pattern matching logic
+│   ├── pattern-loader/          # Pattern management
+│   ├── quality-system/          # Quality monitoring
+│   └── lsp-server/              # LSP orchestrator
+├── docs/                        # Root documentation
+│   ├── architecture/            # System design
+│   ├── guides/                  # User guides
+│   ├── design/                  # Design docs
+│   ├── integration/             # Integration guides
+│   └── deployment/              # Deployment guides
+├── vscode-extension/            # VS Code extension
+├── zed-extension/               # Zed extension
+└── examples/                    # Sample log files
+```
 
 ## 🎯 Usage
 
@@ -357,5 +396,6 @@ If you were using the pre-LSP architecture (v0.0.x), see [archive/v1-pre-lsp/REA
 
 ---
 
-**Built with ❤️ for log analysis**#   T e s t  
+**Built with ❤️ for log analysis**#   T e s t 
+ 
  

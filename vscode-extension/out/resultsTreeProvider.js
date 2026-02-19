@@ -41,6 +41,7 @@ class ResultsTreeProvider {
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
         this.results = [];
         this.groupBy = "severity";
+        this.sortBy = "line";
         this.originalResults = [];
     }
     refresh() {
@@ -49,6 +50,7 @@ class ResultsTreeProvider {
     setResults(results) {
         this.results = results;
         this.originalResults = [...results]; // Store original for reset
+        this.applySorting();
         this.refresh();
     }
     getResults() {
@@ -61,9 +63,69 @@ class ResultsTreeProvider {
         this.groupBy = groupBy;
         this.refresh();
     }
+    setSortBy(sortBy) {
+        this.sortBy = sortBy;
+        this.applySorting();
+        this.refresh();
+    }
+    getSortBy() {
+        return this.sortBy;
+    }
+    applySorting() {
+        switch (this.sortBy) {
+            case "line":
+                // Sort by URI, then by line number
+                this.results.sort((a, b) => {
+                    const uriCompare = a.uri.fsPath.localeCompare(b.uri.fsPath);
+                    return uriCompare !== 0 ? uriCompare : a.line - b.line;
+                });
+                break;
+            case "severity":
+                // Sort by severity (Error > Warning > Info > Debug), then by line
+                const severityOrder = { error: 0, warning: 1, info: 2, debug: 3 };
+                this.results.sort((a, b) => {
+                    const severityDiff = severityOrder[a.severity] - severityOrder[b.severity];
+                    return severityDiff !== 0 ? severityDiff : a.line - b.line;
+                });
+                break;
+            case "time":
+                // Sort by timestamp (newest first), then by line
+                this.results.sort((a, b) => {
+                    if (!a.timestamp && !b.timestamp)
+                        return a.line - b.line;
+                    if (!a.timestamp)
+                        return 1;
+                    if (!b.timestamp)
+                        return -1;
+                    const timeDiff = b.timestamp.getTime() - a.timestamp.getTime();
+                    return timeDiff !== 0 ? timeDiff : a.line - b.line;
+                });
+                break;
+            case "file":
+                // Sort by filename, then by line
+                this.results.sort((a, b) => {
+                    const fileA = a.uri.fsPath.split(/[\\/]/).pop() || "";
+                    const fileB = b.uri.fsPath.split(/[\\/]/).pop() || "";
+                    const fileCompare = fileA.localeCompare(fileB);
+                    return fileCompare !== 0 ? fileCompare : a.line - b.line;
+                });
+                break;
+            case "category":
+                // Sort by category, then by line
+                this.results.sort((a, b) => {
+                    const catA = a.category || "Uncategorized";
+                    const catB = b.category || "Uncategorized";
+                    const catCompare = catA.localeCompare(catB);
+                    return catCompare !== 0 ? catCompare : a.line - b.line;
+                });
+                break;
+        }
+    }
     resetGrouping() {
         this.groupBy = "severity";
+        this.sortBy = "line";
         this.results = [...this.originalResults]; // Restore original results
+        this.applySorting();
         this.refresh();
     }
     clear() {
@@ -218,30 +280,26 @@ class ResultsTreeProvider {
         const results = group.results || [];
         return results.map((result) => {
             const lineNum = result.line + 1; // Convert to 1-based
-            // Create rich label with emoji and truncated message
-            const severityEmoji = {
-                error: "🔴",
-                warning: "🟡",
-                info: "🔵",
-                debug: "🟣",
-            };
-            const emoji = severityEmoji[result.severity];
-            const shortMessage = result.message.length > 50
-                ? result.message.substring(0, 47) + "..."
-                : result.message;
-            const label = `${emoji} Line ${lineNum}: ${shortMessage}`;
-            // Create rich description with timestamp and category badges
-            let description = "";
+            // Format timestamp
+            let timeStr = "";
             if (result.timestamp) {
-                const timestamp = result.timestamp instanceof Date ? result.timestamp : new Date(result.timestamp);
-                const time = timestamp.toLocaleTimeString();
-                description = `⏰ ${time}`;
+                const timestamp = result.timestamp instanceof Date
+                    ? result.timestamp
+                    : new Date(result.timestamp);
+                timeStr = timestamp.toLocaleString();
             }
+            // Create label with timestamp and message
+            const label = timeStr ? `${timeStr}  ${result.message}` : result.message;
+            // Create description with structured fields
+            const descParts = [];
             if (result.category) {
-                description = description
-                    ? `${description} • 📁 ${result.category}`
-                    : `📁 ${result.category}`;
+                descParts.push(`Category: ${result.category}`);
             }
+            if (result.patternName) {
+                descParts.push(`Pattern: ${result.patternName}`);
+            }
+            descParts.push(`Line: ${lineNum}, Col: ${result.column + 1}`);
+            const description = descParts.join(" | ");
             const item = new ResultTreeItem(label, description, vscode.TreeItemCollapsibleState.None, "result");
             // Set icon based on severity with color
             if (result.severity === "error") {
@@ -266,34 +324,26 @@ class ResultsTreeProvider {
             const tooltip = new vscode.MarkdownString();
             tooltip.supportHtml = true;
             tooltip.isTrusted = true;
-            // Add severity indicator
-            tooltip.appendMarkdown(`${emoji} **${result.severity.toUpperCase()}**\n\n`);
-            // Add metadata in a structured format
-            tooltip.appendMarkdown(`---\n\n`);
-            if (result.timestamp) {
-                tooltip.appendMarkdown(`⏰ **Time:** ${result.timestamp.toLocaleString()}\n\n`);
-            }
-            if (result.category) {
-                tooltip.appendMarkdown(`📁 **Category:** \`${result.category}\`\n\n`);
-            }
+            // Build header line: Category (left) | trace level filename:line (right)
             const fileName = result.uri.fsPath.split(/[\\/]/).pop();
-            tooltip.appendMarkdown(`📄 **File:** \`${fileName}\`\n\n`);
-            tooltip.appendMarkdown(`📍 **Location:** Line ${lineNum}, Column ${result.column + 1}\n\n`);
-            // Add full message
+            const category = result.category || "";
+            const rightParts = [];
+            rightParts.push(result.severity.toUpperCase());
+            rightParts.push(`${fileName}:${lineNum}`);
+            const rightSide = rightParts.join(" ");
+            // Use HTML for left/right justification
+            tooltip.appendMarkdown(`<div style="display: flex; justify-content: space-between;"><span>${category}</span><span>${rightSide}</span></div>\n\n`);
             tooltip.appendMarkdown(`---\n\n`);
-            tooltip.appendMarkdown(`**Message:**\n\n${result.message}\n\n`);
-            // Add matched text in code block
-            if (result.matchedText && result.matchedText !== result.message) {
-                tooltip.appendMarkdown(`---\n\n`);
-                tooltip.appendMarkdown(`**Matched Text:**\n\n`);
-                tooltip.appendCodeblock(result.matchedText, "log");
+            // Show the merged template (template with values substituted) or fall back to matched text
+            const displayText = result.merged_template || result.matchedText || result.message;
+            tooltip.appendMarkdown(`${displayText}\n\n`);
+            // Add pattern ID as clickable link below message
+            if (result.patternId) {
+                const encodedId = encodeURIComponent(JSON.stringify([result.patternId]));
+                tooltip.appendMarkdown(`Pattern: [(${result.patternId})](command:logScoutAnalyzer.showPatternById?${encodedId})\n\n`);
             }
-            // Add context hint if available
-            if (result.context) {
-                tooltip.appendMarkdown(`\n---\n\n`);
-                tooltip.appendMarkdown(`💡 **Context Available**\n\n`);
-                tooltip.appendCodeblock(result.context.substring(0, 200) + "...", "log");
-            }
+            tooltip.appendMarkdown(`---\n\n`);
+            tooltip.appendCodeblock(result.context, "log");
             item.tooltip = tooltip;
             item.result = result;
             return item;

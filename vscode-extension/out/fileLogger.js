@@ -47,12 +47,22 @@ class FileLogger {
             fs.mkdirSync(logDir, { recursive: true });
         }
         // Create log file with date
-        const date = new Date().toISOString().split('T')[0];
-        this.logFilePath = path.join(logDir, `log-scout-${date}.log`);
+        const date = new Date().toISOString().split("T")[0];
+        this.logFilePath = path.join(logDir, `log-scout-extension-${date}.log`);
+        // LSP server log path (shared location)
+        const homeDir = process.env.HOME || process.env.USERPROFILE || "";
+        const lspLogDir = homeDir
+            ? path.join(homeDir, ".log-scout-analyzer")
+            : logDir;
+        if (!fs.existsSync(lspLogDir)) {
+            fs.mkdirSync(lspLogDir, { recursive: true });
+        }
+        this.lspLogPath = path.join(lspLogDir, `lsp-server-${date}.log`);
         // Initialize log file with header
-        const header = `\n${"=".repeat(80)}\nLog Scout Analyzer - Session Started: ${new Date().toISOString()}\n${"=".repeat(80)}\n`;
+        const header = `\n${"=".repeat(80)}\nLog Scout Analyzer Extension - Session Started: ${new Date().toISOString()}\n${"=".repeat(80)}\n`;
         fs.appendFileSync(this.logFilePath, header);
-        this.log(`Log file: ${this.logFilePath}`);
+        this.log(`Extension log file: ${this.logFilePath}`);
+        this.log(`LSP server log file: ${this.lspLogPath}`);
     }
     log(message) {
         if (!this.enabled)
@@ -63,7 +73,20 @@ class FileLogger {
             fs.appendFileSync(this.logFilePath, logLine);
         }
         catch (error) {
-            console.error('Failed to write to log file:', error);
+            console.error("Failed to write to log file:", error);
+        }
+    }
+    logLSP(message, level = "info") {
+        if (!this.enabled)
+            return;
+        const timestamp = new Date().toISOString();
+        const levelStr = level.toUpperCase().padEnd(5);
+        const logLine = `[${timestamp}] [LSP] [${levelStr}] ${message}\n`;
+        try {
+            fs.appendFileSync(this.logFilePath, logLine);
+        }
+        catch (error) {
+            console.error("Failed to write LSP log:", error);
         }
     }
     logAnalysisStart(fileName, uri) {
@@ -75,7 +98,7 @@ class FileLogger {
             error: "ERROR",
             warning: "WARN ",
             info: "INFO ",
-            debug: "DEBUG"
+            debug: "DEBUG",
         }[severity];
         const cat = category ? `[${category}] ` : "";
         this.log(`  ${severityIcon} Line ${line + 1}: ${cat}${message}`);
@@ -93,8 +116,50 @@ class FileLogger {
         this.enabled = enabled;
         this.log(enabled ? "Logging enabled" : "Logging disabled");
     }
+    getLSPLogPath() {
+        return this.lspLogPath;
+    }
     getLogPath() {
         return this.logFilePath;
+    }
+    logLSPInitialization(mode, details) {
+        this.logLSP(`Initializing LSP client in ${mode} mode: ${details}`, "info");
+    }
+    logLSPConnection(success, version, name) {
+        if (success) {
+            const info = version
+                ? `${name || "LSP Server"} v${version}`
+                : "connected";
+            this.logLSP(`Successfully connected - ${info}`, "info");
+        }
+        else {
+            this.logLSP("Failed to connect", "error");
+        }
+    }
+    logLSPDiagnostics(uri, count) {
+        this.logLSP(`Received ${count} diagnostics for ${uri}`, "debug");
+    }
+    logLSPRequest(method, params) {
+        const paramsStr = params ? ` with params: ${JSON.stringify(params)}` : "";
+        this.logLSP(`Sending request: ${method}${paramsStr}`, "debug");
+    }
+    logLSPResponse(method, success, error) {
+        if (success) {
+            this.logLSP(`Response received for: ${method}`, "debug");
+        }
+        else {
+            this.logLSP(`Response error for: ${method} - ${error}`, "error");
+        }
+    }
+    logLSPNotification(method, params) {
+        const paramsStr = params
+            ? ` - ${JSON.stringify(params).substring(0, 100)}`
+            : "";
+        this.logLSP(`Notification: ${method}${paramsStr}`, "debug");
+    }
+    logLSPError(error, context) {
+        const contextStr = context ? ` [${context}]` : "";
+        this.logLSP(`Error${contextStr}: ${error}`, "error");
     }
     dispose() {
         this.log(`${"=".repeat(80)}\nSession ended: ${new Date().toISOString()}\n${"=".repeat(80)}\n`);

@@ -1,0 +1,173 @@
+# Extraction Policy Configuration
+#
+# Controls which file types are extracted from archives during bundle import.
+# This helps manage disk space, improve security, and optimize performance.
+
+# Version of this config file
+version: 1
+
+# File type policies
+extraction:
+  # Maximum file size to extract (in MB)
+  # Files larger than this are skipped
+  max_file_size_mb: 500
+
+  # File extensions to ALWAYS extract (whitelist)
+  include_extensions:
+    # Log files
+    - log
+    - txt
+    - trace
+    - out
+    - err
+
+    # Metadata and diagnostics
+    - xml    # RTMT metadata
+    - json   # Configuration, diagnostics
+
+    # Configuration files
+    - yaml
+    - yml
+    - conf
+    - cfg
+    - config
+    - properties
+    - ini
+
+    # Reports and data
+    - csv
+    - tsv
+    - html
+    - htm
+
+    # Network captures
+    - pcap
+    - pcapng
+    - cap
+
+    # Archives (for nested extraction)
+    - zip
+    - tar
+    - gz
+    - tgz
+    - bz2
+    - tar.gz
+
+  # File extensions to ALWAYS skip (blacklist)
+  # These take priority over include_extensions
+  exclude_extensions:
+    # Executables (security risk)
+    - exe
+    - dll
+    - so
+    - dylib
+    - bat
+    - cmd
+    - com
+    - sh
+    - ps1
+    - scr
+
+    # Images (not useful for log analysis)
+    - png
+    - jpg
+    - jpeg
+    - gif
+    - bmp
+    - ico
+    - svg
+    - tiff
+
+    # Videos (never useful)
+    - mp4
+    - avi
+    - mov
+    - wmv
+    - flv
+    - mkv
+    - webm
+
+    # Audio (not useful)
+    - mp3
+    - wav
+    - ogg
+    - flac
+
+    # Office documents (usually not needed)
+    - doc
+    - docx
+    - xls
+    - xlsx
+    - ppt
+    - pptx
+
+    # Compiled/binary
+    - bin
+    - dat
+    - class
+    - jar  # Unless you need Java diagnostics
+
+  # Conditional extraction rules
+  conditional:
+    # Extract PDFs only if smaller than this (MB)
+    pdf_max_size_mb: 10
+
+    # Extract SQL dumps only if smaller than this (MB)
+    sql_max_size_mb: 50
+
+    # Extract database files only if smaller than this (MB)
+    db_max_size_mb: 100
+
+  # Behavior flags
+  options:
+    # Skip images by default
+    skip_images: true
+
+    # Skip videos by default
+    skip_videos: true
+
+    # Skip executables for security
+    skip_executables: true
+
+    # Log skipped files at DEBUG level
+    log_skipped_files: true
+
+    # Warn when large files are skipped
+    warn_on_large_files: true
+
+# Override policies per archive name pattern
+# Useful for specific diagnostic tools or vendors
+overrides:
+  # Example: RTMT exports might need different rules
+  - pattern: "rtmt_*"
+    include_extensions:
+      - sql  # RTMT might include SQL diagnostic dumps
+      - db   # RTMT database snapshots
+    max_file_size_mb: 1000  # Allow larger files from RTMT
+
+  # Example: Network diagnostic packages
+  - pattern: "*_network_*"
+    include_extensions:
+      - pcap
+      - pcapng
+      - cap
+    max_file_size_mb: 2000  # Network captures can be large
+
+  # Example: Webex diagnostics might include images for bug reports
+  - pattern: "webex_diagnostics_*"
+    options:
+      skip_images: false  # Allow images from Webex
+    conditional:
+      pdf_max_size_mb: 50  # Webex might have larger reports
+
+# Statistics tracking
+# These settings control what statistics are logged
+statistics:
+  # Log extraction statistics after each archive
+  log_stats: true
+
+  # Include details about skipped files in stats
+  include_skipped_details: true
+
+  # Log top N most common skipped file types
+  top_skipped_types: 5

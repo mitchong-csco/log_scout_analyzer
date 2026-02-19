@@ -1,17 +1,14 @@
 # Log Scout Analyzer - Workspace Configuration
-# Feature-based monorepo architecture
+# Note: Using standalone lsp-server/ directory (not modular crates/)
 
 [workspace]
 resolver = "2"
 members = [
-    "crates/core",
-    "crates/pattern-engine",
-    "crates/pattern-loader",
-    "crates/quality-system",
-    "crates/case-management",
-    "crates/protocol-analysis",
-    "crates/tagscout-integration",
-    "crates/lsp-server",
+    "lsp-server",
+]
+exclude = [
+    "crates",
+    "archive",
 ]
 
 # Shared workspace dependencies
@@ -50,6 +47,17 @@ tokio-stream = "0.1"
 
 # Time handling
 chrono = { version = "0.4", features = ["serde"] }
+
+# UUID generation
+uuid = { version = "1", features = ["v4", "serde"] }
+
+# URL encoding
+urlencoding = "2.1"
+
+# Archive handling
+zip = "0.6"
+tar = "0.4"
+flate2 = "1.0"
 
 # Directory utilities
 dirs = "5.0"

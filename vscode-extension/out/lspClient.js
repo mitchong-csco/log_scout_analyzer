@@ -33,6 +33,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.setLSPLogger = setLSPLogger;
 exports.startLSPClient = startLSPClient;
 exports.stopLSPClient = stopLSPClient;
 exports.getLSPClient = getLSPClient;
@@ -43,6 +44,7 @@ const fs = __importStar(require("fs"));
 const vscode = __importStar(require("vscode"));
 const node_1 = require("vscode-languageclient/node");
 let client;
+let logger;
 /**
  * Get the path to the LSP server binary
  */
@@ -73,11 +75,18 @@ function getServerPath(context) {
     return serverExecutable;
 }
 /**
+ * Set the file logger instance
+ */
+function setLSPLogger(fileLogger) {
+    logger = fileLogger;
+}
+/**
  * Initialize and start the LSP client
  */
 async function startLSPClient(context, outputChannel) {
     try {
         outputChannel.appendLine("🔌 Initializing LSP client...");
+        logger?.logLSP("Initializing LSP client", "info");
         // Get configuration
         const config = vscode.workspace.getConfiguration("logScoutAnalyzer");
         const remoteHost = config.get("lsp.serverHost");
@@ -88,6 +97,7 @@ async function startLSPClient(context, outputChannel) {
         if (remoteHost) {
             // Remote server mode (TCP)
             outputChannel.appendLine(`📡  Using remote LSP server at ${remoteHost}:${remotePort}`);
+            logger?.logLSPInitialization("remote", `${remoteHost}:${remotePort}`);
             serverOptions = () => {
                 return new Promise((resolve, reject) => {
                     const net = require("net");
@@ -111,6 +121,7 @@ async function startLSPClient(context, outputChannel) {
             // Local server mode (embedded binary)
             const serverPath = getServerPath(context);
             outputChannel.appendLine(`📦 Using local LSP server: ${serverPath}`);
+            logger?.logLSPInitialization("local", serverPath);
             serverOptions = {
                 run: {
                     command: serverPath,
@@ -162,13 +173,24 @@ async function startLSPClient(context, outputChannel) {
         // Create and start the language client
         client = new node_1.LanguageClient("logScoutAnalyzer", "Log Scout Analyzer", serverOptions, clientOptions);
         outputChannel.appendLine("🚀 Starting LSP client...");
+        logger?.logLSP("Starting LSP client", "info");
         await client.start();
         outputChannel.appendLine("✅ LSP client started successfully");
         outputChannel.appendLine("🔗 Connected to TagScout pattern engine via LSP");
+        logger?.logLSPConnection(true, client.initializeResult?.serverInfo?.version, client.initializeResult?.serverInfo?.name);
+        // Log paths for easy access
+        if (logger) {
+            outputChannel.appendLine(`📝 Extension log: ${logger.getLogPath()}`);
+            outputChannel.appendLine(`📝 LSP server log: ${logger.getLSPLogPath()}`);
+        }
+        // Set up diagnostic handler to process LSP diagnostics
+        setupDiagnosticHandlers(client, outputChannel);
         return client;
     }
     catch (error) {
         outputChannel.appendLine(`❌ Failed to start LSP client: ${error.message}`);
+        logger?.logLSPError(error.message, "startLSPClient");
+        logger?.logLSPConnection(false);
         vscode.window.showErrorMessage(`Failed to start Log Scout Analyzer LSP: ${error.message}`);
         return undefined;
     }
@@ -178,8 +200,10 @@ async function startLSPClient(context, outputChannel) {
  */
 async function stopLSPClient() {
     if (client) {
+        logger?.logLSP("Stopping LSP client", "info");
         await client.stop();
         client = undefined;
+        logger?.logLSP("LSP client stopped", "info");
     }
 }
 /**
@@ -205,5 +229,26 @@ function getLSPServerName() {
         return undefined;
     }
     return client.initializeResult.serverInfo?.name;
+}
+/**
+ * Set up handlers for LSP diagnostics
+ * This allows the extension to process diagnostics from the LSP server
+ */
+function setupDiagnosticHandlers(lspClient, outputChannel) {
+    // Handler for when LSP server publishes diagnostics
+    lspClient.onNotification("textDocument/publishDiagnostics", (params) => {
+        const uri = vscode.Uri.parse(params.uri);
+        const diagnostics = params.diagnostics;
+        // Log diagnostic information
+        outputChannel.appendLine(`📊 Received ${diagnostics.length} diagnostics from LSP server for ${uri.fsPath}`);
+        logger?.logLSPDiagnostics(uri.fsPath, diagnostics.length);
+        // Publish diagnostics through VS Code's diagnostic collection
+        const diagnosticCollection = vscode.languages.createDiagnosticCollection("log-scout-lsp");
+        diagnosticCollection.set(uri, diagnostics);
+        // Note: The extension can also listen to vscode.languages.onDidChangeDiagnostics
+        // to react to these diagnostics in its UI components
+    });
+    outputChannel.appendLine("✅ LSP diagnostic handlers configured");
+    logger?.logLSP("LSP diagnostic handlers configured", "info");
 }
 //# sourceMappingURL=lspClient.js.map

@@ -1,0 +1,11 @@
+C:\Users\mitchong\code\log_scout_analyzer\lsp-server\target\release\deps\bzip2-3b9bf1bdf1722a08.d: C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bzip2-0.4.4\src\lib.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bzip2-0.4.4\src\mem.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bzip2-0.4.4\src\bufread.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bzip2-0.4.4\src\read.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bzip2-0.4.4\src\write.rs
+
+C:\Users\mitchong\code\log_scout_analyzer\lsp-server\target\release\deps\libbzip2-3b9bf1bdf1722a08.rlib: C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bzip2-0.4.4\src\lib.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bzip2-0.4.4\src\mem.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bzip2-0.4.4\src\bufread.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bzip2-0.4.4\src\read.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bzip2-0.4.4\src\write.rs
+
+C:\Users\mitchong\code\log_scout_analyzer\lsp-server\target\release\deps\libbzip2-3b9bf1bdf1722a08.rmeta: C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bzip2-0.4.4\src\lib.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bzip2-0.4.4\src\mem.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bzip2-0.4.4\src\bufread.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bzip2-0.4.4\src\read.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bzip2-0.4.4\src\write.rs
+
+C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bzip2-0.4.4\src\lib.rs:
+C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bzip2-0.4.4\src\mem.rs:
+C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bzip2-0.4.4\src\bufread.rs:
+C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bzip2-0.4.4\src\read.rs:
+C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\bzip2-0.4.4\src\write.rs:

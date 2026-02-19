@@ -35,15 +35,15 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ScoutInventorProvider = exports.InventorItem = exports.InventorItemType = void 0;
 const vscode = __importStar(require("vscode"));
+const lspClient_1 = require("./lspClient");
 /**
  * Item types for Scout Inventor
  */
 var InventorItemType;
 (function (InventorItemType) {
     InventorItemType[InventorItemType["Category"] = 0] = "Category";
-    InventorItemType[InventorItemType["Action"] = 1] = "Action";
-    InventorItemType[InventorItemType["Tool"] = 2] = "Tool";
-    InventorItemType[InventorItemType["Quick"] = 3] = "Quick";
+    InventorItemType[InventorItemType["Product"] = 1] = "Product";
+    InventorItemType[InventorItemType["Pattern"] = 2] = "Pattern";
 })(InventorItemType || (exports.InventorItemType = InventorItemType = {}));
 /**
  * Tree item for Scout Inventor
@@ -56,21 +56,8 @@ class InventorItem extends vscode.TreeItem {
         this.commandId = commandId;
         this.collapsibleState = collapsibleState;
         this.children = children;
-        // Set icons based on type
-        switch (type) {
-            case InventorItemType.Category:
-                this.iconPath = new vscode.ThemeIcon("folder");
-                break;
-            case InventorItemType.Action:
-                this.iconPath = new vscode.ThemeIcon("play");
-                break;
-            case InventorItemType.Tool:
-                this.iconPath = new vscode.ThemeIcon("tools");
-                break;
-            case InventorItemType.Quick:
-                this.iconPath = new vscode.ThemeIcon("zap");
-                break;
-        }
+        // Set context value for when clauses
+        this.contextValue = type.toString();
         // Set command if provided
         if (commandId) {
             this.command = {
@@ -78,18 +65,43 @@ class InventorItem extends vscode.TreeItem {
                 title: label,
             };
         }
-        // Set context value for when clauses
-        this.contextValue = type.toString();
     }
 }
 exports.InventorItem = InventorItem;
 /**
- * Provides the Scout Inventor tree view with quick actions and tools
+ * Provides the Scout Inventor tree view with pattern library
  */
 class ScoutInventorProvider {
     constructor() {
         this._onDidChangeTreeData = new vscode.EventEmitter();
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
+        this.patterns = [];
+        this.loadPatterns();
+    }
+    async loadPatterns() {
+        try {
+            const lspClient = (0, lspClient_1.getLSPClient)();
+            if (!lspClient) {
+                return;
+            }
+            const result = await lspClient.sendRequest('workspace/executeCommand', {
+                command: 'logScout.getPatterns',
+                arguments: []
+            });
+            if (result && result.patterns) {
+                this.patterns = result.patterns.map((p) => ({
+                    id: p.id,
+                    name: p.name,
+                    category: p.category || 'uncategorized',
+                    service: p.service,
+                    severity: p.severity
+                }));
+                this.refresh();
+            }
+        }
+        catch (error) {
+            console.error('Failed to load patterns:', error);
+        }
     }
     refresh() {
         this._onDidChangeTreeData.fire();
@@ -99,69 +111,100 @@ class ScoutInventorProvider {
     }
     getChildren(element) {
         if (!element) {
-            // Root level items
+            // Root level items - products
             return Promise.resolve(this.getRootItems());
         }
-        else {
-            // Child items
-            return Promise.resolve(element.children || []);
+        else if (element.type === InventorItemType.Product) {
+            // Categories under product
+            return Promise.resolve(this.getCategoryItems(element.label));
         }
+        else if (element.type === InventorItemType.Category) {
+            // Patterns under category
+            const [product, category] = element.metadata?.split('|') || ['', ''];
+            return Promise.resolve(this.getPatternItems(product, category));
+        }
+        return Promise.resolve([]);
     }
     /**
-     * Get root level items
+     * Get root level items - products/services
      */
     getRootItems() {
-        return [
-            // Quick Actions Section
-            new InventorItem("⚡ Quick Actions", InventorItemType.Category, undefined, vscode.TreeItemCollapsibleState.Expanded, [
-                new InventorItem("Analyze Current File", InventorItemType.Quick, "logScoutAnalyzer.analyzeFile"),
-                new InventorItem("Clear Results", InventorItemType.Quick, "logScoutAnalyzer.clearDiagnostics"),
-                new InventorItem("Clear Cache", InventorItemType.Quick, "logScoutAnalyzer.clearCache"),
-                new InventorItem("Show Patterns", InventorItemType.Quick, "logScoutAnalyzer.showPatterns"),
-            ]),
-            // Creation Tools Section
-            new InventorItem("✨ Creation & Authoring", InventorItemType.Category, undefined, vscode.TreeItemCollapsibleState.Expanded, [
-                new InventorItem("Open Action Panel", InventorItemType.Tool, "logScoutAnalyzer.openActionPanel"),
-                new InventorItem("Create Pattern", InventorItemType.Tool, "logScoutAnalyzer.createPattern"),
-                new InventorItem("Create Signature", InventorItemType.Tool, "logScoutAnalyzer.createSignature"),
-                new InventorItem("Create Scenario", InventorItemType.Tool, "logScoutAnalyzer.createScenario"),
-                new InventorItem("Create Action", InventorItemType.Tool, "logScoutAnalyzer.createAction"),
-            ]),
-            // Visualization Section
-            new InventorItem("📊 Visualization", InventorItemType.Category, undefined, vscode.TreeItemCollapsibleState.Expanded, [
-                new InventorItem("Show Timeline", InventorItemType.Tool, "logScoutAnalyzer.showTimelineVisualization"),
-                new InventorItem("Show Ladder Diagram", InventorItemType.Tool, "logScoutAnalyzer.showLadderDiagram"),
-                new InventorItem("Open Split View", InventorItemType.Tool, "logScoutAnalyzer.openSplitView"),
-            ]),
-            // Export & Share Section
-            new InventorItem("📤 Export & Share", InventorItemType.Category, undefined, vscode.TreeItemCollapsibleState.Expanded, [
-                new InventorItem("Export Results", InventorItemType.Action, "logScoutAnalyzer.exportResults"),
-                new InventorItem("Export Patterns", InventorItemType.Action, "logScoutAnalyzer.exportPatterns"),
-                new InventorItem("Export Scenarios", InventorItemType.Action, "logScoutAnalyzer.exportScenarios"),
-            ]),
-            // Batch Operations Section
-            new InventorItem("🔄 Batch Operations", InventorItemType.Category, undefined, vscode.TreeItemCollapsibleState.Collapsed, [
-                new InventorItem("Analyze Directory", InventorItemType.Action, "logScoutAnalyzer.analyzeDirectory"),
-                new InventorItem("Analyze All Below", InventorItemType.Action, "logScoutAnalyzer.analyzeAllBelow"),
-            ]),
-            // Console Section
-            new InventorItem("🖥️ Console", InventorItemType.Category, undefined, vscode.TreeItemCollapsibleState.Collapsed, [
-                new InventorItem("Show Console", InventorItemType.Action, "logScoutAnalyzer.showConsole"),
-                new InventorItem("Clear Console", InventorItemType.Action, "logScoutAnalyzer.clearConsole"),
-            ]),
-            // View Options Section
-            new InventorItem("👁️ View Options", InventorItemType.Category, undefined, vscode.TreeItemCollapsibleState.Collapsed, [
-                new InventorItem("Group by Severity", InventorItemType.Action, "logScoutAnalyzer.groupBySeverity"),
-                new InventorItem("Group by Category", InventorItemType.Action, "logScoutAnalyzer.groupByCategory"),
-                new InventorItem("Group by File", InventorItemType.Action, "logScoutAnalyzer.groupByFile"),
-                new InventorItem("Reset View", InventorItemType.Action, "logScoutAnalyzer.resetView"),
-            ]),
-            // Info Section
-            new InventorItem("ℹ️ Information", InventorItemType.Category, undefined, vscode.TreeItemCollapsibleState.Collapsed, [
-                new InventorItem("Show Version", InventorItemType.Action, "logScoutAnalyzer.showVersion"),
-                new InventorItem("Show Cache Stats", InventorItemType.Action, "logScoutAnalyzer.showCacheStats"),
-            ]),
-        ];
+        const byProduct = new Map();
+        this.patterns.forEach(p => {
+            const product = p.service || 'general';
+            if (!byProduct.has(product)) {
+                byProduct.set(product, []);
+            }
+            byProduct.get(product).push(p);
+        });
+        const items = [];
+        Array.from(byProduct.keys()).sort().forEach(product => {
+            const patternCount = byProduct.get(product).length;
+            const productItem = new InventorItem(product, InventorItemType.Product, undefined, vscode.TreeItemCollapsibleState.Collapsed);
+            productItem.description = `${patternCount} patterns`;
+            productItem.iconPath = new vscode.ThemeIcon('package', new vscode.ThemeColor('charts.blue'));
+            items.push(productItem);
+        });
+        return items;
+    }
+    /**
+     * Get category items for a product
+     */
+    getCategoryItems(product) {
+        const productPatterns = this.patterns.filter(p => (p.service || 'general') === product);
+        const byCategory = new Map();
+        productPatterns.forEach(p => {
+            const category = p.category || 'uncategorized';
+            if (!byCategory.has(category)) {
+                byCategory.set(category, []);
+            }
+            byCategory.get(category).push(p);
+        });
+        const items = [];
+        Array.from(byCategory.keys()).sort().forEach(category => {
+            const patternCount = byCategory.get(category).length;
+            const categoryItem = new InventorItem(category, InventorItemType.Category, undefined, vscode.TreeItemCollapsibleState.Collapsed);
+            categoryItem.description = `${patternCount} patterns`;
+            categoryItem.metadata = `${product}|${category}`;
+            categoryItem.iconPath = new vscode.ThemeIcon('symbol-folder', new vscode.ThemeColor('charts.orange'));
+            items.push(categoryItem);
+        });
+        return items;
+    }
+    /**
+     * Get pattern items for a product/category
+     */
+    getPatternItems(product, category) {
+        const patterns = this.patterns.filter(p => (p.service || 'general') === product &&
+            (p.category || 'uncategorized') === category);
+        const items = [];
+        patterns.forEach(p => {
+            const patternItem = new InventorItem(p.name, InventorItemType.Pattern, 'logScoutAnalyzer.showPatternById');
+            patternItem.description = p.severity;
+            patternItem.metadata = p.id;
+            patternItem.tooltip = `Pattern ID: ${p.id}`;
+            patternItem.command = {
+                command: 'logScoutAnalyzer.showPatternById',
+                title: 'Show Pattern Details',
+                arguments: [[p.id]]
+            };
+            // Icon based on severity
+            const severityIcons = {
+                'error': 'error',
+                'warning': 'warning',
+                'info': 'info',
+                'hint': 'lightbulb'
+            };
+            const severityColors = {
+                'error': 'errorForeground',
+                'warning': 'charts.yellow',
+                'info': 'charts.blue',
+                'hint': 'charts.green'
+            };
+            patternItem.iconPath = new vscode.ThemeIcon(severityIcons[p.severity] || 'circle-outline', new vscode.ThemeColor(severityColors[p.severity] || 'foreground'));
+            items.push(patternItem);
+        });
+        return items;
     }
 }
 exports.ScoutInventorProvider = ScoutInventorProvider;

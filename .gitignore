@@ -81,9 +81,17 @@ Desktop.ini
 # Logs
 *.log
 
+# Build logs
+build_logs/
+
 # Extension development
 *.wasm.map
 .zed/
+!.zed/tasks.json
+
+# VSIX packages (built artifacts)
+vscode-extension/vsix/
+*.vsix
 
 # Local configuration
 local.yaml

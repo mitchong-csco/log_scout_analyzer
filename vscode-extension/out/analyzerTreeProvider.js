@@ -35,7 +35,6 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AnalyzerTreeItem = exports.AnalyzerTreeProvider = void 0;
 const vscode = __importStar(require("vscode"));
-const path = __importStar(require("path"));
 class AnalyzerTreeProvider {
     static setDiagnosticsProvider(_provider) {
         // Reserved for future use
@@ -65,134 +64,85 @@ class AnalyzerTreeProvider {
         return Promise.resolve([]);
     }
     getRootItems() {
-        const editor = vscode.window.activeTextEditor;
         const items = [];
-        // Current File Section
-        if (editor) {
-            const fileName = path.basename(editor.document.fileName);
-            const currentFileItem = new AnalyzerTreeItem(`📄 ${fileName}`, "", vscode.TreeItemCollapsibleState.None, "currentFile");
-            currentFileItem.tooltip = `Current file: ${editor.document.fileName}`;
-            currentFileItem.iconPath = new vscode.ThemeIcon("file", new vscode.ThemeColor("charts.blue"));
-            items.push(currentFileItem);
-        }
-        // Quick Actions
-        const analyzeCurrentItem = new AnalyzerTreeItem("Analyze Current File", editor ? "Run analysis on active file" : "No file open", vscode.TreeItemCollapsibleState.None, "analyzeFile");
-        analyzeCurrentItem.command = {
-            command: "logScoutAnalyzer.analyzeFile",
-            title: "Analyze File",
+        // Analysis Commands
+        const analyzeCurrentFile = new AnalyzerTreeItem("Analyze Current File", "Run analysis on active file", vscode.TreeItemCollapsibleState.None, "analyzeCommand");
+        analyzeCurrentFile.iconPath = new vscode.ThemeIcon("file-code");
+        analyzeCurrentFile.command = {
+            command: "logScoutAnalyzer.analyzeCurrentFile",
+            title: "Analyze Current File",
         };
-        analyzeCurrentItem.iconPath = new vscode.ThemeIcon("play-circle", new vscode.ThemeColor("testing.runIcon"));
-        items.push(analyzeCurrentItem);
-        const analyzeDirectoryItem = new AnalyzerTreeItem("Analyze Directory", editor ? "All log files in current directory" : "No file open", vscode.TreeItemCollapsibleState.None, "analyzeDirectory");
-        analyzeDirectoryItem.command = {
+        items.push(analyzeCurrentFile);
+        const analyzeDirectory = new AnalyzerTreeItem("Analyze Directory", "Analyze all files in a directory", vscode.TreeItemCollapsibleState.None, "analyzeCommand");
+        analyzeDirectory.iconPath = new vscode.ThemeIcon("folder");
+        analyzeDirectory.command = {
             command: "logScoutAnalyzer.analyzeDirectory",
             title: "Analyze Directory",
         };
-        analyzeDirectoryItem.iconPath = new vscode.ThemeIcon("folder", new vscode.ThemeColor("testing.runIcon"));
-        items.push(analyzeDirectoryItem);
-        const analyzeRecursiveItem = new AnalyzerTreeItem("Analyze Recursively", editor ? "All log files in directory tree" : "No file open", vscode.TreeItemCollapsibleState.None, "analyzeRecursive");
-        analyzeRecursiveItem.command = {
-            command: "logScoutAnalyzer.analyzeAllBelow",
+        items.push(analyzeDirectory);
+        const analyzeRecursive = new AnalyzerTreeItem("Analyze Recursively", "Analyze directory and subdirectories", vscode.TreeItemCollapsibleState.None, "analyzeCommand");
+        analyzeRecursive.iconPath = new vscode.ThemeIcon("folder-library");
+        analyzeRecursive.command = {
+            command: "logScoutAnalyzer.analyzeDirectoryRecursive",
             title: "Analyze Recursively",
         };
-        analyzeRecursiveItem.iconPath = new vscode.ThemeIcon("folder-library", new vscode.ThemeColor("testing.runIcon"));
-        items.push(analyzeRecursiveItem);
-        // Separator
-        const separatorItem = new AnalyzerTreeItem("────────────────────", "", vscode.TreeItemCollapsibleState.None, "separator");
-        items.push(separatorItem);
-        // Timeframe Filters Section
-        const timeframeHeader = new AnalyzerTreeItem("⏱️ Timeframe Filters", this.activeTimeframe
-            ? `Active: ${this.activeTimeframe.label}`
-            : "Show all time", vscode.TreeItemCollapsibleState.None, "timeframeHeader");
-        timeframeHeader.iconPath = new vscode.ThemeIcon("calendar", new vscode.ThemeColor("charts.purple"));
-        items.push(timeframeHeader);
-        // Timeframe buttons
-        const timeframes = [
-            { label: "Last 1 Day", days: 1, active: false },
-            { label: "Last 2 Days", days: 2, active: false },
-            { label: "Last 3 Days", days: 3, active: false },
-            { label: "Last 7 Days", days: 7, active: false },
-            { label: "All Time", days: 0, active: false },
-        ];
-        timeframes.forEach((tf) => {
-            const isActive = this.activeTimeframe?.days === tf.days;
-            const item = new AnalyzerTreeItem(isActive ? `✓ ${tf.label}` : `  ${tf.label}`, isActive ? "Currently active" : "Click to apply", vscode.TreeItemCollapsibleState.None, "timeframeFilter");
-            item.command = {
-                command: "logScoutAnalyzer.setTimeframe",
-                title: "Set Timeframe",
-                arguments: [tf.days === 0 ? null : tf],
-            };
-            item.iconPath = new vscode.ThemeIcon(isActive ? "check" : "circle-outline", isActive ? new vscode.ThemeColor("charts.green") : undefined);
-            items.push(item);
-        });
-        // Separator
-        const separator2Item = new AnalyzerTreeItem("────────────────────", "", vscode.TreeItemCollapsibleState.None, "separator");
-        items.push(separator2Item);
-        // Tools Section
-        const clearResultsItem = new AnalyzerTreeItem("Clear Results", "Clear all diagnostics", vscode.TreeItemCollapsibleState.None, "clearResults");
-        clearResultsItem.command = {
-            command: "logScoutAnalyzer.clearDiagnostics",
+        items.push(analyzeRecursive);
+        const clearResults = new AnalyzerTreeItem("Clear Results", "Clear all analysis results", vscode.TreeItemCollapsibleState.None, "analyzeCommand");
+        clearResults.iconPath = new vscode.ThemeIcon("clear-all");
+        clearResults.command = {
+            command: "logScoutAnalyzer.clearResults",
             title: "Clear Results",
         };
-        clearResultsItem.iconPath = new vscode.ThemeIcon("clear-all", new vscode.ThemeColor("errorForeground"));
-        items.push(clearResultsItem);
-        const exportResultsItem = new AnalyzerTreeItem("Export Results", "Export to JSON", vscode.TreeItemCollapsibleState.None, "exportResults");
-        exportResultsItem.command = {
+        items.push(clearResults);
+        const exportResults = new AnalyzerTreeItem("Export Results", "Export results to JSON/CSV", vscode.TreeItemCollapsibleState.None, "analyzeCommand");
+        exportResults.iconPath = new vscode.ThemeIcon("export");
+        exportResults.command = {
             command: "logScoutAnalyzer.exportResults",
             title: "Export Results",
         };
-        exportResultsItem.iconPath = new vscode.ThemeIcon("save");
-        items.push(exportResultsItem);
-        const showConsoleItem = new AnalyzerTreeItem("Show Console", "Open Scout Console output", vscode.TreeItemCollapsibleState.None, "showConsole");
-        showConsoleItem.command = {
+        items.push(exportResults);
+        const showConsole = new AnalyzerTreeItem("Show Console", "Open Log Scout console", vscode.TreeItemCollapsibleState.None, "analyzeCommand");
+        showConsole.iconPath = new vscode.ThemeIcon("output");
+        showConsole.command = {
             command: "logScoutAnalyzer.showConsole",
             title: "Show Console",
         };
-        showConsoleItem.iconPath = new vscode.ThemeIcon("terminal");
-        items.push(showConsoleItem);
-        const config = vscode.workspace.getConfiguration("logScoutAnalyzer");
-        const consoleLocation = config.get("consoleOutputLocation", "outputPanel");
-        const locationLabel = consoleLocation === "outputPanel" ? "Output Panel" : "Terminal";
-        const toggleConsoleItem = new AnalyzerTreeItem("Toggle Console Location", `Currently: ${locationLabel}`, vscode.TreeItemCollapsibleState.None, "toggleConsoleLocation");
-        toggleConsoleItem.command = {
+        items.push(showConsole);
+        const toggleConsole = new AnalyzerTreeItem("Toggle Console Location", "Move console between panel/editor", vscode.TreeItemCollapsibleState.None, "analyzeCommand");
+        toggleConsole.iconPath = new vscode.ThemeIcon("move");
+        toggleConsole.command = {
             command: "logScoutAnalyzer.toggleConsoleLocation",
             title: "Toggle Console Location",
         };
-        toggleConsoleItem.iconPath = new vscode.ThemeIcon("arrow-swap");
-        items.push(toggleConsoleItem);
-        const showPatternsItem = new AnalyzerTreeItem("Show Patterns", "View loaded analysis patterns", vscode.TreeItemCollapsibleState.None, "showPatterns");
-        showPatternsItem.command = {
+        items.push(toggleConsole);
+        const showPatterns = new AnalyzerTreeItem("Show Pattern Library", "View all available patterns", vscode.TreeItemCollapsibleState.None, "analyzeCommand");
+        showPatterns.iconPath = new vscode.ThemeIcon("book");
+        showPatterns.command = {
             command: "logScoutAnalyzer.showPatterns",
-            title: "Show Patterns",
+            title: "Show Pattern Library",
         };
-        showPatternsItem.iconPath = new vscode.ThemeIcon("list-tree");
-        items.push(showPatternsItem);
-        // Visualization Section
-        const timelineVizItem = new AnalyzerTreeItem("Timeline Visualization", "Visual timeline with events", vscode.TreeItemCollapsibleState.None, "timelineVisualization");
-        timelineVizItem.command = {
+        items.push(showPatterns);
+        const timelineViz = new AnalyzerTreeItem("Timeline Visualization", "Show events over time", vscode.TreeItemCollapsibleState.None, "analyzeCommand");
+        timelineViz.iconPath = new vscode.ThemeIcon("graph-line");
+        timelineViz.command = {
             command: "logScoutAnalyzer.showTimelineVisualization",
             title: "Timeline Visualization",
         };
-        timelineVizItem.iconPath = new vscode.ThemeIcon("graph-line", new vscode.ThemeColor("charts.blue"));
-        items.push(timelineVizItem);
-        const ladderDiagramItem = new AnalyzerTreeItem("SIP Ladder Diagram", "Call flow visualization", vscode.TreeItemCollapsibleState.None, "ladderDiagram");
-        ladderDiagramItem.command = {
-            command: "logScoutAnalyzer.showLadderDiagram",
+        items.push(timelineViz);
+        const sipLadder = new AnalyzerTreeItem("SIP Ladder Diagram", "Show SIP call flow diagram", vscode.TreeItemCollapsibleState.None, "analyzeCommand");
+        sipLadder.iconPath = new vscode.ThemeIcon("symbol-method");
+        sipLadder.command = {
+            command: "logScoutAnalyzer.showSIPLadderDiagram",
             title: "SIP Ladder Diagram",
         };
-        ladderDiagramItem.iconPath = new vscode.ThemeIcon("type-hierarchy", new vscode.ThemeColor("charts.green"));
-        items.push(ladderDiagramItem);
-        // Separator
-        const separator3Item = new AnalyzerTreeItem("────────────────────", "", vscode.TreeItemCollapsibleState.None, "separator");
-        items.push(separator3Item);
-        // Info Section
-        const versionItem = new AnalyzerTreeItem("About", "Version and build info", vscode.TreeItemCollapsibleState.None, "version");
-        versionItem.command = {
-            command: "logScoutAnalyzer.showVersion",
-            title: "Show Version",
+        items.push(sipLadder);
+        const about = new AnalyzerTreeItem("About", "Show Log Scout version info", vscode.TreeItemCollapsibleState.None, "analyzeCommand");
+        about.iconPath = new vscode.ThemeIcon("info");
+        about.command = {
+            command: "logScoutAnalyzer.showAbout",
+            title: "About",
         };
-        versionItem.iconPath = new vscode.ThemeIcon("info");
-        items.push(versionItem);
+        items.push(about);
         return items;
     }
 }

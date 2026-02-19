@@ -101,9 +101,39 @@ class GutterDecorator {
     createHoverTooltip(annotation, _document) {
         const markdown = new vscode.MarkdownString();
         markdown.isTrusted = true;
-        markdown.supportHtml = false;
-        // Just show the message (already contains parameter values from LSP server)
-        markdown.appendMarkdown(annotation.message);
+        markdown.supportHtml = true;
+        // Build header line: Category (left) | severity badge + file icon + line (right)
+        const category = annotation.category || "";
+        // Create severity badge with color
+        const severityColors = {
+            error: "#f48771",
+            warning: "#cca700",
+            info: "#75beff",
+            debug: "#b5b5b5",
+        };
+        const severityColor = severityColors[annotation.severity.toLowerCase()] || "#b5b5b5";
+        const severityBadge = `<span style="background-color: ${severityColor}; color: #000; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; text-transform: uppercase;">${annotation.severity}</span>`;
+        // Build right side with file icon and line number
+        let rightSide = severityBadge;
+        if (annotation.fileName) {
+            rightSide += ` 📄 ${annotation.fileName} line: ${annotation.line + 1}`;
+        }
+        // Use HTML for left/right justification
+        markdown.appendMarkdown(`<div style="display: flex; justify-content: space-between; align-items: center;"><span>${category}</span><span>${rightSide}</span></div>\n\n`);
+        markdown.appendMarkdown(`---\n\n`);
+        // Show the merged template (template with values substituted) or fall back to matched text
+        const displayText = annotation.merged_template ||
+            annotation.matchedText ||
+            annotation.message;
+        markdown.appendMarkdown(`${displayText}\n\n`);
+        // Add pattern ID as clickable link below message
+        if (annotation.patternId) {
+            const encodedId = encodeURIComponent(JSON.stringify([annotation.patternId]));
+            markdown.appendMarkdown(`Pattern: [(${annotation.patternId})](command:logScoutAnalyzer.showPatternById?${encodedId})\n\n`);
+        }
+        markdown.appendMarkdown(`---\n\n`);
+        // Show the actual raw log line from the file as citation/evidence
+        markdown.appendCodeblock(annotation.context, "log");
         return new vscode.Hover(markdown);
     }
     /**
@@ -123,7 +153,7 @@ class GutterDecorator {
             const range = line.range;
             const decorationOption = {
                 range,
-                hoverMessage: annotation.message, // Just the message with parameter values
+                hoverMessage: annotation.merged_template || annotation.message, // Use merged template (annotation) over fallback
             };
             switch (annotation.severity) {
                 case "error":

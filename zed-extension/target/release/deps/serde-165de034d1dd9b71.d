@@ -1,0 +1,14 @@
+C:\Users\mitchong\code\log_scout_analyzer\zed-extension\target\release\deps\serde-165de034d1dd9b71.d: C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs C:\Users\mitchong\code\log_scout_analyzer\zed-extension\target\release\build\serde-ed2804979b726d48\out/private.rs
+
+C:\Users\mitchong\code\log_scout_analyzer\zed-extension\target\release\deps\libserde-165de034d1dd9b71.rlib: C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs C:\Users\mitchong\code\log_scout_analyzer\zed-extension\target\release\build\serde-ed2804979b726d48\out/private.rs
+
+C:\Users\mitchong\code\log_scout_analyzer\zed-extension\target\release\deps\libserde-165de034d1dd9b71.rmeta: C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs C:\Users\mitchong\code\log_scout_analyzer\zed-extension\target\release\build\serde-ed2804979b726d48\out/private.rs
+
+C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs:
+C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs:
+C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs:
+C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs:
+C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs:
+C:\Users\mitchong\code\log_scout_analyzer\zed-extension\target\release\build\serde-ed2804979b726d48\out/private.rs:
+
+# env-dep:OUT_DIR=C:\\Users\\mitchong\\code\\log_scout_analyzer\\zed-extension\\target\\release\\build\\serde-ed2804979b726d48\\out

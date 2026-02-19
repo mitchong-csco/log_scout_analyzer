@@ -273,6 +273,33 @@ class PatternViewerPanel {
             font-size: 12px;
             word-break: break-all;
         }
+        .pattern-parameters {
+            margin: 8px 0;
+            padding: 8px;
+            background-color: var(--vscode-editor-inactiveSelectionBackground);
+            border-radius: 4px;
+            border-left: 3px solid var(--vscode-charts-blue);
+        }
+        .pattern-parameters-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--vscode-charts-blue);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+        }
+        .parameter-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .parameter {
+            padding: 3px 8px;
+            background-color: var(--vscode-badge-background);
+            color: var(--vscode-badge-foreground);
+            border-radius: 3px;
+            font-size: 11px;
+            font-family: monospace;
+        }
         .pattern-footer {
             display: flex;
             justify-content: space-between;
@@ -379,6 +406,22 @@ class PatternViewerPanel {
                 </div>
                 <div class="pattern-description">${p.description}</div>
                 <div class="pattern-regex"><code>${p.pattern}</code></div>
+                ${p.captureFields && p.captureFields.length > 0
+            ? `<div class="pattern-parameters">
+                        <div class="pattern-parameters-title">📊 Extracted Fields</div>
+                        <div class="parameter-list">
+                          ${p.captureFields.map((field) => `<span class="parameter">${field}</span>`).join('')}
+                        </div>
+                      </div>`
+            : ''}
+                ${p.parameterExtractors && p.parameterExtractors.length > 0
+            ? `<div class="pattern-parameters">
+                        <div class="pattern-parameters-title">🔧 Parameter Extractors</div>
+                        <div class="parameter-list">
+                          ${p.parameterExtractors.map((pe) => `<span class="parameter" title="${pe.regex}">${pe.name}</span>`).join('')}
+                        </div>
+                      </div>`
+            : ''}
                 <div class="pattern-footer">
                     <div class="tags">
                         ${p.service ? `<span class="tag">🔧 ${p.service}</span>` : ""}

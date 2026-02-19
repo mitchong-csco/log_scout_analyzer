@@ -1,0 +1,10 @@
+C:\Users\mitchong\code\log_scout_analyzer\zed-extension\target\release\deps\wit_bindgen_core-197574d09d81eb35.d: C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wit-bindgen-core-0.22.0\src\lib.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wit-bindgen-core-0.22.0\src\abi.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wit-bindgen-core-0.22.0\src\ns.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wit-bindgen-core-0.22.0\src\source.rs
+
+C:\Users\mitchong\code\log_scout_analyzer\zed-extension\target\release\deps\libwit_bindgen_core-197574d09d81eb35.rlib: C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wit-bindgen-core-0.22.0\src\lib.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wit-bindgen-core-0.22.0\src\abi.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wit-bindgen-core-0.22.0\src\ns.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wit-bindgen-core-0.22.0\src\source.rs
+
+C:\Users\mitchong\code\log_scout_analyzer\zed-extension\target\release\deps\libwit_bindgen_core-197574d09d81eb35.rmeta: C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wit-bindgen-core-0.22.0\src\lib.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wit-bindgen-core-0.22.0\src\abi.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wit-bindgen-core-0.22.0\src\ns.rs C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wit-bindgen-core-0.22.0\src\source.rs
+
+C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wit-bindgen-core-0.22.0\src\lib.rs:
+C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wit-bindgen-core-0.22.0\src\abi.rs:
+C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wit-bindgen-core-0.22.0\src\ns.rs:
+C:\Users\mitchong\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wit-bindgen-core-0.22.0\src\source.rs:

@@ -179,10 +179,12 @@ class ModernResultsTreeProvider {
     createIssueItem(result) {
         // Create rich label with timestamp and category badges
         const lineNum = result.line + 1;
-        const timestamp = result.timestamp instanceof Date ? result.timestamp : (result.timestamp ? new Date(result.timestamp) : undefined);
-        const time = timestamp
-            ? timestamp.toLocaleTimeString()
-            : "";
+        const timestamp = result.timestamp instanceof Date
+            ? result.timestamp
+            : result.timestamp
+                ? new Date(result.timestamp)
+                : undefined;
+        const time = timestamp ? timestamp.toLocaleTimeString() : "";
         // Main label: Line number and message (truncated)
         const shortMessage = result.message.length > 60
             ? result.message.substring(0, 57) + "..."
@@ -241,19 +243,15 @@ class ModernResultsTreeProvider {
             tooltip.appendMarkdown(`📄 File: \`${path.basename(result.uri.fsPath)}\`\n\n`);
         }
         tooltip.appendMarkdown(`📍 Line ${lineNum}, Column ${result.column + 1}\n\n`);
-        // Add message
+        // Add annotation (interpretation)
         tooltip.appendMarkdown("---\n\n");
-        tooltip.appendMarkdown(`**Message:**\n\n${result.message}\n\n`);
-        // Add matched text
-        if (result.matchedText && result.matchedText !== result.message) {
-            tooltip.appendMarkdown("---\n\n");
-            tooltip.appendMarkdown("**Matched Text:**\n\n");
-            tooltip.appendMarkdown(`\`\`\`\n${result.matchedText}\n\`\`\`\n\n`);
-        }
-        // Add context hint
+        const annotationText = result.mergedTemplate || result.merged_template || result.message;
+        tooltip.appendMarkdown(`**Annotation:**\n\n${annotationText}\n\n`);
+        // Add citation (raw log line evidence)
         if (result.context) {
             tooltip.appendMarkdown("---\n\n");
-            tooltip.appendMarkdown("💡 *Click to expand for full context*\n");
+            tooltip.appendMarkdown("**Citation (Log Line):**\n\n");
+            tooltip.appendCodeblock(result.context, "log");
         }
         item.tooltip = tooltip;
         // Set command to jump to line

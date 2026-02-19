@@ -2,14 +2,17 @@
 //!
 //! Implements the Language Server Protocol for log file analysis.
 
+use crate::bundle::BundleManager;
 use crate::pattern_engine::{Detection, PatternEngine, Severity};
 use crate::pattern_loader;
 use crate::tagscout::{SyncMode, SyncService, SyncServiceConfig};
 
 use dashmap::DashMap;
+use serde::Deserialize;
+use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tower_lsp::jsonrpc::Result;
+use tower_lsp::jsonrpc::{Error as JsonRpcError, Result};
 use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer};
 
@@ -21,6 +24,7 @@ pub struct LogScoutServer {
     tagscout_service: Arc<RwLock<Option<SyncService>>>,
     documents: Arc<DashMap<Url, String>>,
     workspace_path: Arc<RwLock<Option<String>>>,
+    bundle_manager: Arc<RwLock<Option<BundleManager>>>,
 }
 
 impl LogScoutServer {
@@ -41,6 +45,7 @@ impl LogScoutServer {
             tagscout_service: Arc::new(RwLock::new(None)),
             documents: Arc::new(DashMap::new()),
             workspace_path: Arc::new(RwLock::new(None)),
+            bundle_manager: Arc::new(RwLock::new(None)),
         }
     }
 
@@ -533,6 +538,296 @@ impl LogScoutServer {
             data: Some(serde_json::Value::Object(data_map)),
         }
     }
+
+    /// Initialize bundle manager
+    async fn initialize_bundle_manager(
+        &self,
+        workspace_path: &str,
+    ) -> std::result::Result<(), String> {
+        tracing::info!("Initializing bundle manager at: {}", workspace_path);
+
+        let manager = BundleManager::new(std::path::Path::new(workspace_path))
+            .map_err(|e| format!("Failed to create bundle manager: {}", e))?;
+
+        *self.bundle_manager.write().await = Some(manager);
+        tracing::info!("Bundle manager initialized successfully");
+
+        Ok(())
+    }
+
+    /// Handle custom bundle requests
+    async fn handle_bundle_request(&self, method: &str, params: Value) -> Result<Value> {
+        let manager_opt = self.bundle_manager.read().await;
+        let manager = manager_opt
+            .as_ref()
+            .ok_or_else(|| JsonRpcError::method_not_found())?;
+
+        match method {
+            "scout/bundle/list" => {
+                tracing::info!("Handling scout/bundle/list request");
+                let bundles = manager
+                    .list_bundles(None, None, None)
+                    .map_err(|e| JsonRpcError::internal_error())?;
+
+                let response = serde_json::json!({
+                    "bundles": bundles.iter().map(|b| {
+                        serde_json::json!({
+                            "id": b.id,
+                            "name": b.name,
+                            "logCount": b.log_count,
+                            "createdAt": b.created_at,
+                            "updatedAt": b.updated_at,
+                            "caseId": b.case_id,
+                            "owner": b.owner,
+                            "tags": b.tags,
+                            "analysisStatus": b.analysis_status,
+                        })
+                    }).collect::<Vec<_>>()
+                });
+
+                tracing::info!("Returning {} bundles", bundles.len());
+                Ok(response)
+            }
+
+            "scout/bundle/get" => {
+                #[derive(Deserialize)]
+                struct GetBundleParams {
+                    #[serde(rename = "bundleId")]
+                    bundle_id: String,
+                }
+
+                let params: GetBundleParams = serde_json::from_value(params)
+                    .map_err(|_| JsonRpcError::invalid_params("Invalid parameters".to_string()))?;
+
+                tracing::info!(
+                    "Handling scout/bundle/get request for: {}",
+                    params.bundle_id
+                );
+
+                let bundle = manager
+                    .get_bundle(&params.bundle_id)
+                    .map_err(|_| JsonRpcError::method_not_found())?;
+
+                let response = serde_json::json!({
+                    "id": bundle.id,
+                    "name": bundle.name,
+                    "description": bundle.description,
+                    "logs": bundle.logs.iter().map(|log| {
+                        serde_json::json!({
+                            "uri": log.uri,
+                            "service": format!("{:?}", log.service),
+                            "logType": format!("{:?}", log.log_type),
+                            "sizeBytes": log.size_bytes,
+                            "lineCount": log.line_count,
+                            "addedAt": log.added_at,
+                        })
+                    }).collect::<Vec<_>>(),
+                    "createdAt": bundle.created_at,
+                    "updatedAt": bundle.updated_at,
+                });
+
+                Ok(response)
+            }
+
+            "scout/bundle/create" => {
+                #[derive(Deserialize)]
+                struct CreateBundleParams {
+                    name: String,
+                    description: Option<String>,
+                }
+
+                let params: CreateBundleParams = serde_json::from_value(params)
+                    .map_err(|_| JsonRpcError::invalid_params("Invalid parameters".to_string()))?;
+
+                tracing::info!("Creating bundle: {}", params.name);
+
+                // Need mutable access
+                drop(manager_opt);
+                let mut manager_guard = self.bundle_manager.write().await;
+                let manager_mut = manager_guard
+                    .as_mut()
+                    .ok_or_else(|| JsonRpcError::method_not_found())?;
+
+                let bundle_id = manager_mut
+                    .create_bundle(params.name, params.description, None)
+                    .map_err(|_| JsonRpcError::internal_error())?;
+
+                let response = serde_json::json!({
+                    "bundleId": bundle_id
+                });
+
+                Ok(response)
+            }
+
+            "scout/bundle/importPackage" => {
+                #[derive(Deserialize)]
+                struct ImportPackageParams {
+                    #[serde(rename = "packagePath")]
+                    package_path: String,
+                    #[serde(rename = "bundleName")]
+                    bundle_name: Option<String>,
+                    #[serde(rename = "caseId")]
+                    case_id: Option<String>,
+                }
+
+                let params: ImportPackageParams = serde_json::from_value(params).map_err(|e| {
+                    tracing::error!("Failed to parse import params: {}", e);
+                    JsonRpcError::invalid_params("Invalid parameters".to_string())
+                })?;
+
+                tracing::info!("Importing package: {}", params.package_path);
+
+                // For now, return a stub response indicating the feature needs implementation
+                // The bundle import requires archive extraction which is not yet in the legacy manager
+                tracing::warn!("Bundle import not yet implemented in legacy server - needs migration to crates");
+
+                let response = serde_json::json!({
+                    "error": "Feature not implemented",
+                    "message": "Bundle import requires migration to new crates architecture. Use 'Scout: Create New Bundle' and manually add logs for now.",
+                    "packagePath": params.package_path,
+                });
+
+                Err(JsonRpcError::method_not_found())
+            }
+
+            "scout/bundle/addLog" => {
+                #[derive(Deserialize)]
+                struct AddLogParams {
+                    #[serde(rename = "bundleId")]
+                    bundle_id: String,
+                    #[serde(rename = "filePath")]
+                    file_path: String,
+                }
+
+                let params: AddLogParams = serde_json::from_value(params)
+                    .map_err(|_| JsonRpcError::invalid_params("Invalid parameters".to_string()))?;
+
+                tracing::info!(
+                    "Adding log to bundle {}: {}",
+                    params.bundle_id,
+                    params.file_path
+                );
+
+                drop(manager_opt);
+                let mut manager_guard = self.bundle_manager.write().await;
+                let manager_mut = manager_guard
+                    .as_mut()
+                    .ok_or_else(|| JsonRpcError::method_not_found())?;
+
+                // BundleManager::add_log_to_bundle signature: (bundle_id, log_uri, service, log_type)
+                let log = manager_mut
+                    .add_log_to_bundle(&params.bundle_id, &params.file_path, None, None)
+                    .map_err(|e| {
+                        tracing::error!("Failed to add log: {}", e);
+                        JsonRpcError::internal_error()
+                    })?;
+
+                let response = serde_json::json!({
+                    "service": format!("{:?}", log.service),
+                    "logType": format!("{:?}", log.log_type),
+                    "sizeBytes": log.size_bytes,
+                    "lineCount": log.line_count,
+                });
+
+                Ok(response)
+            }
+
+            "scout/bundle/delete" => {
+                #[derive(Deserialize)]
+                struct DeleteParams {
+                    #[serde(rename = "bundleId")]
+                    bundle_id: String,
+                }
+
+                let params: DeleteParams = serde_json::from_value(params)
+                    .map_err(|_| JsonRpcError::invalid_params("Invalid parameters".to_string()))?;
+
+                tracing::info!("Deleting bundle: {}", params.bundle_id);
+
+                drop(manager_opt);
+                let mut manager_guard = self.bundle_manager.write().await;
+                let manager_mut = manager_guard
+                    .as_mut()
+                    .ok_or_else(|| JsonRpcError::method_not_found())?;
+
+                manager_mut.delete_bundle(&params.bundle_id).map_err(|e| {
+                    tracing::error!("Failed to delete bundle: {}", e);
+                    JsonRpcError::internal_error()
+                })?;
+
+                let response = serde_json::json!({
+                    "success": true,
+                    "bundleId": params.bundle_id,
+                });
+
+                Ok(response)
+            }
+
+            "scout/bundle/analyze" => {
+                #[derive(Deserialize)]
+                struct AnalyzeParams {
+                    #[serde(rename = "bundleId")]
+                    bundle_id: String,
+                }
+
+                let params: AnalyzeParams = serde_json::from_value(params)
+                    .map_err(|_| JsonRpcError::invalid_params("Invalid parameters".to_string()))?;
+
+                tracing::info!("Analyzing bundle: {}", params.bundle_id);
+
+                let bundle = manager.get_bundle(&params.bundle_id).map_err(|e| {
+                    tracing::error!("Failed to get bundle: {}", e);
+                    JsonRpcError::method_not_found()
+                })?;
+
+                // Analyze each log file in the bundle
+                let mut total_detections = 0;
+                let mut error_count = 0;
+                let mut warning_count = 0;
+                let mut info_count = 0;
+
+                let engine_guard = self.pattern_engine.read().await;
+                if let Some(engine) = engine_guard.as_ref() {
+                    for log in &bundle.logs {
+                        // Read log file and analyze
+                        if let Ok(content) = tokio::fs::read_to_string(&log.uri).await {
+                            // Process each line
+                            for (line_num, line) in content.lines().enumerate() {
+                                let detections = engine.process_line(line, line_num);
+                                total_detections += detections.len();
+
+                                for detection in detections {
+                                    match detection.pattern.severity {
+                                        Severity::Error => error_count += 1,
+                                        Severity::Warning => warning_count += 1,
+                                        Severity::Info => info_count += 1,
+                                        _ => {}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                let response = serde_json::json!({
+                    "bundleId": params.bundle_id,
+                    "totalDetections": total_detections,
+                    "errorCount": error_count,
+                    "warningCount": warning_count,
+                    "infoCount": info_count,
+                    "logCount": bundle.logs.len(),
+                });
+
+                tracing::info!("Analysis complete: {} detections", total_detections);
+                Ok(response)
+            }
+
+            _ => {
+                tracing::warn!("Unknown bundle request: {}", method);
+                Err(JsonRpcError::method_not_found())
+            }
+        }
+    }
 }
 
 #[tower_lsp::async_trait]
@@ -698,7 +993,6 @@ impl LanguageServer for LogScoutServer {
         if let Some(doc) = self.documents.get(uri) {
             let lines: Vec<&str> = doc.lines().collect();
             if let Some(line) = lines.get(position.line as usize) {
-                // Provide hover information about the line
                 let contents = HoverContents::Markup(MarkupContent {
                     kind: MarkupKind::Markdown,
                     value: format!(
