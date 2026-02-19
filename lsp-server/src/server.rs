@@ -677,17 +677,41 @@ impl LogScoutServer {
 
                 tracing::info!("Importing package: {}", params.package_path);
 
-                // For now, return a stub response indicating the feature needs implementation
-                // The bundle import requires archive extraction which is not yet in the legacy manager
-                tracing::warn!("Bundle import not yet implemented in legacy server - needs migration to crates");
+                // Need mutable access to bundle manager
+                drop(manager_opt);
+                let mut manager_guard = self.bundle_manager.write().await;
+                let manager_mut = manager_guard.as_mut().ok_or_else(|| {
+                    tracing::error!("Bundle manager not initialized");
+                    JsonRpcError::method_not_found()
+                })?;
 
+                // Import the package
+                let result = manager_mut
+                    .import_log_package(
+                        std::path::Path::new(&params.package_path),
+                        params.bundle_name,
+                        params.case_id,
+                    )
+                    .map_err(|e| {
+                        tracing::error!("Import failed: {}", e);
+                        JsonRpcError::internal_error()
+                    })?;
+
+                // Build response
                 let response = serde_json::json!({
-                    "error": "Feature not implemented",
-                    "message": "Bundle import requires migration to new crates architecture. Use 'Scout: Create New Bundle' and manually add logs for now.",
-                    "packagePath": params.package_path,
+                    "bundleId": result.bundle_id,
+                    "bundleName": result.bundle_name,
+                    "caseId": result.case_id,
+                    "importedCount": result.success_count,
+                    "totalFiles": result.total_files,
+                    "failedFiles": result.failed_files.len(),
                 });
 
-                Err(JsonRpcError::method_not_found())
+                tracing::info!(
+                    "Package imported successfully: {} files",
+                    result.success_count
+                );
+                Ok(response)
             }
 
             "scout/bundle/addLog" => {
@@ -899,6 +923,24 @@ impl LanguageServer for LogScoutServer {
             .log_message(MessageType::INFO, "Log Scout Analyzer ready!")
             .await;
 
+        // Initialize bundle manager if workspace path is available
+        let workspace_path_opt = self.workspace_path.read().await.clone();
+        if let Some(workspace_path) = workspace_path_opt {
+            if let Err(e) = self.initialize_bundle_manager(&workspace_path).await {
+                tracing::error!("Failed to initialize bundle manager: {}", e);
+                self.client
+                    .log_message(
+                        MessageType::WARNING,
+                        &format!("Bundle manager initialization failed: {}", e),
+                    )
+                    .await;
+            } else {
+                tracing::info!("Bundle manager initialized successfully");
+            }
+        } else {
+            tracing::warn!("No workspace path available, bundle manager not initialized");
+        }
+
         // Initialize TagScout in background
         let client_clone = self.client.clone();
         let server_clone = self.clone();
@@ -1069,6 +1111,28 @@ impl LanguageServer for LogScoutServer {
         tracing::info!("Executing command: {}", params.command);
 
         match params.command.as_str() {
+            // Route bundle commands to handler
+            cmd if cmd.starts_with("logScout.bundle.") => {
+                let method = cmd.replace("logScout.bundle.", "scout/bundle/");
+                let args = params
+                    .arguments
+                    .get(0)
+                    .cloned()
+                    .unwrap_or(serde_json::json!({}));
+
+                match self.handle_bundle_request(&method, args).await {
+                    Ok(response) => Ok(Some(response)),
+                    Err(e) => {
+                        self.client
+                            .show_message(
+                                MessageType::ERROR,
+                                &format!("Bundle operation failed: {:?}", e),
+                            )
+                            .await;
+                        Err(e)
+                    }
+                }
+            }
             "logScout.analyze" => {
                 self.client
                     .log_message(MessageType::INFO, "Running full analysis...")

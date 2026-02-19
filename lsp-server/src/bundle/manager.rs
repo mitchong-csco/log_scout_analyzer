@@ -2,6 +2,7 @@
 //!
 //! Manages creation, loading, saving, and querying of bundles
 
+use super::archive_extractor::ArchiveExtractor;
 use super::models::*;
 use super::service_detector::ServiceDetector;
 use chrono::Utc;
@@ -22,6 +23,7 @@ pub enum BundleError {
     SerializationError(serde_json::Error),
     BundleNotFound(String),
     InvalidBundle(String),
+    ArchiveError(String),
 }
 
 impl From<std::io::Error> for BundleError {
@@ -43,8 +45,20 @@ impl std::fmt::Display for BundleError {
             BundleError::SerializationError(e) => write!(f, "Serialization error: {}", e),
             BundleError::BundleNotFound(id) => write!(f, "Bundle not found: {}", id),
             BundleError::InvalidBundle(msg) => write!(f, "Invalid bundle: {}", msg),
+            BundleError::ArchiveError(msg) => write!(f, "Archive error: {}", msg),
         }
     }
+}
+
+/// Result of importing a log package
+#[derive(Debug, Clone)]
+pub struct ImportResult {
+    pub bundle_id: String,
+    pub bundle_name: String,
+    pub case_id: Option<String>,
+    pub total_files: usize,
+    pub success_count: usize,
+    pub failed_files: Vec<PathBuf>,
 }
 
 impl BundleManager {
@@ -315,6 +329,121 @@ impl BundleManager {
         fs::write(&self.index_path, serde_json::to_string_pretty(&index)?)?;
 
         Ok(())
+    }
+
+    /// Import a log package (QCSONE ZIP or other archive)
+    ///
+    /// # Arguments
+    /// * `package_path` - Path to the archive file
+    /// * `bundle_name` - Optional bundle name (auto-generated if None)
+    /// * `case_id` - Optional case ID (auto-detected if None)
+    ///
+    /// # Returns
+    /// ImportResult with bundle ID and import statistics
+    pub fn import_log_package(
+        &mut self,
+        package_path: &Path,
+        bundle_name: Option<String>,
+        case_id: Option<String>,
+    ) -> Result<ImportResult, BundleError> {
+        tracing::info!("Importing log package: {:?}", package_path);
+
+        // Create temp extraction directory
+        let temp_dir = std::env::temp_dir().join(format!(
+            "log-scout-import-{}",
+            Uuid::new_v4()
+                .to_string()
+                .split('-')
+                .next()
+                .unwrap_or("temp")
+        ));
+        fs::create_dir_all(&temp_dir)?;
+
+        tracing::debug!("Extracting to temp directory: {:?}", temp_dir);
+
+        // Extract archive
+        let extracted_files = ArchiveExtractor::extract_archive(package_path, &temp_dir)
+            .map_err(|e| BundleError::ArchiveError(format!("Failed to extract archive: {}", e)))?;
+
+        tracing::info!("Extracted {} files from archive", extracted_files.len());
+
+        // Filter to only log files
+        let log_files = ArchiveExtractor::filter_log_files(&extracted_files);
+        tracing::info!("Found {} log files", log_files.len());
+
+        // Detect case ID from filename if not provided
+        let detected_case_id = case_id.or_else(|| {
+            package_path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .and_then(|s| ArchiveExtractor::detect_case_id(s))
+        });
+
+        // Generate bundle name if not provided
+        let bundle_name = bundle_name.unwrap_or_else(|| {
+            if let Some(case_id) = &detected_case_id {
+                format!("Case {}", case_id)
+            } else {
+                format!(
+                    "Import {}",
+                    package_path
+                        .file_stem()
+                        .and_then(|s| s.to_str())
+                        .unwrap_or("Unknown")
+                )
+            }
+        });
+
+        // Create bundle metadata
+        let mut metadata = BundleMetadata::default();
+        metadata.case_id = detected_case_id.clone();
+        metadata.tags.push("imported".to_string());
+        if detected_case_id.is_some() {
+            metadata.tags.push("qcsone".to_string());
+        }
+
+        // Create the bundle
+        let bundle_id = self.create_bundle(bundle_name.clone(), None, Some(metadata))?;
+
+        tracing::info!("Created bundle {} for import", bundle_id);
+
+        // Add all log files to bundle
+        let mut success_count = 0;
+        let mut failed_files = Vec::new();
+
+        for file_path in &log_files {
+            match self.add_log_to_bundle(&bundle_id, file_path.to_str().unwrap_or(""), None, None) {
+                Ok(_) => {
+                    success_count += 1;
+                    tracing::debug!("Added log file: {:?}", file_path);
+                }
+                Err(e) => {
+                    tracing::warn!("Failed to add {:?}: {}", file_path, e);
+                    failed_files.push(file_path.clone());
+                }
+            }
+        }
+
+        // Clean up temp directory
+        if let Err(e) = fs::remove_dir_all(&temp_dir) {
+            tracing::warn!("Failed to clean up temp directory: {}", e);
+        }
+
+        tracing::info!(
+            "Import complete: {} of {} log files added to bundle {}",
+            success_count,
+            log_files.len(),
+            bundle_id
+        );
+
+        Ok(ImportResult {
+            bundle_id,
+            bundle_name,
+            case_id: detected_case_id,
+            total_files: extracted_files.len(),
+            success_count,
+            failed_files,
+        })
     }
 }
 
