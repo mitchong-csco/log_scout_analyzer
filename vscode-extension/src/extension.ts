@@ -3002,13 +3002,15 @@ export function activate(context: vscode.ExtensionContext) {
                   }
 
                   message += `📦 Imported: ${result.importedCount}/${result.totalFiles} files\n`;
-                  message += `🔍 Services Detected:\n`;
 
-                  Object.entries(result.serviceCounts).forEach(
-                    ([service, count]) => {
-                      message += `   • ${service}: ${count} log(s)\n`;
-                    },
-                  );
+                  if (result.serviceCounts) {
+                    message += `🔍 Services Detected:\n`;
+                    Object.entries(result.serviceCounts).forEach(
+                      ([service, count]) => {
+                        message += `   • ${service}: ${count} log(s)\n`;
+                      },
+                    );
+                  }
 
                   const action = await vscode.window.showInformationMessage(
                     message,

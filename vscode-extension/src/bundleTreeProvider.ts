@@ -297,10 +297,16 @@ export class BundleTreeProvider implements vscode.TreeDataProvider<BundleItem> {
       throw new Error("LSP client not available");
     }
 
-    const response = await client.sendRequest("scout/bundle/importPackage", {
-      packagePath: packagePath,
-      bundleName: null,
-      caseId: null,
+    // Use workspace/executeCommand instead of custom request
+    const response = await client.sendRequest("workspace/executeCommand", {
+      command: "logScout.bundle.importPackage",
+      arguments: [
+        {
+          packagePath: packagePath,
+          bundleName: null,
+          caseId: null,
+        },
+      ],
     });
 
     this.refresh();
@@ -329,7 +335,7 @@ export class BundleItem extends vscode.TreeItem {
     public readonly logCount: number,
     public readonly sizeBytes: number,
     public readonly description: string | undefined,
-    public readonly type: "bundle" | "log",
+    public readonly type: "bundle" | "log" | "info",
     public readonly uri?: string,
   ) {
     super(
@@ -346,7 +352,7 @@ export class BundleItem extends vscode.TreeItem {
       this.tooltip =
         description ||
         `Bundle: ${label}\n${logCount} logs\n${this.formatSize(sizeBytes)}`;
-    } else {
+    } else if (type === "log") {
       this.contextValue = "bundleLog";
       this.iconPath = new vscode.ThemeIcon("file");
       this.description = `${description || "Unknown"} • ${this.formatSize(sizeBytes)}`;
@@ -359,6 +365,12 @@ export class BundleItem extends vscode.TreeItem {
           arguments: [vscode.Uri.file(uri)],
         };
       }
+    } else {
+      // info type - used for messages/placeholders
+      this.contextValue = "info";
+      this.iconPath = new vscode.ThemeIcon("info");
+      this.description = description;
+      this.tooltip = description;
     }
   }
 

@@ -2085,10 +2085,12 @@ function activate(context) {
                             message += `📋 Case: ${result.caseId}\n`;
                         }
                         message += `📦 Imported: ${result.importedCount}/${result.totalFiles} files\n`;
-                        message += `🔍 Services Detected:\n`;
-                        Object.entries(result.serviceCounts).forEach(([service, count]) => {
-                            message += `   • ${service}: ${count} log(s)\n`;
-                        });
+                        if (result.serviceCounts) {
+                            message += `🔍 Services Detected:\n`;
+                            Object.entries(result.serviceCounts).forEach(([service, count]) => {
+                                message += `   • ${service}: ${count} log(s)\n`;
+                            });
+                        }
                         const action = await vscode.window.showInformationMessage(message, "Open Bundle", "Analyze Now");
                         if (action === "Analyze Now" && result.bundleId) {
                             vscode.commands.executeCommand("logScoutAnalyzer.bundle.analyze", result.bundleId);
