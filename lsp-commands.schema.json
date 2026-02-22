@@ -1,0 +1,220 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Log Scout Analyzer LSP Command Schema",
+  "description": "Defines all custom LSP commands supported by the Log Scout Analyzer server. This is the single source of truth for command names and parameters.",
+  "version": "1.0.0",
+  "commands": {
+    "scout/bundle/list": {
+      "description": "List all bundles, optionally filtered by criteria",
+      "request": {
+        "logs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "optional": true,
+          "description": "Filter bundles containing these log files"
+        },
+        "caseId": {
+          "type": "string",
+          "optional": true,
+          "description": "Filter bundles by case ID"
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "optional": true,
+          "description": "Filter bundles by tags"
+        }
+      },
+      "response": {
+        "bundles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "description": { "type": "string" },
+              "caseId": { "type": "string", "optional": true },
+              "createdAt": { "type": "string" },
+              "logs": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+    "scout/bundle/get": {
+      "description": "Get detailed information about a specific bundle",
+      "request": {
+        "bundleId": {
+          "type": "string",
+          "required": true,
+          "description": "The ID of the bundle to retrieve"
+        }
+      },
+      "response": {
+        "bundle": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" },
+            "description": { "type": "string" },
+            "caseId": { "type": "string", "optional": true },
+            "createdAt": { "type": "string" },
+            "logs": { "type": "array", "items": { "type": "object" } }
+          }
+        }
+      }
+    },
+    "scout/bundle/create": {
+      "description": "Create a new bundle",
+      "request": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "Name of the bundle"
+        },
+        "description": {
+          "type": "string",
+          "optional": true,
+          "description": "Description of the bundle"
+        },
+        "caseId": {
+          "type": "string",
+          "optional": true,
+          "description": "Associated case ID"
+        }
+      },
+      "response": {
+        "bundleId": {
+          "type": "string",
+          "description": "ID of the newly created bundle"
+        }
+      }
+    },
+    "scout/bundle/importPackage": {
+      "description": "Import a QCSONE log package (.zip) into a bundle",
+      "request": {
+        "packagePath": {
+          "type": "string",
+          "required": true,
+          "description": "Path to the .zip package file"
+        },
+        "bundleName": {
+          "type": "string",
+          "optional": true,
+          "description": "Optional name for the bundle (defaults to package name)"
+        },
+        "caseId": {
+          "type": "string",
+          "optional": true,
+          "description": "Optional case ID to associate with the bundle"
+        },
+        "progressToken": {
+          "type": "string",
+          "optional": true,
+          "description": "Token for progress notifications"
+        }
+      },
+      "response": {
+        "bundleId": {
+          "type": "string",
+          "description": "ID of the created/updated bundle"
+        },
+        "filesImported": {
+          "type": "number",
+          "description": "Number of files imported"
+        },
+        "success": {
+          "type": "boolean",
+          "description": "Whether the import succeeded"
+        }
+      }
+    },
+    "scout/bundle/addLog": {
+      "description": "Add a log file to an existing bundle",
+      "request": {
+        "bundleId": {
+          "type": "string",
+          "required": true,
+          "description": "ID of the bundle to add to"
+        },
+        "logPath": {
+          "type": "string",
+          "required": true,
+          "description": "Path to the log file to add"
+        }
+      },
+      "response": {
+        "success": {
+          "type": "boolean",
+          "description": "Whether the log was added successfully"
+        }
+      }
+    },
+    "scout/bundle/delete": {
+      "description": "Delete a bundle and optionally its files",
+      "request": {
+        "bundleId": {
+          "type": "string",
+          "required": true,
+          "description": "ID of the bundle to delete"
+        },
+        "deleteFiles": {
+          "type": "boolean",
+          "optional": true,
+          "default": false,
+          "description": "Whether to also delete the physical log files"
+        }
+      },
+      "response": {
+        "success": {
+          "type": "boolean",
+          "description": "Whether the bundle was deleted successfully"
+        }
+      }
+    },
+    "scout/bundle/analyze": {
+      "description": "Analyze a bundle and generate insights",
+      "request": {
+        "bundleId": {
+          "type": "string",
+          "required": true,
+          "description": "ID of the bundle to analyze"
+        },
+        "options": {
+          "type": "object",
+          "optional": true,
+          "description": "Analysis options"
+        }
+      },
+      "response": {
+        "analysis": {
+          "type": "object",
+          "description": "Analysis results including patterns, anomalies, etc."
+        }
+      }
+    }
+  },
+  "metadata": {
+    "notes": [
+      "This schema is the single source of truth for LSP command names.",
+      "Both TypeScript extension and Rust LSP server must match these command names.",
+      "Command names use the format: scout/{feature}/{action}",
+      "All requests and responses use camelCase for property names.",
+      "The extension sends these commands via: client.sendRequest(commandName, params)",
+      "The LSP server handles these in: handle_bundle_request(method, params)"
+    ],
+    "testing": [
+      "TypeScript tests: vscode-extension/src/test/suite/contract/commands.test.ts",
+      "Rust tests: lsp-server/src/tests/command_contract_tests.rs",
+      "Both test suites validate against this schema"
+    ],
+    "history": [
+      {
+        "date": "2024-02-21",
+        "change": "Initial schema creation to prevent command name mismatches",
+        "issue": "Extension sent 'logScout.bundle.importPackage' but LSP expected 'scout/bundle/importPackage'"
+      }
+    ]
+  }
+}

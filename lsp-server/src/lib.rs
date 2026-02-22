@@ -15,4 +15,7 @@ pub mod quality_monitor;
 pub mod server;
 pub mod tagscout;
 
+#[cfg(test)]
+pub mod command_contract_tests;
+
 pub use server::LogScoutServer;
