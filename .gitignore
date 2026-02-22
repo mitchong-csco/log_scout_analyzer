@@ -98,3 +98,13 @@ local.yaml
 *.local.yaml
 .env
 .env.local
+
+# Build Outputs
+vscode-extension/out/
+vscode-extension/*.vsix
+lsp-server/target/
+.vscode-test/
+nul
+logs/
+.log-scout/
+.tagscout_cache/
