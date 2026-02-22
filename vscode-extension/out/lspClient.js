@@ -15,30 +15,15 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.setLSPLogger = setLSPLogger;
-exports.startLSPClient = startLSPClient;
-exports.stopLSPClient = stopLSPClient;
-exports.getLSPClient = getLSPClient;
-exports.getLSPServerVersion = getLSPServerVersion;
-exports.getLSPServerName = getLSPServerName;
+exports.getLSPServerName = exports.getLSPServerVersion = exports.getLSPClient = exports.stopLSPClient = exports.startLSPClient = exports.setLSPLogger = void 0;
 const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
 const vscode = __importStar(require("vscode"));
@@ -80,6 +65,7 @@ function getServerPath(context) {
 function setLSPLogger(fileLogger) {
     logger = fileLogger;
 }
+exports.setLSPLogger = setLSPLogger;
 /**
  * Initialize and start the LSP client
  */
@@ -195,6 +181,7 @@ async function startLSPClient(context, outputChannel) {
         return undefined;
     }
 }
+exports.startLSPClient = startLSPClient;
 /**
  * Stop the LSP client
  */
@@ -206,12 +193,14 @@ async function stopLSPClient() {
         logger?.logLSP("LSP client stopped", "info");
     }
 }
+exports.stopLSPClient = stopLSPClient;
 /**
  * Get the active LSP client
  */
 function getLSPClient() {
     return client;
 }
+exports.getLSPClient = getLSPClient;
 /**
  * Get the LSP server version from the initialize result
  */
@@ -221,6 +210,7 @@ function getLSPServerVersion() {
     }
     return client.initializeResult.serverInfo?.version;
 }
+exports.getLSPServerVersion = getLSPServerVersion;
 /**
  * Get the LSP server name from the initialize result
  */
@@ -230,6 +220,7 @@ function getLSPServerName() {
     }
     return client.initializeResult.serverInfo?.name;
 }
+exports.getLSPServerName = getLSPServerName;
 /**
  * Set up handlers for LSP diagnostics
  * This allows the extension to process diagnostics from the LSP server

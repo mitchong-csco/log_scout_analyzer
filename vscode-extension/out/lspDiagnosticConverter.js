@@ -38,30 +38,15 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.convertDiagnosticSeverity = convertDiagnosticSeverity;
-exports.parametersToDict = parametersToDict;
-exports.convertLSPDiagnosticToResultItem = convertLSPDiagnosticToResultItem;
-exports.convertLSPDiagnosticsToResultItems = convertLSPDiagnosticsToResultItems;
-exports.logDiagnosticData = logDiagnosticData;
-exports.isValidLSPDiagnostic = isValidLSPDiagnostic;
+exports.isValidLSPDiagnostic = exports.logDiagnosticData = exports.convertLSPDiagnosticsToResultItems = exports.convertLSPDiagnosticToResultItem = exports.parametersToDict = exports.convertDiagnosticSeverity = void 0;
 const vscode = __importStar(require("vscode"));
 /**
  * Convert VSCode diagnostic severity to string format
@@ -80,6 +65,7 @@ function convertDiagnosticSeverity(severity) {
             return "info";
     }
 }
+exports.convertDiagnosticSeverity = convertDiagnosticSeverity;
 /**
  * Convert extracted_parameters array to legacy extractedFields dict
  * For backward compatibility
@@ -94,6 +80,7 @@ function parametersToDict(parameters) {
     }
     return result;
 }
+exports.parametersToDict = parametersToDict;
 /**
  * Convert LSP diagnostic to ResultItem
  *
@@ -136,6 +123,7 @@ function convertLSPDiagnosticToResultItem(diagnostic, uri) {
     };
     return result;
 }
+exports.convertLSPDiagnosticToResultItem = convertLSPDiagnosticToResultItem;
 /**
  * Convert array of LSP diagnostics to ResultItems
  */
@@ -144,6 +132,7 @@ function convertLSPDiagnosticsToResultItems(diagnostics, uri) {
         .map((diagnostic) => convertLSPDiagnosticToResultItem(diagnostic, uri))
         .filter((item) => item !== null);
 }
+exports.convertLSPDiagnosticsToResultItems = convertLSPDiagnosticsToResultItems;
 /**
  * Log diagnostic data for debugging
  */
@@ -177,6 +166,7 @@ function logDiagnosticData(diagnostic, outputChannel) {
         console.log(output);
     }
 }
+exports.logDiagnosticData = logDiagnosticData;
 /**
  * Validate that LSP diagnostic has required fields
  */
@@ -188,4 +178,5 @@ function isValidLSPDiagnostic(diagnostic) {
         data.log_line ||
         data.pattern_id);
 }
+exports.isValidLSPDiagnostic = isValidLSPDiagnostic;
 //# sourceMappingURL=lspDiagnosticConverter.js.map

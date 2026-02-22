@@ -15,29 +15,27 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ScoutAnalyzerPanel = void 0;
 const vscode = __importStar(require("vscode"));
 const path = __importStar(require("path"));
 const fs = __importStar(require("fs"));
 class ScoutAnalyzerPanel {
+    // Method to set the results data provider
+    static setDataProvider(provider) {
+        ScoutAnalyzerPanel.resultsDataProvider = provider;
+        // Refresh panel if it's open
+        if (ScoutAnalyzerPanel.currentPanel) {
+            ScoutAnalyzerPanel.currentPanel._update();
+        }
+    }
     static createOrShow(extensionUri, scenarioManager, patternOverrideManager) {
         // If we already have a panel, show it
         if (ScoutAnalyzerPanel.currentPanel) {
@@ -108,6 +106,9 @@ class ScoutAnalyzerPanel {
                     return;
                 case "loadPatterns":
                     this._sendPatterns();
+                    return;
+                case "loadResults":
+                    this._sendCurrentResults();
                     return;
                 case "exportPatterns":
                     this._handleExportPatterns();
@@ -509,6 +510,23 @@ class ScoutAnalyzerPanel {
             console.error("Failed to toggle pattern:", error);
         }
     }
+    _sendCurrentResults() {
+        if (ScoutAnalyzerPanel.resultsDataProvider &&
+            typeof ScoutAnalyzerPanel.resultsDataProvider.getResults === "function") {
+            const results = ScoutAnalyzerPanel.resultsDataProvider.getResults();
+            this._postMessage({
+                command: "resultsData",
+                results: results,
+            });
+        }
+        else {
+            this._postMessage({
+                command: "resultsData",
+                results: [],
+                error: "No data provider available - LSP may not be connected",
+            });
+        }
+    }
     _sendPatterns() {
         if (!this.patternOverrideManager) {
             return;
@@ -547,6 +565,16 @@ class ScoutAnalyzerPanel {
         }
     }
     _update() {
+        // Send current results to the panel if data provider is available
+        if (ScoutAnalyzerPanel.resultsDataProvider &&
+            typeof ScoutAnalyzerPanel.resultsDataProvider.getResults === "function") {
+            const results = ScoutAnalyzerPanel.resultsDataProvider.getResults();
+            this._postMessage({
+                command: "updateResults",
+                results: results.length,
+                data: results,
+            });
+        }
         this._panel.webview.html = this._getHtmlContent();
     }
     _getHtmlContent() {
@@ -554,9 +582,7 @@ class ScoutAnalyzerPanel {
         const currentFile = editor
             ? path.basename(editor.document.fileName)
             : "No file open";
-        const currentDir = editor
-            ? path.dirname(editor.document.fileName)
-            : "N/A";
+        const currentDir = editor ? path.dirname(editor.document.fileName) : "N/A";
         return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1260,19 +1286,19 @@ class ScoutAnalyzerPanel {
             <form id="createScenarioForm">
                 <div class="form-group">
                     <label class="form-label" for="scenarioName">Scenario Name *</label>
-                    <input 
-                        type="text" 
-                        id="scenarioName" 
-                        class="form-input" 
+                    <input
+                        type="text"
+                        id="scenarioName"
+                        class="form-input"
                         placeholder="e.g., Authentication Failure Flow"
                         required
                     />
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="scenarioDescription">Description</label>
-                    <textarea 
-                        id="scenarioDescription" 
-                        class="form-textarea" 
+                    <textarea
+                        id="scenarioDescription"
+                        class="form-textarea"
                         placeholder="Describe what this scenario captures..."
                     ></textarea>
                 </div>
@@ -1306,19 +1332,19 @@ class ScoutAnalyzerPanel {
                 <input type="hidden" id="patternSourceId" />
                 <div class="form-group">
                     <label class="form-label" for="patternName">Pattern Name *</label>
-                    <input 
-                        type="text" 
-                        id="patternName" 
-                        class="form-input" 
+                    <input
+                        type="text"
+                        id="patternName"
+                        class="form-input"
                         placeholder="e.g., SSL Certificate Error"
                         required
                     />
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="patternRegex">Regular Expression *</label>
-                    <textarea 
-                        id="patternRegex" 
-                        class="form-textarea" 
+                    <textarea
+                        id="patternRegex"
+                        class="form-textarea"
                         placeholder="e.g., \\bERROR\\b.*certificate.*expired"
                         required
                         style="font-family: 'Courier New', monospace;"
@@ -1338,9 +1364,9 @@ class ScoutAnalyzerPanel {
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="patternDescription">Description</label>
-                    <textarea 
-                        id="patternDescription" 
-                        class="form-textarea" 
+                    <textarea
+                        id="patternDescription"
+                        class="form-textarea"
                         placeholder="What does this pattern detect?"
                     ></textarea>
                 </div>
@@ -1427,9 +1453,9 @@ class ScoutAnalyzerPanel {
 
                 <div class="form-group">
                     <label class="form-label" for="patternNotes">Notes (Optional)</label>
-                    <textarea 
-                        id="patternNotes" 
-                        class="form-textarea" 
+                    <textarea
+                        id="patternNotes"
+                        class="form-textarea"
                         placeholder="Why did you create/modify this pattern?"
                     ></textarea>
                 </div>
@@ -1502,11 +1528,11 @@ class ScoutAnalyzerPanel {
         tabButtons.forEach(button => {
             button.addEventListener('click', () => {
                 const tabName = button.getAttribute('data-tab');
-                
+
                 // Remove active class from all buttons and contents
                 tabButtons.forEach(btn => btn.classList.remove('active'));
                 tabContents.forEach(content => content.classList.remove('active'));
-                
+
                 // Add active class to clicked button and corresponding content
                 button.classList.add('active');
                 const targetContent = document.getElementById(tabName + 'Tab');
@@ -1528,7 +1554,7 @@ class ScoutAnalyzerPanel {
         const patternModalTitle = document.getElementById('patternModalTitle');
         const addConditionBtn = document.getElementById('addConditionBtn');
         const conditionTriggersList = document.getElementById('conditionTriggersList');
-        
+
         let patterns = [];
         let editingPatternId = null;
 
@@ -1540,10 +1566,10 @@ class ScoutAnalyzerPanel {
             createPatternForm.reset();
             document.getElementById('patternId').value = '';
             document.getElementById('patternSourceId').value = '';
-            
+
             // TODO: Log level trigger reset removed (template literal syntax errors)
             // TODO: Condition triggers reset removed (template literal syntax errors)
-            
+
             patternModalTitle.textContent = 'Create New Pattern';
             editingPatternId = null;
             createPatternModal.classList.add('active');
@@ -1576,13 +1602,13 @@ class ScoutAnalyzerPanel {
 
         createPatternForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            
+
             const name = document.getElementById('patternName').value.trim();
             const regex = document.getElementById('patternRegex').value.trim();
             const severity = document.getElementById('patternSeverity').value;
             const description = document.getElementById('patternDescription').value.trim();
             const notes = document.getElementById('patternNotes').value.trim();
-            
+
             if (!name || !regex) {
                 showError('Pattern name and regex are required');
                 return;
@@ -1637,7 +1663,7 @@ class ScoutAnalyzerPanel {
 
         function renderPatterns(patternsData, stats) {
             patterns = patternsData || [];
-            
+
             if (patterns.length === 0) {
                 patternsList.style.display = 'none';
                 emptyPatterns.style.display = 'block';
@@ -1646,17 +1672,17 @@ class ScoutAnalyzerPanel {
 
             patternsList.style.display = 'block';
             emptyPatterns.style.display = 'none';
-            
+
             patternsList.innerHTML = patterns.map(pattern => {
-                const badge = pattern.sourceType === 'custom' 
+                const badge = pattern.sourceType === 'custom'
                     ? '<span style="background: #28a745; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 8px;">\u2728 CUSTOM</span>'
-                    : pattern.modified 
+                    : pattern.modified
                     ? '<span style="background: #007acc; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 8px;">\ud83d\udd04 MODIFIED</span>'
                     : '';
-                
+
                 const enabledClass = pattern.enabled === false ? 'opacity: 0.5;' : '';
                 const enabledText = pattern.enabled === false ? '\u274c Disabled' : '\u2705 Enabled';
-                
+
                 return '<div class="scenario-item" data-id="' + pattern.id + '" style="' + enabledClass + '">' +
                     '<div class="scenario-header">' +
                         '<div class="scenario-name">' + escapeHtml(pattern.name) + badge + '</div>' +
@@ -1679,7 +1705,7 @@ class ScoutAnalyzerPanel {
         function editPattern(patternId) {
             const pattern = patterns.find(p => p.id === patternId);
             if (!pattern) return;
-            
+
             document.getElementById('patternId').value = pattern.id;
             document.getElementById('patternSourceId').value = pattern.sourceId || '';
             document.getElementById('patternName').value = pattern.name;
@@ -1687,10 +1713,10 @@ class ScoutAnalyzerPanel {
             document.getElementById('patternSeverity').value = pattern.severity;
             document.getElementById('patternDescription').value = pattern.description || '';
             document.getElementById('patternNotes').value = pattern.notes || '';
-            
+
             // TODO: Log level triggers UI removed (template literal syntax errors)
             // TODO: Condition triggers UI removed (template literal syntax errors)
-            
+
             patternModalTitle.textContent = pattern.sourceType === 'custom' ? 'Edit Custom Pattern' : 'Edit Pattern Override';
             editingPatternId = patternId;
             createPatternModal.classList.add('active');
@@ -1753,7 +1779,7 @@ class ScoutAnalyzerPanel {
         const cancelScenarioBtn = document.getElementById('cancelScenarioBtn');
         const scenarioList = document.getElementById('scenarioList');
         const emptyScenarios = document.getElementById('emptyScenarios');
-        
+
         let scenarios = [];
         let selectedLines = []; // Will be populated from extension
 
@@ -1780,10 +1806,10 @@ class ScoutAnalyzerPanel {
 
         createScenarioForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            
+
             const name = document.getElementById('scenarioName').value.trim();
             const description = document.getElementById('scenarioDescription').value.trim();
-            
+
             if (!name) {
                 showError('Scenario name is required');
                 return;
@@ -1805,7 +1831,7 @@ class ScoutAnalyzerPanel {
 
         function renderScenarios(scenariosData) {
             scenarios = scenariosData || [];
-            
+
             if (scenarios.length === 0) {
                 scenarioList.style.display = 'none';
                 emptyScenarios.style.display = 'block';
@@ -1814,8 +1840,8 @@ class ScoutAnalyzerPanel {
 
             scenarioList.style.display = 'block';
             emptyScenarios.style.display = 'none';
-            
-            scenarioList.innerHTML = scenarios.map(scenario => 
+
+            scenarioList.innerHTML = scenarios.map(scenario =>
                 '<div class="scenario-item" data-id="' + scenario.id + '">' +
                     '<div class="scenario-header">' +
                         '<div class="scenario-name">' + escapeHtml(scenario.name) + '</div>' +
@@ -1863,11 +1889,11 @@ class ScoutAnalyzerPanel {
             const now = new Date();
             const diffMs = now - date;
             const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-            
+
             if (diffDays === 0) return 'Today';
             if (diffDays === 1) return 'Yesterday';
             if (diffDays < 7) return diffDays + ' days ago';
-            
+
             return date.toLocaleDateString();
         }
 

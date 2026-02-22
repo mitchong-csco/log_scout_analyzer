@@ -15,28 +15,18 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.activate = activate;
-exports.deactivate = deactivate;
+exports.deactivate = exports.activate = void 0;
 const vscode = __importStar(require("vscode"));
 const path = __importStar(require("path"));
+const fs = __importStar(require("fs"));
 const buildInfo_1 = require("./buildInfo");
 const resultsTreeProvider_1 = require("./resultsTreeProvider");
 const categoriesTreeProvider_1 = require("./categoriesTreeProvider");
@@ -62,21 +52,21 @@ let statusBarItem;
 let patternStatusBarItem;
 let resultsTreeProvider;
 let categoriesTreeProvider;
-let cachedFilesTreeProvider;
+let cachedFilesTreeProvider; // CachedFilesTreeProvider | undefined;
 let analyzerTreeProvider;
 let filterTreeProvider;
 let fileLogger;
 let gutterDecorator;
-let annotationRenderer;
+let annotationRenderer; // AnnotationRenderer | undefined;
 let scenarioManager;
 let patternOverrideManager;
-let scoutInventorProvider;
+let scoutInventorProvider; // ScoutInventorProvider | undefined;
 let highlightDecoration;
 let highlightTimeout;
 let splitViewProvider;
 let timelineVisualization;
-let caseManager;
-let casesTreeProvider;
+let caseManager; // CaseManager | undefined;
+let casesTreeProvider; // CasesTreeProvider | undefined;
 let patternOverrideTreeProvider;
 let bundleTreeProvider;
 // Store all results from last analysis for category filtering
@@ -676,7 +666,7 @@ function activate(context) {
     // Commented out - CachedFilesTreeProvider not properly imported
     // cachedFilesTreeProvider = new CachedFilesTreeProvider();
     analyzerTreeProvider = new analyzerTreeProvider_1.AnalyzerTreeProvider();
-    scoutInventorProvider = new ScoutInventorProvider();
+    // scoutInventorProvider = new ScoutInventorProvider(); // Commented out - class not imported
     // Initialize Filter Tree Provider (consolidates categories, files, time filters)
     filterTreeProvider = new filterTreeProvider_1.FilterTreeProvider();
     // When filters change, update Results tree with filtered results
@@ -2017,6 +2007,62 @@ function activate(context) {
         }
     });
     // ============================================================
+    // REGISTER ALL COMMANDS
+    // ============================================================
+    context.subscriptions.push(dumpDiagnosticsCommand);
+    context.subscriptions.push(analyzeCommand);
+    context.subscriptions.push(clearCommand);
+    context.subscriptions.push(clearResultsCommand);
+    context.subscriptions.push(clearCacheCommand);
+    context.subscriptions.push(removeCachedFileCommand);
+    context.subscriptions.push(openCachedFileCommand);
+    context.subscriptions.push(openFileInEditorCommand);
+    context.subscriptions.push(revealInExplorerCommand);
+    context.subscriptions.push(viewCacheMetadataCommand);
+    context.subscriptions.push(showCacheStatsCommand);
+    context.subscriptions.push(showPatternsCommand);
+    context.subscriptions.push(showAboutCommand);
+    context.subscriptions.push(openExtensionLogCommand);
+    context.subscriptions.push(openLSPLogCommand);
+    context.subscriptions.push(showLogPathsCommand);
+    context.subscriptions.push(jumpToLineCommand);
+    context.subscriptions.push(openSplitViewCommand);
+    context.subscriptions.push(closeSplitViewCommand);
+    context.subscriptions.push(refreshResultsCommand);
+    context.subscriptions.push(showConsoleCommand);
+    context.subscriptions.push(clearConsoleCommand);
+    context.subscriptions.push(showLadderDiagramCommand);
+    context.subscriptions.push(groupBySeverityCommand);
+    context.subscriptions.push(groupByCategoryCommand);
+    context.subscriptions.push(groupByFileCommand);
+    context.subscriptions.push(resetViewCommand);
+    context.subscriptions.push(sortByLineCommand);
+    context.subscriptions.push(sortBySeverityCommand);
+    context.subscriptions.push(sortByTimeCommand);
+    context.subscriptions.push(sortByFileCommand);
+    context.subscriptions.push(sortByCategoryCommand);
+    context.subscriptions.push(exportResultsCommand);
+    context.subscriptions.push(analyzeDirectoryCommand);
+    context.subscriptions.push(analyzeAllBelowCommand);
+    context.subscriptions.push(openAnalyzerPanelCommand);
+    context.subscriptions.push(openScoutViewCommand);
+    context.subscriptions.push(openActionPanelCommand);
+    context.subscriptions.push(openAnnotationDashboardCommand);
+    context.subscriptions.push(toggleConsoleLocationCommand);
+    context.subscriptions.push(setTimeframeCommand);
+    context.subscriptions.push(toggleCategoryCommand);
+    context.subscriptions.push(toggleAllCategoriesCommand);
+    context.subscriptions.push(toggleFilterCommand);
+    context.subscriptions.push(copyFilePathCommand);
+    context.subscriptions.push(openInNewWindowCommand);
+    context.subscriptions.push(extractSipMessagesCommand);
+    context.subscriptions.push(copyVersionInfoCommand);
+    context.subscriptions.push(copyResultInfoCommand);
+    context.subscriptions.push(copyDiagnosticAtCursorCommand);
+    context.subscriptions.push(showCacheDataCommand);
+    context.subscriptions.push(showPatternByIdCommand);
+    context.subscriptions.push(showPatternForResultCommand);
+    // ============================================================
     // BUNDLE MANAGEMENT COMMANDS
     // ============================================================
     // Create Bundle Command
@@ -2250,6 +2296,34 @@ function activate(context) {
         bundleTreeProvider?.refresh();
         outputChannel?.appendLine("✓ Bundles refreshed");
     }));
+    // Import Log Archive Command
+    context.subscriptions.push(vscode.commands.registerCommand("logScoutAnalyzer.importArchive", async () => {
+        if (!bundleTreeProvider) {
+            vscode.window.showErrorMessage("Bundle tree provider not initialized");
+            return;
+        }
+        // Show file picker
+        const result = await vscode.window.showOpenDialog({
+            canSelectFiles: true,
+            canSelectFolders: false,
+            canSelectMany: false,
+            filters: {
+                Archives: ["zip", "tar", "gz", "tgz"],
+            },
+            title: "Select Log Archive to Import",
+        });
+        if (result && result.length > 0) {
+            const archivePath = result[0].fsPath;
+            outputChannel?.appendLine(`Importing archive: ${archivePath}`);
+            try {
+                await bundleTreeProvider.importPackage(archivePath);
+                outputChannel?.appendLine("✓ Import completed successfully");
+            }
+            catch (error) {
+                outputChannel?.appendLine(`✗ Import failed: ${error}`);
+            }
+        }
+    }));
     // Analyze Bundle Command
     context.subscriptions.push(vscode.commands.registerCommand("logScoutAnalyzer.bundle.analyze", async (bundleId) => {
         if (!bundleTreeProvider) {
@@ -2324,6 +2398,198 @@ function activate(context) {
     fileLogger.log("  - File-based logging");
     console.log(`${(0, buildInfo_1.getBuildInfo)()}: All features registered`);
 }
+exports.activate = activate;
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+function updateCachedFilesView() {
+    // TODO: Implement cached files view update when CachedFilesTreeProvider exists
+    // Currently this is a stub to satisfy calls from cache management code
+    if (cachedFilesTreeProvider) {
+        // cachedFilesTreeProvider.refresh();
+    }
+}
+function updateStatusBar() {
+    if (!statusBarItem) {
+        return;
+    }
+    // Check if status bar button is enabled in settings
+    const config = vscode.workspace.getConfiguration("logScoutAnalyzer");
+    const showStatusBar = config.get("showStatusBarButton", true);
+    if (!showStatusBar) {
+        statusBarItem.hide();
+        return;
+    }
+    const editor = vscode.window.activeTextEditor;
+    if (editor && isLogFile(editor.document)) {
+        const diagnostics = vscode.languages.getDiagnostics(editor.document.uri);
+        const errorCount = diagnostics.filter((d) => d.severity === vscode.DiagnosticSeverity.Error).length;
+        const warningCount = diagnostics.filter((d) => d.severity === vscode.DiagnosticSeverity.Warning).length;
+        const infoCount = diagnostics.filter((d) => d.severity === vscode.DiagnosticSeverity.Information).length;
+        if (diagnostics.length === 0) {
+            statusBarItem.text = `$(search) Scout: Analyze`;
+            statusBarItem.backgroundColor = undefined;
+        }
+        else {
+            statusBarItem.text = `$(search) Scout: 🔴 ${errorCount} 🟡 ${warningCount} 🔵 ${infoCount}`;
+            if (errorCount > 0) {
+                statusBarItem.backgroundColor = new vscode.ThemeColor("statusBarItem.errorBackground");
+            }
+            else if (warningCount > 0) {
+                statusBarItem.backgroundColor = new vscode.ThemeColor("statusBarItem.warningBackground");
+            }
+            else {
+                statusBarItem.backgroundColor = undefined;
+            }
+        }
+    }
+    else {
+        statusBarItem.text = "$(search) Scout Analyzer";
+        statusBarItem.backgroundColor = undefined;
+    }
+    statusBarItem.show();
+}
+function updatePatternStatusBar() {
+    if (!patternStatusBarItem) {
+        return;
+    }
+    // Update pattern status bar with current pattern statistics
+    if (patternOverrideManager) {
+        const stats = patternOverrideManager.getStats();
+        const activeCount = stats.enabledOverrides + stats.enabledCustom;
+        const totalCount = stats.totalOverrides + stats.totalCustom;
+        patternStatusBarItem.text = `$(edit) Patterns: ${activeCount}/${totalCount}`;
+        patternStatusBarItem.show();
+    }
+    else {
+        patternStatusBarItem.text = "$(edit) Patterns";
+        patternStatusBarItem.show();
+    }
+}
+function isLogFile(document) {
+    const config = vscode.workspace.getConfiguration("logScoutAnalyzer");
+    const enableDiagnostics = config.get("enableDiagnostics", true);
+    if (!enableDiagnostics) {
+        return false;
+    }
+    // Check language ID first
+    if (document.languageId === "log") {
+        return true;
+    }
+    // Check file extensions
+    const fileName = document.fileName.toLowerCase();
+    const logExtensions = [".log", ".txt", ".out", ".err"];
+    return logExtensions.some((ext) => fileName.endsWith(ext));
+}
+function extractTimestamp(logLine) {
+    // Try various timestamp formats
+    const patterns = [
+        // ISO 8601: 2024-01-15T14:30:45.123Z or 2024-01-15 14:30:45
+        /(\d{4}-\d{2}-\d{2}[T\s]\d{2}:\d{2}:\d{2}(?:\.\d{3})?(?:Z|[+-]\d{2}:?\d{2})?)/,
+        // Common log format: [2024-01-15 14:30:45]
+        /\[(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})\]/,
+        // Unix timestamp with milliseconds: 1705329045123
+        /\b(\d{13})\b/,
+        // Unix timestamp: 1705329045
+        /\b(\d{10})\b/,
+        // Month DD YYYY HH:MM:SS: Jan 15 2024 14:30:45
+        /((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}\s+\d{4}\s+\d{2}:\d{2}:\d{2})/i,
+        // MM/DD/YYYY HH:MM:SS
+        /(\d{1,2}\/\d{1,2}\/\d{4}\s+\d{2}:\d{2}:\d{2})/,
+    ];
+    for (const pattern of patterns) {
+        const match = logLine.match(pattern);
+        if (match) {
+            const dateStr = match[1];
+            // Handle Unix timestamps
+            if (/^\d{10}$/.test(dateStr)) {
+                return new Date(parseInt(dateStr) * 1000);
+            }
+            if (/^\d{13}$/.test(dateStr)) {
+                return new Date(parseInt(dateStr));
+            }
+            // Try parsing as date string
+            const date = new Date(dateStr);
+            if (!isNaN(date.getTime())) {
+                return date;
+            }
+        }
+    }
+    return undefined;
+}
+function extractCategory(logLine) {
+    // Try to extract category/component/module from common patterns
+    const patterns = [
+        // [Category] or [CATEGORY]
+        /\[([A-Z][A-Za-z0-9_-]+)\]/,
+        // Category: or CATEGORY:
+        /^([A-Z][A-Za-z0-9_-]+):/,
+        // <Category> or <CATEGORY>
+        /<([A-Z][A-Za-z0-9_-]+)>/,
+        // category.function or Category.Function
+        /([A-Z][A-Za-z0-9_]+)\.[A-Za-z0-9_]+/,
+        // Common logging framework patterns
+        /(?:ERROR|WARN|INFO|DEBUG)\s+\[([A-Za-z0-9._-]+)\]/,
+        // Java-style: com.example.Service
+        /([a-z]+\.[a-z]+\.[A-Z][A-Za-z0-9]+)/,
+    ];
+    for (const pattern of patterns) {
+        const match = logLine.match(pattern);
+        if (match && match[1]) {
+            return match[1];
+        }
+    }
+    return undefined;
+}
+function formatTimeSince(date) {
+    const now = Date.now();
+    const diff = now - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1)
+        return "just now";
+    if (minutes === 1)
+        return "1 minute ago";
+    if (minutes < 60)
+        return `${minutes} minutes ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours === 1)
+        return "1 hour ago";
+    if (hours < 24)
+        return `${hours} hours ago`;
+    const days = Math.floor(hours / 24);
+    if (days === 1)
+        return "1 day ago";
+    return `${days} days ago`;
+}
+async function findLogFiles(directory, recursive) {
+    const logFiles = [];
+    const logExtensions = [".log", ".txt", ".out", ".err"];
+    async function scan(dir) {
+        try {
+            const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+            for (const entry of entries) {
+                const fullPath = path.join(dir, entry.name);
+                if (entry.isDirectory() && recursive) {
+                    await scan(fullPath);
+                }
+                else if (entry.isFile()) {
+                    const ext = path.extname(entry.name).toLowerCase();
+                    if (logExtensions.includes(ext)) {
+                        logFiles.push(fullPath);
+                    }
+                }
+            }
+        }
+        catch (error) {
+            // Skip directories we can't read
+            if (outputChannel) {
+                outputChannel.appendLine(`Warning: Could not read directory ${dir}`);
+            }
+        }
+    }
+    await scan(directory);
+    return logFiles;
+}
 async function deactivate() {
     // Save cache before shutting down
     if (extensionContext && saveTimeout) {
@@ -2368,4 +2634,5 @@ async function deactivate() {
     splitViewProvider = undefined;
     timelineVisualization = undefined;
 }
+exports.deactivate = deactivate;
 //# sourceMappingURL=extension.js.map

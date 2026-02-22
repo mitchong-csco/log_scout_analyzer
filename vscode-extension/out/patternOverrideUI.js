@@ -15,47 +15,32 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createOverrideQuickInput = createOverrideQuickInput;
-exports.createOverrideFromSelection = createOverrideFromSelection;
-exports.createOverrideFromDiagnostic = createOverrideFromDiagnostic;
-exports.createCustomPatternWizard = createCustomPatternWizard;
-exports.editPatternQuickInput = editPatternQuickInput;
-exports.deletePatternQuickPick = deletePatternQuickPick;
-exports.togglePatternQuickPick = togglePatternQuickPick;
+exports.togglePatternQuickPick = exports.deletePatternQuickPick = exports.editPatternQuickInput = exports.createCustomPatternWizard = exports.createOverrideFromDiagnostic = exports.createOverrideFromSelection = exports.createOverrideQuickInput = void 0;
 const vscode = __importStar(require("vscode"));
 const SEVERITY_OPTIONS = ["error", "warning", "info", "hint"];
 function formatPatternLabel(pattern) {
     return pattern.name?.trim() ? pattern.name : pattern.id;
 }
-async function pickSeverity(defaultValue) {
-    const defaultIndex = defaultValue
-        ? SEVERITY_OPTIONS.indexOf(defaultValue)
-        : -1;
-    return vscode.window.showQuickPick(SEVERITY_OPTIONS, {
+async function pickSeverity(_defaultValue) {
+    const items = SEVERITY_OPTIONS.map((option) => ({
+        label: option,
+        value: option,
+    }));
+    const selected = await vscode.window.showQuickPick(items, {
         title: "Select severity",
         placeHolder: "Choose severity",
         canPickMany: false,
         ignoreFocusOut: true,
-        activeItem: defaultIndex >= 0 ? SEVERITY_OPTIONS[defaultIndex] : undefined,
     });
+    return selected?.value;
 }
 async function pickPattern(manager, title) {
     const patterns = manager.getAllPatterns();
@@ -121,6 +106,7 @@ async function createOverrideQuickInput(manager) {
     });
     vscode.window.showInformationMessage(`Created override ${override.id} (${override.severity}).`);
 }
+exports.createOverrideQuickInput = createOverrideQuickInput;
 async function createOverrideFromSelection(manager, selectionText) {
     const trimmedSelection = selectionText.trim();
     if (!trimmedSelection) {
@@ -170,6 +156,7 @@ async function createOverrideFromSelection(manager, selectionText) {
     });
     vscode.window.showInformationMessage(`Created override ${override.id} (${override.severity}).`);
 }
+exports.createOverrideFromSelection = createOverrideFromSelection;
 async function createOverrideFromDiagnostic(manager, diagnostic) {
     const diagnosticData = diagnostic.data;
     const sourceId = typeof diagnostic.code === "string" ? diagnostic.code : undefined;
@@ -226,6 +213,7 @@ async function createOverrideFromDiagnostic(manager, diagnostic) {
     });
     vscode.window.showInformationMessage(`Created override ${override.id} (${override.severity}).`);
 }
+exports.createOverrideFromDiagnostic = createOverrideFromDiagnostic;
 async function createCustomPatternWizard(manager) {
     const name = await vscode.window.showInputBox({
         title: "Create Custom Pattern",
@@ -271,6 +259,7 @@ async function createCustomPatternWizard(manager) {
     });
     vscode.window.showInformationMessage(`Created custom pattern ${custom.id} (${custom.severity}).`);
 }
+exports.createCustomPatternWizard = createCustomPatternWizard;
 async function editPatternQuickInput(manager) {
     const pattern = await pickPattern(manager, "Edit Pattern");
     if (!pattern) {
@@ -316,6 +305,7 @@ async function editPatternQuickInput(manager) {
         vscode.window.showInformationMessage(`Updated pattern ${updated.id} (${updated.severity}).`);
     }
 }
+exports.editPatternQuickInput = editPatternQuickInput;
 async function deletePatternQuickPick(manager) {
     const pattern = await pickPattern(manager, "Delete Pattern");
     if (!pattern) {
@@ -330,6 +320,7 @@ async function deletePatternQuickPick(manager) {
         vscode.window.showInformationMessage(`Deleted pattern ${pattern.id}.`);
     }
 }
+exports.deletePatternQuickPick = deletePatternQuickPick;
 async function togglePatternQuickPick(manager) {
     const pattern = await pickPattern(manager, "Enable/Disable Pattern");
     if (!pattern) {
@@ -342,4 +333,5 @@ async function togglePatternQuickPick(manager) {
         vscode.window.showInformationMessage(`${nextState ? "Enabled" : "Disabled"} pattern ${pattern.id}.`);
     }
 }
+exports.togglePatternQuickPick = togglePatternQuickPick;
 //# sourceMappingURL=patternOverrideUI.js.map
