@@ -960,6 +960,9 @@ export function activate(context: vscode.ExtensionContext) {
   });
   context.subscriptions.push(resultsTreeView);
 
+  // ✅ Connect results provider to Action Panel so it can access LSP data
+  ScoutAnalyzerPanel.setDataProvider(resultsTreeProvider);
+
   const categoriesTreeView = vscode.window.createTreeView("scoutCategories", {
     treeDataProvider: categoriesTreeProvider,
     showCollapseAll: true,

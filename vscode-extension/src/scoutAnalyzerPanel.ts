@@ -625,20 +625,62 @@ export class ScoutAnalyzerPanel {
   }
 
   private _sendCurrentResults() {
+    // Check if provider is connected
     if (
-      ScoutAnalyzerPanel.resultsDataProvider &&
-      typeof ScoutAnalyzerPanel.resultsDataProvider.getResults === "function"
+      !ScoutAnalyzerPanel.resultsDataProvider ||
+      typeof ScoutAnalyzerPanel.resultsDataProvider.getResults !== "function"
     ) {
-      const results = ScoutAnalyzerPanel.resultsDataProvider.getResults();
+      // ✅ Initial state - show welcoming empty state (UX fix)
+      // Empty states are NOT errors - they're normal lifecycle states
+      // See: UX_FIX_ACTION_PANEL_EMPTY_STATE.md
+      this._postMessage({
+        command: "emptyState",
+        state: "initial",
+        icon: "🔍",
+        title: "Ready to Analyze",
+        message: "Open a log file to see analysis results",
+        helpText:
+          "Scout Analyzer will automatically detect patterns, errors, and issues in your log files.",
+        actions: [
+          { label: "Open Log File", command: "vscode.open" },
+          {
+            label: "Learn More",
+            command: "logScoutAnalyzer.showDocumentation",
+          },
+        ],
+      });
+      return;
+    }
+
+    // Provider exists - get results
+    const results = ScoutAnalyzerPanel.resultsDataProvider.getResults();
+
+    if (!results || results.length === 0) {
+      // ✅ No results found - show positive empty state
+      this._postMessage({
+        command: "emptyState",
+        state: "no-results",
+        icon: "✨",
+        title: "No Issues Found",
+        message: "Your log file looks clean!",
+        helpText:
+          "If you expected to see results, verify that:\n• The file is a supported log format\n• Pattern matching is enabled\n• The LSP server is connected",
+        actions: [
+          {
+            label: "Check LSP Status",
+            command: "logScoutAnalyzer.showLspStatus",
+          },
+          {
+            label: "View Patterns",
+            command: "logScoutAnalyzer.patterns.showManager",
+          },
+        ],
+      });
+    } else {
+      // ✅ Has results - send data
       this._postMessage({
         command: "resultsData",
         results: results,
-      });
-    } else {
-      this._postMessage({
-        command: "resultsData",
-        results: [],
-        error: "No data provider available - LSP may not be connected",
       });
     }
   }

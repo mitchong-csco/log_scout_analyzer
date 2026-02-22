@@ -2,7 +2,7 @@
   "name": "log-scout-analyzer",
   "displayName": "Log Scout Analyzer - DevTools Edition",
   "description": "Professional log analysis workbench with DevTools-style interface, pattern recognition, and real-time diagnostics",
-  "version": "0.0.176",
+  "version": "0.0.175",
   "publisher": "log-scout-team",
   "engines": {
     "vscode": "^1.75.0"
@@ -52,12 +52,12 @@
       "activitybar": [
         {
           "id": "scout-analyzer",
-          "title": "Scout Analyzer (v0.0.176 | LSP v0.1.24)",
+          "title": "Scout Analyzer (v0.0.174 | LSP v0.1.22)",
           "icon": "$(telescope)"
         },
         {
           "id": "scout-inventor",
-          "title": "Scout Toolkit (v0.0.176 | LSP v0.1.24)",
+          "title": "Scout Toolkit (v0.0.174 | LSP v0.1.22)",
           "icon": "$(circuit-board)"
         }
       ]
@@ -450,6 +450,11 @@
         "command": "logScoutAnalyzer.openScoutView",
         "title": "Scout: Open Analyzer View",
         "icon": "$(telescope)"
+      },
+      {
+        "command": "logScoutAnalyzer.openActionPanel",
+        "title": "Scout: Open Action Panel",
+        "icon": "$(notebook)"
       },
       {
         "command": "logScoutAnalyzer.groupBySeverity",

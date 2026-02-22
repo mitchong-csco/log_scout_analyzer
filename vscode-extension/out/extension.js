@@ -711,6 +711,8 @@ function activate(context) {
         showCollapseAll: true,
     });
     context.subscriptions.push(resultsTreeView);
+    // ✅ Connect results provider to Action Panel so it can access LSP data
+    scoutAnalyzerPanel_1.ScoutAnalyzerPanel.setDataProvider(resultsTreeProvider);
     const categoriesTreeView = vscode.window.createTreeView("scoutCategories", {
         treeDataProvider: categoriesTreeProvider,
         showCollapseAll: true,
