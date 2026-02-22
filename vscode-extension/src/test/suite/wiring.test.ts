@@ -406,4 +406,133 @@ suite("Extension Wiring Validation", () => {
       );
     });
   });
+
+  suite("Action Panel Wiring", () => {
+    test("openActionPanel command should be registered in package.json", () => {
+      const commands = packageJson.contributes?.commands || [];
+      const actionPanelCommand = commands.find(
+        (cmd: any) => cmd.command === "logScoutAnalyzer.openActionPanel",
+      );
+
+      assert.ok(
+        actionPanelCommand,
+        "openActionPanel command should be defined in package.json",
+      );
+      assert.strictEqual(
+        actionPanelCommand.command,
+        "logScoutAnalyzer.openActionPanel",
+      );
+      assert.ok(
+        actionPanelCommand.title,
+        "openActionPanel command should have a title",
+      );
+    });
+
+    test("ScoutAnalyzerPanel should be imported in extension.ts", () => {
+      assert.ok(
+        extensionTs.includes("import") &&
+          extensionTs.includes("ScoutAnalyzerPanel"),
+        "ScoutAnalyzerPanel should be imported in extension.ts",
+      );
+    });
+
+    test("openActionPanel command should be registered in extension.ts", () => {
+      const hasRegistration =
+        extensionTs.includes(
+          'registerCommand("logScoutAnalyzer.openActionPanel"',
+        ) ||
+        extensionTs.includes(
+          "registerCommand('logScoutAnalyzer.openActionPanel'",
+        ) ||
+        extensionTs.includes(
+          "registerCommand(`logScoutAnalyzer.openActionPanel`",
+        ) ||
+        (extensionTs.includes("registerCommand(") &&
+          extensionTs.includes('"logScoutAnalyzer.openActionPanel"'));
+
+      assert.ok(
+        hasRegistration,
+        "openActionPanel command should be registered in extension.ts",
+      );
+    });
+
+    test("setDataProvider should be called during activation", () => {
+      assert.ok(
+        extensionTs.includes("ScoutAnalyzerPanel.setDataProvider"),
+        "ScoutAnalyzerPanel.setDataProvider() should be called to connect resultsTreeProvider",
+      );
+    });
+
+    test("resultsTreeProvider should exist and be connected to Action Panel", () => {
+      // Check that resultsTreeProvider is declared
+      const hasResultsProvider =
+        extensionTs.includes("let resultsTreeProvider") ||
+        extensionTs.includes("const resultsTreeProvider") ||
+        extensionTs.includes("resultsTreeProvider =");
+
+      assert.ok(
+        hasResultsProvider,
+        "resultsTreeProvider should be declared in extension.ts",
+      );
+
+      // Check that it's passed to Action Panel
+      const isConnected =
+        extensionTs.includes("setDataProvider(resultsTreeProvider)") ||
+        extensionTs.includes("setDataProvider( resultsTreeProvider )") ||
+        (extensionTs.includes("setDataProvider") &&
+          extensionTs.includes("resultsTreeProvider"));
+
+      assert.ok(
+        isConnected,
+        "resultsTreeProvider should be passed to ScoutAnalyzerPanel.setDataProvider()",
+      );
+    });
+
+    test("Action Panel should NOT show error for empty initial state", () => {
+      // This is a code smell detection test
+      // If we find "No data provider available" as a hardcoded error,
+      // it should only be used for actual error states, not empty states
+
+      const scoutAnalyzerPanelPath = path.join(
+        extensionRoot,
+        "src",
+        "scoutAnalyzerPanel.ts",
+      );
+
+      if (fs.existsSync(scoutAnalyzerPanelPath)) {
+        const panelTs = fs.readFileSync(scoutAnalyzerPanelPath, "utf8");
+
+        // Check if the old error pattern exists
+        const hasOldErrorPattern = panelTs.includes(
+          "No data provider available",
+        );
+
+        if (hasOldErrorPattern) {
+          // If it exists, verify it's used correctly (should send emptyState, not error)
+          const hasEmptyStateHandling =
+            panelTs.includes('command: "emptyState"') ||
+            panelTs.includes("command: 'emptyState'");
+
+          assert.ok(
+            hasEmptyStateHandling,
+            'Action Panel should handle empty states with "emptyState" command, not error messages. ' +
+              "Empty states (no files opened) are normal, not errors. See UX_FIX_ACTION_PANEL_EMPTY_STATE.md",
+          );
+        }
+      }
+    });
+
+    test("ScoutAnalyzerPanel file should exist", () => {
+      const scoutAnalyzerPanelPath = path.join(
+        extensionRoot,
+        "src",
+        "scoutAnalyzerPanel.ts",
+      );
+
+      assert.ok(
+        fs.existsSync(scoutAnalyzerPanelPath),
+        `ScoutAnalyzerPanel.ts should exist at: ${scoutAnalyzerPanelPath}`,
+      );
+    });
+  });
 });
