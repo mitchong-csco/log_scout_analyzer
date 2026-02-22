@@ -2,680 +2,714 @@ import * as vscode from "vscode";
 import * as path from "path";
 import * as fs from "fs";
 import { ScenarioManager } from "./scenarioManager";
-import { PatternOverrideManager, PatternOverride } from "./patternOverrideManager";
+import {
+  PatternOverrideManager,
+  PatternOverride,
+} from "./patternOverrideManager";
 
 export class ScoutAnalyzerPanel {
-    public static currentPanel: ScoutAnalyzerPanel | undefined;
-    private readonly _panel: vscode.WebviewPanel;
-    private _disposables: vscode.Disposable[] = [];
-    private scenarioManager?: ScenarioManager;
-    private patternOverrideManager?: PatternOverrideManager;
+  public static currentPanel: ScoutAnalyzerPanel | undefined;
+  private readonly _panel: vscode.WebviewPanel;
+  private _disposables: vscode.Disposable[] = [];
+  private scenarioManager?: ScenarioManager;
+  private patternOverrideManager?: PatternOverrideManager;
+  private static resultsDataProvider?: any; // Store results provider for data access
 
-    public static createOrShow(
-        extensionUri: vscode.Uri,
-        scenarioManager: ScenarioManager,
-        patternOverrideManager: PatternOverrideManager
-    ) {
-        // If we already have a panel, show it
-        if (ScoutAnalyzerPanel.currentPanel) {
-            ScoutAnalyzerPanel.currentPanel._panel.reveal();
-            ScoutAnalyzerPanel.currentPanel._update(); // Refresh content
+  // Method to set the results data provider
+  public static setDataProvider(provider: any): void {
+    ScoutAnalyzerPanel.resultsDataProvider = provider;
+    // Refresh panel if it's open
+    if (ScoutAnalyzerPanel.currentPanel) {
+      ScoutAnalyzerPanel.currentPanel._update();
+    }
+  }
+
+  public static createOrShow(
+    extensionUri: vscode.Uri,
+    scenarioManager: ScenarioManager,
+    patternOverrideManager: PatternOverrideManager,
+  ) {
+    // If we already have a panel, show it
+    if (ScoutAnalyzerPanel.currentPanel) {
+      ScoutAnalyzerPanel.currentPanel._panel.reveal();
+      ScoutAnalyzerPanel.currentPanel._update(); // Refresh content
+      return;
+    }
+
+    // Open in the main editor window
+    const column = vscode.ViewColumn.One;
+
+    // Otherwise, create a new panel
+    const panel = vscode.window.createWebviewPanel(
+      "scoutAnalyzer",
+      "Scout Analyzer",
+      column,
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        localResourceRoots: [extensionUri],
+      },
+    );
+
+    ScoutAnalyzerPanel.currentPanel = new ScoutAnalyzerPanel(
+      panel,
+      scenarioManager,
+      patternOverrideManager,
+    );
+  }
+
+  private constructor(
+    panel: vscode.WebviewPanel,
+    scenarioManager: ScenarioManager,
+    patternOverrideManager: PatternOverrideManager,
+  ) {
+    this._panel = panel;
+    this.scenarioManager = scenarioManager;
+    this.patternOverrideManager = patternOverrideManager;
+
+    // Set the webview's initial html content
+    this._update();
+
+    // Listen for when the panel is disposed
+    this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+
+    // Handle messages from the webview
+    this._panel.webview.onDidReceiveMessage(
+      (message) => {
+        switch (message.command) {
+          case "analyzeCurrentFile":
+            this._analyzeCurrentFile();
             return;
-        }
-
-        // Open in the main editor window
-        const column = vscode.ViewColumn.One;
-
-        // Otherwise, create a new panel
-        const panel = vscode.window.createWebviewPanel(
-            "scoutAnalyzer",
-            "Scout Analyzer",
-            column,
-            {
-                enableScripts: true,
-                retainContextWhenHidden: true,
-                localResourceRoots: [extensionUri],
-            },
-        );
-
-        ScoutAnalyzerPanel.currentPanel = new ScoutAnalyzerPanel(
-            panel,
-            scenarioManager,
-            patternOverrideManager
-        );
-    }
-
-    private constructor(
-        panel: vscode.WebviewPanel,
-        scenarioManager: ScenarioManager,
-        patternOverrideManager: PatternOverrideManager
-    ) {
-        this._panel = panel;
-        this.scenarioManager = scenarioManager;
-        this.patternOverrideManager = patternOverrideManager;
-
-        // Set the webview's initial html content
-        this._update();
-
-        // Listen for when the panel is disposed
-        this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
-
-        // Handle messages from the webview
-        this._panel.webview.onDidReceiveMessage(
-            (message) => {
-                switch (message.command) {
-                    case "analyzeCurrentFile":
-                        this._analyzeCurrentFile();
-                        return;
-                    case "analyzeDirectory":
-                        this._analyzeDirectory();
-                        return;
-                    case "analyzeAllBelow":
-                        this._analyzeAllBelow();
-                        return;
-                    case "clearResults":
-                        this._clearResults();
-                        return;
-                    case "createScenario":
-                        this._createScenario(message.data);
-                        return;
-                    case "deleteScenario":
-                        this._deleteScenario(message.scenarioId);
-                        return;
-                    case "exportScenario":
-                        this._exportScenario(message.scenarioId);
-                        return;
-                    case "loadScenarios":
-                        this._sendScenarios();
-                        return;
-                    case "createPattern":
-                        this._handleCreatePattern(message.data);
-                        return;
-                    case "updatePattern":
-                        this._handleUpdatePattern(message.id, message.data);
-                        return;
-                    case "deletePattern":
-                        this._handleDeletePattern(message.id);
-                        return;
-                    case "resetPattern":
-                        this._handleResetPattern(message.sourceId);
-                        return;
-                    case "togglePattern":
-                        this._handleTogglePattern(message.id, message.enabled);
-                        return;
-                    case "loadPatterns":
-                        this._sendPatterns();
-                        return;
-                    case "exportPatterns":
-                        this._handleExportPatterns();
-                        return;
-                    case "importPatterns":
-                        this._handleImportPatterns();
-                        return;
-                    case "createSignature":
-                        this._showCreationNotImplemented("Signature");
-                        return;
-                    case "createAction":
-                        this._showCreationNotImplemented("Action");
-                        return;
-                    case "createState":
-                        this._showCreationNotImplemented("State");
-                        return;
-                    case "createStatus":
-                        this._showCreationNotImplemented("Status");
-                        return;
-                }
-            },
-            null,
-            this._disposables,
-        );
-    }
-
-    public dispose() {
-        ScoutAnalyzerPanel.currentPanel = undefined;
-
-        // Clean up resources
-        this._panel.dispose();
-
-        while (this._disposables.length) {
-            const disposable = this._disposables.pop();
-            if (disposable) {
-                disposable.dispose();
-            }
-        }
-    }
-
-    private async _analyzeCurrentFile() {
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            this._postMessage({
-                command: "showError",
-                message: "No active file to analyze",
-            });
+          case "analyzeDirectory":
+            this._analyzeDirectory();
             return;
-        }
-
-        this._postMessage({ command: "analysisStarted" });
-
-        try {
-            // Trigger the analyze command
-            await vscode.commands.executeCommand(
-                "logScoutAnalyzer.analyzeFile",
-            );
-
-            this._postMessage({
-                command: "analysisComplete",
-                message: `Analyzed: ${path.basename(editor.document.fileName)}`,
-            });
-        } catch (error) {
-            this._postMessage({
-                command: "showError",
-                message: `Analysis failed: ${error}`,
-            });
-        }
-    }
-
-    private async _analyzeDirectory() {
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            this._postMessage({
-                command: "showError",
-                message: "No active file to determine directory",
-            });
+          case "analyzeAllBelow":
+            this._analyzeAllBelow();
             return;
-        }
-
-        // Store original file and editor column to return focus
-        const originalUri = editor.document.uri;
-        const originalColumn = editor.viewColumn || vscode.ViewColumn.One;
-
-        this._postMessage({ command: "analysisStarted" });
-
-        const currentDir = path.dirname(editor.document.fileName);
-        const files = await this._findLogFiles(currentDir, false);
-
-        this._postMessage({
-            command: "updateStatus",
-            message: `Found ${files.length} log files in directory...`,
-        });
-
-        let analyzed = 0;
-        for (const file of files) {
-            try {
-                // Open document - LSP will analyze automatically
-                await vscode.workspace.openTextDocument(file);
-
-                analyzed++;
-                this._postMessage({
-                    command: "updateStatus",
-                    message: `Analyzing... ${analyzed}/${files.length}`,
-                });
-            } catch (error) {
-                console.error(`Failed to analyze ${file}:`, error);
-            }
-        }
-
-        // Return focus to original file in original column
-        await vscode.window.showTextDocument(originalUri, {
-            viewColumn: originalColumn,
-            preserveFocus: false,
-            preview: false,
-        });
-
-        // Small delay to ensure diagnostics are processed
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
-        // Trigger tree view updates
-        await vscode.commands.executeCommand("logScoutAnalyzer.refreshResults");
-
-        this._postMessage({
-            command: "analysisComplete",
-            message: `Analyzed ${analyzed} files in directory`,
-        });
-    }
-
-    private async _analyzeAllBelow() {
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            this._postMessage({
-                command: "showError",
-                message: "No active file to determine directory",
-            });
+          case "clearResults":
+            this._clearResults();
             return;
-        }
-
-        // Store original file and editor column to return focus
-        const originalUri = editor.document.uri;
-        const originalColumn = editor.viewColumn || vscode.ViewColumn.One;
-
-        this._postMessage({ command: "analysisStarted" });
-
-        const currentDir = path.dirname(editor.document.fileName);
-        const files = await this._findLogFiles(currentDir, true);
-
-        this._postMessage({
-            command: "updateStatus",
-            message: `Found ${files.length} log files (including subdirectories)...`,
-        });
-
-        let analyzed = 0;
-        for (const file of files) {
-            try {
-                // Open document - LSP will analyze automatically
-                await vscode.workspace.openTextDocument(file);
-
-                analyzed++;
-                this._postMessage({
-                    command: "updateStatus",
-                    message: `Analyzing... ${analyzed}/${files.length}`,
-                });
-            } catch (error) {
-                console.error(`Failed to analyze ${file}:`, error);
-            }
-        }
-
-        // Return focus to original file in original column
-        await vscode.window.showTextDocument(originalUri, {
-            viewColumn: originalColumn,
-            preserveFocus: false,
-            preview: false,
-        });
-
-        // Small delay to ensure diagnostics are processed
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
-        // Trigger tree view updates
-        await vscode.commands.executeCommand("logScoutAnalyzer.refreshResults");
-
-        this._postMessage({
-            command: "analysisComplete",
-            message: `Analyzed ${analyzed} files recursively`,
-        });
-    }
-
-    private _clearResults() {
-        vscode.commands.executeCommand("logScoutAnalyzer.clearDiagnostics");
-        this._postMessage({
-            command: "updateStatus",
-            message: "Results cleared",
-        });
-    }
-
-    private async _findLogFiles(
-        dir: string,
-        recursive: boolean,
-    ): Promise<string[]> {
-        const logFiles: string[] = [];
-        const logExtensions = [".log", ".txt", ".out"];
-
-        try {
-            const entries = fs.readdirSync(dir, { withFileTypes: true });
-
-            for (const entry of entries) {
-                const fullPath = path.join(dir, entry.name);
-
-                if (entry.isDirectory() && recursive) {
-                    const subFiles = await this._findLogFiles(fullPath, true);
-                    logFiles.push(...subFiles);
-                } else if (entry.isFile()) {
-                    const ext = path.extname(entry.name).toLowerCase();
-                    if (logExtensions.includes(ext)) {
-                        logFiles.push(fullPath);
-                    }
-                }
-            }
-        } catch (error) {
-            console.error(`Failed to read directory ${dir}:`, error);
-        }
-
-        return logFiles;
-    }
-
-    private _postMessage(message: any) {
-        this._panel.webview.postMessage(message);
-    }
-
-    private async _createScenario(data: {
-        name: string;
-        description: string;
-        lines: number[];
-        patterns: any[];
-    }) {
-        try {
-            const editor = vscode.window.activeTextEditor;
-            if (!editor) {
-                this._postMessage({
-                    command: "showError",
-                    message: "No active file to create scenario from",
-                });
-                return;
-            }
-
-            if (!this.scenarioManager) {
-                this._postMessage({
-                    command: "showError",
-                    message: "Scenario manager not available",
-                });
-                return;
-            }
-
-            const scenario = this.scenarioManager.createScenario(
-                data.name,
-                data.description,
-                editor.document.uri.fsPath,
-                data.lines,
-                data.patterns
-            );
-
-            this._postMessage({
-                command: "scenarioCreated",
-                scenario,
-            });
-
-            vscode.window.showInformationMessage(
-                `Scenario "${scenario.name}" created successfully`
-            );
-
-            // Refresh the scenarios list
+          case "createScenario":
+            this._createScenario(message.data);
+            return;
+          case "deleteScenario":
+            this._deleteScenario(message.scenarioId);
+            return;
+          case "exportScenario":
+            this._exportScenario(message.scenarioId);
+            return;
+          case "loadScenarios":
             this._sendScenarios();
-        } catch (error) {
-            console.error("Failed to create scenario:", error);
-            this._postMessage({
-                command: "showError",
-                message: `Failed to create scenario: ${error}`,
-            });
-        }
-    }
-
-    private async _deleteScenario(scenarioId: string) {
-        try {
-            if (!this.scenarioManager) {
-                return;
-            }
-
-            const scenario = this.scenarioManager.getScenario(scenarioId);
-            if (!scenario) {
-                this._postMessage({
-                    command: "showError",
-                    message: "Scenario not found",
-                });
-                return;
-            }
-
-            const confirm = await vscode.window.showWarningMessage(
-                `Delete scenario "${scenario.name}"?`,
-                { modal: true },
-                "Delete"
-            );
-
-            if (confirm === "Delete") {
-                this.scenarioManager.deleteScenario(scenarioId);
-                this._postMessage({
-                    command: "scenarioDeleted",
-                    scenarioId,
-                });
-                this._sendScenarios();
-            }
-        } catch (error) {
-            console.error("Failed to delete scenario:", error);
-            this._postMessage({
-                command: "showError",
-                message: `Failed to delete scenario: ${error}`,
-            });
-        }
-    }
-
-    private async _exportScenario(scenarioId: string) {
-        try {
-            if (!this.scenarioManager) {
-                return;
-            }
-
-            await this.scenarioManager.exportScenario(scenarioId);
-        } catch (error) {
-            console.error("Failed to export scenario:", error);
-            vscode.window.showErrorMessage(
-                `Failed to export scenario: ${error}`
-            );
-        }
-    }
-
-    private _sendScenarios() {
-        if (!this.scenarioManager) {
+            return;
+          case "createPattern":
+            this._handleCreatePattern(message.data);
+            return;
+          case "updatePattern":
+            this._handleUpdatePattern(message.id, message.data);
+            return;
+          case "deletePattern":
+            this._handleDeletePattern(message.id);
+            return;
+          case "resetPattern":
+            this._handleResetPattern(message.sourceId);
+            return;
+          case "togglePattern":
+            this._handleTogglePattern(message.id, message.enabled);
+            return;
+          case "loadPatterns":
+            this._sendPatterns();
+            return;
+          case "loadResults":
+            this._sendCurrentResults();
+            return;
+          case "exportPatterns":
+            this._handleExportPatterns();
+            return;
+          case "importPatterns":
+            this._handleImportPatterns();
+            return;
+          case "createSignature":
+            this._showCreationNotImplemented("Signature");
+            return;
+          case "createAction":
+            this._showCreationNotImplemented("Action");
+            return;
+          case "createState":
+            this._showCreationNotImplemented("State");
+            return;
+          case "createStatus":
+            this._showCreationNotImplemented("Status");
             return;
         }
+      },
+      null,
+      this._disposables,
+    );
+  }
 
-        const editor = vscode.window.activeTextEditor;
-        const scenarios = editor
-            ? this.scenarioManager.getScenariosForFile(
-                  editor.document.uri.fsPath
-              )
-            : this.scenarioManager.getAllScenarios();
+  public dispose() {
+    ScoutAnalyzerPanel.currentPanel = undefined;
 
+    // Clean up resources
+    this._panel.dispose();
+
+    while (this._disposables.length) {
+      const disposable = this._disposables.pop();
+      if (disposable) {
+        disposable.dispose();
+      }
+    }
+  }
+
+  private async _analyzeCurrentFile() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      this._postMessage({
+        command: "showError",
+        message: "No active file to analyze",
+      });
+      return;
+    }
+
+    this._postMessage({ command: "analysisStarted" });
+
+    try {
+      // Trigger the analyze command
+      await vscode.commands.executeCommand("logScoutAnalyzer.analyzeFile");
+
+      this._postMessage({
+        command: "analysisComplete",
+        message: `Analyzed: ${path.basename(editor.document.fileName)}`,
+      });
+    } catch (error) {
+      this._postMessage({
+        command: "showError",
+        message: `Analysis failed: ${error}`,
+      });
+    }
+  }
+
+  private async _analyzeDirectory() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      this._postMessage({
+        command: "showError",
+        message: "No active file to determine directory",
+      });
+      return;
+    }
+
+    // Store original file and editor column to return focus
+    const originalUri = editor.document.uri;
+    const originalColumn = editor.viewColumn || vscode.ViewColumn.One;
+
+    this._postMessage({ command: "analysisStarted" });
+
+    const currentDir = path.dirname(editor.document.fileName);
+    const files = await this._findLogFiles(currentDir, false);
+
+    this._postMessage({
+      command: "updateStatus",
+      message: `Found ${files.length} log files in directory...`,
+    });
+
+    let analyzed = 0;
+    for (const file of files) {
+      try {
+        // Open document - LSP will analyze automatically
+        await vscode.workspace.openTextDocument(file);
+
+        analyzed++;
         this._postMessage({
-            command: "scenariosLoaded",
-            scenarios,
+          command: "updateStatus",
+          message: `Analyzing... ${analyzed}/${files.length}`,
         });
+      } catch (error) {
+        console.error(`Failed to analyze ${file}:`, error);
+      }
     }
 
-    private _showCreationNotImplemented(type: string) {
-        vscode.window.showInformationMessage(
-            `${type} creation is coming soon! This will allow you to create custom ${type.toLowerCase()}s for your log analysis.`,
-            "OK"
-        );
+    // Return focus to original file in original column
+    await vscode.window.showTextDocument(originalUri, {
+      viewColumn: originalColumn,
+      preserveFocus: false,
+      preview: false,
+    });
+
+    // Small delay to ensure diagnostics are processed
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // Trigger tree view updates
+    await vscode.commands.executeCommand("logScoutAnalyzer.refreshResults");
+
+    this._postMessage({
+      command: "analysisComplete",
+      message: `Analyzed ${analyzed} files in directory`,
+    });
+  }
+
+  private async _analyzeAllBelow() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      this._postMessage({
+        command: "showError",
+        message: "No active file to determine directory",
+      });
+      return;
     }
 
-    // Pattern management methods
-    private async _handleCreatePattern(data: {
-        name: string;
-        regex: string;
-        severity: string;
-        description?: string;
-        category?: string[];
-        tags?: string[];
-    }) {
-        try {
-            if (!this.patternOverrideManager) {
-                this._postMessage({
-                    command: "showError",
-                    message: "Pattern manager not available",
-                });
-                return;
-            }
+    // Store original file and editor column to return focus
+    const originalUri = editor.document.uri;
+    const originalColumn = editor.viewColumn || vscode.ViewColumn.One;
 
-            const pattern = this.patternOverrideManager.createCustomPattern({
-                name: data.name,
-                regex: data.regex,
-                severity: data.severity,
-                description: data.description,
-                category: data.category,
-                tags: data.tags,
-            });
+    this._postMessage({ command: "analysisStarted" });
 
-            this._postMessage({
-                command: "patternCreated",
-                pattern,
-            });
+    const currentDir = path.dirname(editor.document.fileName);
+    const files = await this._findLogFiles(currentDir, true);
 
-            vscode.window.showInformationMessage(
-                `Pattern "${pattern.name}" created successfully`
-            );
+    this._postMessage({
+      command: "updateStatus",
+      message: `Found ${files.length} log files (including subdirectories)...`,
+    });
 
-            this._sendPatterns();
-        } catch (error) {
-            console.error("Failed to create pattern:", error);
-            this._postMessage({
-                command: "showError",
-                message: `Failed to create pattern: ${error}`,
-            });
+    let analyzed = 0;
+    for (const file of files) {
+      try {
+        // Open document - LSP will analyze automatically
+        await vscode.workspace.openTextDocument(file);
+
+        analyzed++;
+        this._postMessage({
+          command: "updateStatus",
+          message: `Analyzing... ${analyzed}/${files.length}`,
+        });
+      } catch (error) {
+        console.error(`Failed to analyze ${file}:`, error);
+      }
+    }
+
+    // Return focus to original file in original column
+    await vscode.window.showTextDocument(originalUri, {
+      viewColumn: originalColumn,
+      preserveFocus: false,
+      preview: false,
+    });
+
+    // Small delay to ensure diagnostics are processed
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // Trigger tree view updates
+    await vscode.commands.executeCommand("logScoutAnalyzer.refreshResults");
+
+    this._postMessage({
+      command: "analysisComplete",
+      message: `Analyzed ${analyzed} files recursively`,
+    });
+  }
+
+  private _clearResults() {
+    vscode.commands.executeCommand("logScoutAnalyzer.clearDiagnostics");
+    this._postMessage({
+      command: "updateStatus",
+      message: "Results cleared",
+    });
+  }
+
+  private async _findLogFiles(
+    dir: string,
+    recursive: boolean,
+  ): Promise<string[]> {
+    const logFiles: string[] = [];
+    const logExtensions = [".log", ".txt", ".out"];
+
+    try {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+
+        if (entry.isDirectory() && recursive) {
+          const subFiles = await this._findLogFiles(fullPath, true);
+          logFiles.push(...subFiles);
+        } else if (entry.isFile()) {
+          const ext = path.extname(entry.name).toLowerCase();
+          if (logExtensions.includes(ext)) {
+            logFiles.push(fullPath);
+          }
         }
+      }
+    } catch (error) {
+      console.error(`Failed to read directory ${dir}:`, error);
     }
 
-    private async _handleUpdatePattern(
-        id: string,
-        updates: Partial<PatternOverride>
+    return logFiles;
+  }
+
+  private _postMessage(message: any) {
+    this._panel.webview.postMessage(message);
+  }
+
+  private async _createScenario(data: {
+    name: string;
+    description: string;
+    lines: number[];
+    patterns: any[];
+  }) {
+    try {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        this._postMessage({
+          command: "showError",
+          message: "No active file to create scenario from",
+        });
+        return;
+      }
+
+      if (!this.scenarioManager) {
+        this._postMessage({
+          command: "showError",
+          message: "Scenario manager not available",
+        });
+        return;
+      }
+
+      const scenario = this.scenarioManager.createScenario(
+        data.name,
+        data.description,
+        editor.document.uri.fsPath,
+        data.lines,
+        data.patterns,
+      );
+
+      this._postMessage({
+        command: "scenarioCreated",
+        scenario,
+      });
+
+      vscode.window.showInformationMessage(
+        `Scenario "${scenario.name}" created successfully`,
+      );
+
+      // Refresh the scenarios list
+      this._sendScenarios();
+    } catch (error) {
+      console.error("Failed to create scenario:", error);
+      this._postMessage({
+        command: "showError",
+        message: `Failed to create scenario: ${error}`,
+      });
+    }
+  }
+
+  private async _deleteScenario(scenarioId: string) {
+    try {
+      if (!this.scenarioManager) {
+        return;
+      }
+
+      const scenario = this.scenarioManager.getScenario(scenarioId);
+      if (!scenario) {
+        this._postMessage({
+          command: "showError",
+          message: "Scenario not found",
+        });
+        return;
+      }
+
+      const confirm = await vscode.window.showWarningMessage(
+        `Delete scenario "${scenario.name}"?`,
+        { modal: true },
+        "Delete",
+      );
+
+      if (confirm === "Delete") {
+        this.scenarioManager.deleteScenario(scenarioId);
+        this._postMessage({
+          command: "scenarioDeleted",
+          scenarioId,
+        });
+        this._sendScenarios();
+      }
+    } catch (error) {
+      console.error("Failed to delete scenario:", error);
+      this._postMessage({
+        command: "showError",
+        message: `Failed to delete scenario: ${error}`,
+      });
+    }
+  }
+
+  private async _exportScenario(scenarioId: string) {
+    try {
+      if (!this.scenarioManager) {
+        return;
+      }
+
+      await this.scenarioManager.exportScenario(scenarioId);
+    } catch (error) {
+      console.error("Failed to export scenario:", error);
+      vscode.window.showErrorMessage(`Failed to export scenario: ${error}`);
+    }
+  }
+
+  private _sendScenarios() {
+    if (!this.scenarioManager) {
+      return;
+    }
+
+    const editor = vscode.window.activeTextEditor;
+    const scenarios = editor
+      ? this.scenarioManager.getScenariosForFile(editor.document.uri.fsPath)
+      : this.scenarioManager.getAllScenarios();
+
+    this._postMessage({
+      command: "scenariosLoaded",
+      scenarios,
+    });
+  }
+
+  private _showCreationNotImplemented(type: string) {
+    vscode.window.showInformationMessage(
+      `${type} creation is coming soon! This will allow you to create custom ${type.toLowerCase()}s for your log analysis.`,
+      "OK",
+    );
+  }
+
+  // Pattern management methods
+  private async _handleCreatePattern(data: {
+    name: string;
+    regex: string;
+    severity: string;
+    description?: string;
+    category?: string[];
+    tags?: string[];
+  }) {
+    try {
+      if (!this.patternOverrideManager) {
+        this._postMessage({
+          command: "showError",
+          message: "Pattern manager not available",
+        });
+        return;
+      }
+
+      const pattern = this.patternOverrideManager.createCustomPattern({
+        name: data.name,
+        regex: data.regex,
+        severity: data.severity,
+        description: data.description,
+        category: data.category,
+        tags: data.tags,
+      });
+
+      this._postMessage({
+        command: "patternCreated",
+        pattern,
+      });
+
+      vscode.window.showInformationMessage(
+        `Pattern "${pattern.name}" created successfully`,
+      );
+
+      this._sendPatterns();
+    } catch (error) {
+      console.error("Failed to create pattern:", error);
+      this._postMessage({
+        command: "showError",
+        message: `Failed to create pattern: ${error}`,
+      });
+    }
+  }
+
+  private async _handleUpdatePattern(
+    id: string,
+    updates: Partial<PatternOverride>,
+  ) {
+    try {
+      if (!this.patternOverrideManager) {
+        return;
+      }
+
+      const pattern = this.patternOverrideManager.updatePattern(id, updates);
+      if (pattern) {
+        this._postMessage({
+          command: "patternUpdated",
+          pattern,
+        });
+        this._sendPatterns();
+      }
+    } catch (error) {
+      console.error("Failed to update pattern:", error);
+      this._postMessage({
+        command: "showError",
+        message: `Failed to update pattern: ${error}`,
+      });
+    }
+  }
+
+  private async _handleDeletePattern(id: string) {
+    try {
+      if (!this.patternOverrideManager) {
+        return;
+      }
+
+      const pattern = this.patternOverrideManager.getPattern(id);
+      if (!pattern) {
+        return;
+      }
+
+      const confirm = await vscode.window.showWarningMessage(
+        `Delete pattern "${pattern.name}"?`,
+        { modal: true },
+        "Delete",
+      );
+
+      if (confirm === "Delete") {
+        this.patternOverrideManager.deletePattern(id);
+        this._postMessage({
+          command: "patternDeleted",
+          id,
+        });
+        this._sendPatterns();
+      }
+    } catch (error) {
+      console.error("Failed to delete pattern:", error);
+      this._postMessage({
+        command: "showError",
+        message: `Failed to delete pattern: ${error}`,
+      });
+    }
+  }
+
+  private async _handleResetPattern(sourceId: string) {
+    try {
+      if (!this.patternOverrideManager) {
+        return;
+      }
+
+      const confirm = await vscode.window.showWarningMessage(
+        `Reset pattern to MongoDB original?`,
+        { modal: true },
+        "Reset",
+      );
+
+      if (confirm === "Reset") {
+        this.patternOverrideManager.resetOverride(sourceId);
+        this._postMessage({
+          command: "patternReset",
+          sourceId,
+        });
+        vscode.window.showInformationMessage("Pattern reset to original");
+        this._sendPatterns();
+      }
+    } catch (error) {
+      console.error("Failed to reset pattern:", error);
+      this._postMessage({
+        command: "showError",
+        message: `Failed to reset pattern: ${error}`,
+      });
+    }
+  }
+
+  private async _handleTogglePattern(id: string, enabled: boolean) {
+    try {
+      if (!this.patternOverrideManager) {
+        return;
+      }
+
+      this.patternOverrideManager.togglePattern(id, enabled);
+      this._sendPatterns();
+    } catch (error) {
+      console.error("Failed to toggle pattern:", error);
+    }
+  }
+
+  private _sendCurrentResults() {
+    if (
+      ScoutAnalyzerPanel.resultsDataProvider &&
+      typeof ScoutAnalyzerPanel.resultsDataProvider.getResults === "function"
     ) {
-        try {
-            if (!this.patternOverrideManager) {
-                return;
-            }
+      const results = ScoutAnalyzerPanel.resultsDataProvider.getResults();
+      this._postMessage({
+        command: "resultsData",
+        results: results,
+      });
+    } else {
+      this._postMessage({
+        command: "resultsData",
+        results: [],
+        error: "No data provider available - LSP may not be connected",
+      });
+    }
+  }
 
-            const pattern = this.patternOverrideManager.updatePattern(id, updates);
-            if (pattern) {
-                this._postMessage({
-                    command: "patternUpdated",
-                    pattern,
-                });
-                this._sendPatterns();
-            }
-        } catch (error) {
-            console.error("Failed to update pattern:", error);
-            this._postMessage({
-                command: "showError",
-                message: `Failed to update pattern: ${error}`,
-            });
-        }
+  private _sendPatterns() {
+    if (!this.patternOverrideManager) {
+      return;
     }
 
-    private async _handleDeletePattern(id: string) {
-        try {
-            if (!this.patternOverrideManager) {
-                return;
-            }
+    const patterns = this.patternOverrideManager.getAllPatterns();
+    const stats = this.patternOverrideManager.getStats();
 
-            const pattern = this.patternOverrideManager.getPattern(id);
-            if (!pattern) {
-                return;
-            }
+    this._postMessage({
+      command: "patternsLoaded",
+      patterns,
+      stats,
+    });
+  }
 
-            const confirm = await vscode.window.showWarningMessage(
-                `Delete pattern "${pattern.name}"?`,
-                { modal: true },
-                "Delete"
-            );
+  private async _handleExportPatterns() {
+    try {
+      if (!this.patternOverrideManager) {
+        return;
+      }
 
-            if (confirm === "Delete") {
-                this.patternOverrideManager.deletePattern(id);
-                this._postMessage({
-                    command: "patternDeleted",
-                    id,
-                });
-                this._sendPatterns();
-            }
-        } catch (error) {
-            console.error("Failed to delete pattern:", error);
-            this._postMessage({
-                command: "showError",
-                message: `Failed to delete pattern: ${error}`,
-            });
-        }
+      await this.patternOverrideManager.exportPatterns();
+    } catch (error) {
+      console.error("Failed to export patterns:", error);
+      vscode.window.showErrorMessage(`Failed to export patterns: ${error}`);
+    }
+  }
+
+  private async _handleImportPatterns() {
+    try {
+      if (!this.patternOverrideManager) {
+        return;
+      }
+
+      await this.patternOverrideManager.importPatterns();
+      this._sendPatterns();
+    } catch (error) {
+      console.error("Failed to import patterns:", error);
+      vscode.window.showErrorMessage(`Failed to import patterns: ${error}`);
+    }
+  }
+
+  private _update() {
+    // Send current results to the panel if data provider is available
+    if (
+      ScoutAnalyzerPanel.resultsDataProvider &&
+      typeof ScoutAnalyzerPanel.resultsDataProvider.getResults === "function"
+    ) {
+      const results = ScoutAnalyzerPanel.resultsDataProvider.getResults();
+      this._postMessage({
+        command: "updateResults",
+        results: results.length,
+        data: results,
+      });
     }
 
-    private async _handleResetPattern(sourceId: string) {
-        try {
-            if (!this.patternOverrideManager) {
-                return;
-            }
+    this._panel.webview.html = this._getHtmlContent();
+  }
 
-            const confirm = await vscode.window.showWarningMessage(
-                `Reset pattern to MongoDB original?`,
-                { modal: true },
-                "Reset"
-            );
+  private _getHtmlContent(): string {
+    const editor = vscode.window.activeTextEditor;
+    const currentFile = editor
+      ? path.basename(editor.document.fileName)
+      : "No file open";
+    const currentDir = editor ? path.dirname(editor.document.fileName) : "N/A";
 
-            if (confirm === "Reset") {
-                this.patternOverrideManager.resetOverride(sourceId);
-                this._postMessage({
-                    command: "patternReset",
-                    sourceId,
-                });
-                vscode.window.showInformationMessage(
-                    "Pattern reset to original"
-                );
-                this._sendPatterns();
-            }
-        } catch (error) {
-            console.error("Failed to reset pattern:", error);
-            this._postMessage({
-                command: "showError",
-                message: `Failed to reset pattern: ${error}`,
-            });
-        }
-    }
-
-    private async _handleTogglePattern(id: string, enabled: boolean) {
-        try {
-            if (!this.patternOverrideManager) {
-                return;
-            }
-
-            this.patternOverrideManager.togglePattern(id, enabled);
-            this._sendPatterns();
-        } catch (error) {
-            console.error("Failed to toggle pattern:", error);
-        }
-    }
-
-    private _sendPatterns() {
-        if (!this.patternOverrideManager) {
-            return;
-        }
-
-        const patterns = this.patternOverrideManager.getAllPatterns();
-        const stats = this.patternOverrideManager.getStats();
-
-        this._postMessage({
-            command: "patternsLoaded",
-            patterns,
-            stats,
-        });
-    }
-
-    private async _handleExportPatterns() {
-        try {
-            if (!this.patternOverrideManager) {
-                return;
-            }
-
-            await this.patternOverrideManager.exportPatterns();
-        } catch (error) {
-            console.error("Failed to export patterns:", error);
-            vscode.window.showErrorMessage(
-                `Failed to export patterns: ${error}`
-            );
-        }
-    }
-
-    private async _handleImportPatterns() {
-        try {
-            if (!this.patternOverrideManager) {
-                return;
-            }
-
-            await this.patternOverrideManager.importPatterns();
-            this._sendPatterns();
-        } catch (error) {
-            console.error("Failed to import patterns:", error);
-            vscode.window.showErrorMessage(
-                `Failed to import patterns: ${error}`
-            );
-        }
-    }
-
-    private _update() {
-        this._panel.webview.html = this._getHtmlContent();
-    }
-
-    private _getHtmlContent(): string {
-        const editor = vscode.window.activeTextEditor;
-        const currentFile = editor
-            ? path.basename(editor.document.fileName)
-            : "No file open";
-        const currentDir = editor
-            ? path.dirname(editor.document.fileName)
-            : "N/A";
-
-        return `<!DOCTYPE html>
+    return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1378,19 +1412,19 @@ export class ScoutAnalyzerPanel {
             <form id="createScenarioForm">
                 <div class="form-group">
                     <label class="form-label" for="scenarioName">Scenario Name *</label>
-                    <input 
-                        type="text" 
-                        id="scenarioName" 
-                        class="form-input" 
+                    <input
+                        type="text"
+                        id="scenarioName"
+                        class="form-input"
                         placeholder="e.g., Authentication Failure Flow"
                         required
                     />
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="scenarioDescription">Description</label>
-                    <textarea 
-                        id="scenarioDescription" 
-                        class="form-textarea" 
+                    <textarea
+                        id="scenarioDescription"
+                        class="form-textarea"
                         placeholder="Describe what this scenario captures..."
                     ></textarea>
                 </div>
@@ -1424,19 +1458,19 @@ export class ScoutAnalyzerPanel {
                 <input type="hidden" id="patternSourceId" />
                 <div class="form-group">
                     <label class="form-label" for="patternName">Pattern Name *</label>
-                    <input 
-                        type="text" 
-                        id="patternName" 
-                        class="form-input" 
+                    <input
+                        type="text"
+                        id="patternName"
+                        class="form-input"
                         placeholder="e.g., SSL Certificate Error"
                         required
                     />
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="patternRegex">Regular Expression *</label>
-                    <textarea 
-                        id="patternRegex" 
-                        class="form-textarea" 
+                    <textarea
+                        id="patternRegex"
+                        class="form-textarea"
                         placeholder="e.g., \\bERROR\\b.*certificate.*expired"
                         required
                         style="font-family: 'Courier New', monospace;"
@@ -1456,9 +1490,9 @@ export class ScoutAnalyzerPanel {
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="patternDescription">Description</label>
-                    <textarea 
-                        id="patternDescription" 
-                        class="form-textarea" 
+                    <textarea
+                        id="patternDescription"
+                        class="form-textarea"
                         placeholder="What does this pattern detect?"
                     ></textarea>
                 </div>
@@ -1545,9 +1579,9 @@ export class ScoutAnalyzerPanel {
 
                 <div class="form-group">
                     <label class="form-label" for="patternNotes">Notes (Optional)</label>
-                    <textarea 
-                        id="patternNotes" 
-                        class="form-textarea" 
+                    <textarea
+                        id="patternNotes"
+                        class="form-textarea"
                         placeholder="Why did you create/modify this pattern?"
                     ></textarea>
                 </div>
@@ -1620,11 +1654,11 @@ export class ScoutAnalyzerPanel {
         tabButtons.forEach(button => {
             button.addEventListener('click', () => {
                 const tabName = button.getAttribute('data-tab');
-                
+
                 // Remove active class from all buttons and contents
                 tabButtons.forEach(btn => btn.classList.remove('active'));
                 tabContents.forEach(content => content.classList.remove('active'));
-                
+
                 // Add active class to clicked button and corresponding content
                 button.classList.add('active');
                 const targetContent = document.getElementById(tabName + 'Tab');
@@ -1646,7 +1680,7 @@ export class ScoutAnalyzerPanel {
         const patternModalTitle = document.getElementById('patternModalTitle');
         const addConditionBtn = document.getElementById('addConditionBtn');
         const conditionTriggersList = document.getElementById('conditionTriggersList');
-        
+
         let patterns = [];
         let editingPatternId = null;
 
@@ -1658,10 +1692,10 @@ export class ScoutAnalyzerPanel {
             createPatternForm.reset();
             document.getElementById('patternId').value = '';
             document.getElementById('patternSourceId').value = '';
-            
+
             // TODO: Log level trigger reset removed (template literal syntax errors)
             // TODO: Condition triggers reset removed (template literal syntax errors)
-            
+
             patternModalTitle.textContent = 'Create New Pattern';
             editingPatternId = null;
             createPatternModal.classList.add('active');
@@ -1694,13 +1728,13 @@ export class ScoutAnalyzerPanel {
 
         createPatternForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            
+
             const name = document.getElementById('patternName').value.trim();
             const regex = document.getElementById('patternRegex').value.trim();
             const severity = document.getElementById('patternSeverity').value;
             const description = document.getElementById('patternDescription').value.trim();
             const notes = document.getElementById('patternNotes').value.trim();
-            
+
             if (!name || !regex) {
                 showError('Pattern name and regex are required');
                 return;
@@ -1755,7 +1789,7 @@ export class ScoutAnalyzerPanel {
 
         function renderPatterns(patternsData, stats) {
             patterns = patternsData || [];
-            
+
             if (patterns.length === 0) {
                 patternsList.style.display = 'none';
                 emptyPatterns.style.display = 'block';
@@ -1764,17 +1798,17 @@ export class ScoutAnalyzerPanel {
 
             patternsList.style.display = 'block';
             emptyPatterns.style.display = 'none';
-            
+
             patternsList.innerHTML = patterns.map(pattern => {
-                const badge = pattern.sourceType === 'custom' 
+                const badge = pattern.sourceType === 'custom'
                     ? '<span style="background: #28a745; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 8px;">\u2728 CUSTOM</span>'
-                    : pattern.modified 
+                    : pattern.modified
                     ? '<span style="background: #007acc; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px; margin-left: 8px;">\ud83d\udd04 MODIFIED</span>'
                     : '';
-                
+
                 const enabledClass = pattern.enabled === false ? 'opacity: 0.5;' : '';
                 const enabledText = pattern.enabled === false ? '\u274c Disabled' : '\u2705 Enabled';
-                
+
                 return '<div class="scenario-item" data-id="' + pattern.id + '" style="' + enabledClass + '">' +
                     '<div class="scenario-header">' +
                         '<div class="scenario-name">' + escapeHtml(pattern.name) + badge + '</div>' +
@@ -1797,7 +1831,7 @@ export class ScoutAnalyzerPanel {
         function editPattern(patternId) {
             const pattern = patterns.find(p => p.id === patternId);
             if (!pattern) return;
-            
+
             document.getElementById('patternId').value = pattern.id;
             document.getElementById('patternSourceId').value = pattern.sourceId || '';
             document.getElementById('patternName').value = pattern.name;
@@ -1805,10 +1839,10 @@ export class ScoutAnalyzerPanel {
             document.getElementById('patternSeverity').value = pattern.severity;
             document.getElementById('patternDescription').value = pattern.description || '';
             document.getElementById('patternNotes').value = pattern.notes || '';
-            
+
             // TODO: Log level triggers UI removed (template literal syntax errors)
             // TODO: Condition triggers UI removed (template literal syntax errors)
-            
+
             patternModalTitle.textContent = pattern.sourceType === 'custom' ? 'Edit Custom Pattern' : 'Edit Pattern Override';
             editingPatternId = patternId;
             createPatternModal.classList.add('active');
@@ -1871,7 +1905,7 @@ export class ScoutAnalyzerPanel {
         const cancelScenarioBtn = document.getElementById('cancelScenarioBtn');
         const scenarioList = document.getElementById('scenarioList');
         const emptyScenarios = document.getElementById('emptyScenarios');
-        
+
         let scenarios = [];
         let selectedLines = []; // Will be populated from extension
 
@@ -1898,10 +1932,10 @@ export class ScoutAnalyzerPanel {
 
         createScenarioForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            
+
             const name = document.getElementById('scenarioName').value.trim();
             const description = document.getElementById('scenarioDescription').value.trim();
-            
+
             if (!name) {
                 showError('Scenario name is required');
                 return;
@@ -1923,7 +1957,7 @@ export class ScoutAnalyzerPanel {
 
         function renderScenarios(scenariosData) {
             scenarios = scenariosData || [];
-            
+
             if (scenarios.length === 0) {
                 scenarioList.style.display = 'none';
                 emptyScenarios.style.display = 'block';
@@ -1932,8 +1966,8 @@ export class ScoutAnalyzerPanel {
 
             scenarioList.style.display = 'block';
             emptyScenarios.style.display = 'none';
-            
-            scenarioList.innerHTML = scenarios.map(scenario => 
+
+            scenarioList.innerHTML = scenarios.map(scenario =>
                 '<div class="scenario-item" data-id="' + scenario.id + '">' +
                     '<div class="scenario-header">' +
                         '<div class="scenario-name">' + escapeHtml(scenario.name) + '</div>' +
@@ -1981,11 +2015,11 @@ export class ScoutAnalyzerPanel {
             const now = new Date();
             const diffMs = now - date;
             const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-            
+
             if (diffDays === 0) return 'Today';
             if (diffDays === 1) return 'Yesterday';
             if (diffDays < 7) return diffDays + ' days ago';
-            
+
             return date.toLocaleDateString();
         }
 
@@ -2064,5 +2098,5 @@ export class ScoutAnalyzerPanel {
     </script>
 </body>
 </html>`;
-    }
+  }
 }

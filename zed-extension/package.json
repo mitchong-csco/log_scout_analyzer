@@ -1,0 +1,52 @@
+{
+  "name": "log-scout-analyzer-zed",
+  "displayName": "Log Scout Analyzer - Zed Extension",
+  "description": "Build automation for Log Scout Analyzer Zed extension",
+  "version": "0.0.3",
+  "private": true,
+  "scripts": {
+    "update:versions": "node update-versions.js",
+    "build": "npm run update:versions && node generate-build-info.js && cargo build --release --target wasm32-wasip1",
+    "build:lsp": "cd ../lsp-server && cargo build --release --bin log-scout-lsp-server",
+    "build:all": "npm run build:lsp && npm run build",
+    "check": "npm run check:lsp && npm run check:extension",
+    "check:lsp": "cd ../lsp-server && cargo check",
+    "check:extension": "cargo check --target wasm32-wasip1",
+    "check:lsp:release": "cd ../lsp-server && cargo check --release",
+    "lint": "cargo clippy --target wasm32-wasip1 -- -D warnings",
+    "format": "cargo fmt",
+    "test": "cargo test",
+    "test:scripts": "node test-scripts.js",
+    "dry-run": "node dry-run.js",
+    "clean": "node clean.js",
+    "help": "node help.js",
+    "status": "node show-status.js",
+    "version:increment": "node increment-version.js",
+    "package": "npm run version:increment && npm run build:all && node package-extension.js",
+    "postpackage": "node copy-package.js",
+    "install:zed": "node install-to-zed.js",
+    "deploy": "npm run package && npm run install:zed"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/log-scout/analyzer"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/log-scout/analyzer",
+  "bugs": {
+    "url": "https://github.com/log-scout/analyzer/issues"
+  },
+  "keywords": [
+    "zed",
+    "extension",
+    "log-analysis",
+    "diagnostics",
+    "lsp"
+  ]
+}

@@ -45,7 +45,7 @@ class CiscoAuthClient {
 
     // Add response interceptor for cookie handling
     this.httpClient.interceptors.response.use(
-      (response) => {
+      (response: any) => {
         // Extract and store bdb_cookie from Set-Cookie header
         const setCookie = response.headers["set-cookie"];
         if (setCookie) {
@@ -53,7 +53,7 @@ class CiscoAuthClient {
         }
         return response;
       },
-      (error) => Promise.reject(error),
+      (error: any) => Promise.reject(error),
     );
   }
 
@@ -116,7 +116,7 @@ class CiscoAuthClient {
             path: redirectPath,
             code: code,
           },
-          validateStatus: (status) => status === 201 || status === 200,
+          validateStatus: (status: number) => status === 201 || status === 200,
         },
       );
 
@@ -138,7 +138,7 @@ class CiscoAuthClient {
     } catch (error) {
       const message =
         error instanceof AxiosError
-          ? error.response?.data || error.message
+          ? (error as any).response?.data || (error as any).message
           : String(error);
       vscode.window.showErrorMessage(`Authentication failed: ${message}`);
       throw error;
@@ -207,7 +207,7 @@ class CiscoAuthClient {
    * Make request with both Bearer token and cookies
    */
   async getWithCookies(endpoint: string): Promise<any> {
-    const token = this.get_access_token();
+    const token = this.getAccessToken();
     const cookie = await this.getBdbCookie();
 
     if (!token) {
@@ -226,7 +226,10 @@ class CiscoAuthClient {
       const response = await this.httpClient.get(endpoint, { headers });
       return response.data;
     } catch (error) {
-      if (error instanceof AxiosError && error.response?.status === 401) {
+      if (
+        error instanceof AxiosError &&
+        (error as any).response?.status === 401
+      ) {
         this.clearToken();
         vscode.window.showErrorMessage(
           "Authentication token expired. Please log in again.",
@@ -252,7 +255,10 @@ class CiscoAuthClient {
       });
       return response.data;
     } catch (error) {
-      if (error instanceof AxiosError && error.response?.status === 401) {
+      if (
+        error instanceof AxiosError &&
+        (error as any).response?.status === 401
+      ) {
         this.clearToken();
         vscode.window.showErrorMessage(
           "Authentication token expired. Please log in again.",
@@ -278,7 +284,10 @@ class CiscoAuthClient {
       });
       return response.data;
     } catch (error) {
-      if (error instanceof AxiosError && error.response?.status === 401) {
+      if (
+        error instanceof AxiosError &&
+        (error as any).response?.status === 401
+      ) {
         this.clearToken();
         vscode.window.showErrorMessage(
           "Authentication token expired. Please log in again.",
@@ -360,8 +369,6 @@ export { CiscoAuthClient, TokenResponse, AuthConfig };
 // ============================================================================
 // VS CODE COMMAND INTEGRATION
 // ============================================================================
-
-import * as vscode from "vscode";
 
 /**
  * Register authentication commands

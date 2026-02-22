@@ -6,8 +6,8 @@ export class PatternOverrideCodeActionProvider
   static readonly providedCodeActionKinds = [vscode.CodeActionKind.QuickFix];
 
   provideCodeActions(
-    document: vscode.TextDocument,
-    range: vscode.Range,
+    _document: vscode.TextDocument,
+    _range: vscode.Range,
     context: vscode.CodeActionContext,
   ): vscode.CodeAction[] {
     if (context.diagnostics.length === 0) {

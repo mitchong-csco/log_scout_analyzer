@@ -1,0 +1,287 @@
+# Vendor Signatures Configuration
+#
+# This file defines the signatures used to detect which vendor/product
+# produced a log file. The detection system uses weighted pattern matching
+# with confidence scoring.
+#
+# Structure:
+#   vendors:
+#     vendor_id:
+#       name: Human-readable name
+#       product: Product name (optional)
+#       confidence_threshold: Minimum confidence (0.0-1.0)
+#       signatures:
+#         - pattern: Regex pattern
+#           weight: Weight (0.0-1.0) - higher means more distinctive
+#           description: What this pattern matches
+
+vendors:
+  cisco_cube:
+    name: "Cisco IOS/CUBE"
+    product: "Cisco IOS"
+    confidence_threshold: 0.7
+    signatures:
+      - pattern: "ccsipDisplayMsg:"
+        weight: 0.9
+        description: "CUBE SIP message display marker - highly distinctive"
+
+      - pattern: "/SIP/Msg/"
+        weight: 0.85
+        description: "CUBE SIP message path identifier"
+
+      - pattern: '%SIP-\d+-'
+        weight: 0.8
+        description: "IOS SIP syslog format (e.g., %SIP-6-INVITE)"
+
+      - pattern: '\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}\.\d{3}'
+        weight: 0.5
+        description: "IOS timestamp format (e.g., Jan 15 10:30:00.123)"
+
+      - pattern: "SIP/\d+\.\d+/(?:UDP|TCP|TLS)"
+        weight: 0.6
+        description: "SIP protocol version with transport"
+
+  cisco_cucm:
+    name: "Cisco Unified Call Manager"
+    product: "CUCM"
+    confidence_threshold: 0.75
+    signatures:
+      - pattern: '\|SIPTcp\|'
+        weight: 0.95
+        description: "CUCM SIP TCP marker - very distinctive"
+
+      - pattern: '\|AppId=Cisco CallManager\|'
+        weight: 0.9
+        description: "CUCM application identifier"
+
+      - pattern: '\|LocalAddr='
+        weight: 0.7
+        description: "CUCM metadata field for local address"
+
+      - pattern: '\|RemoteAddr='
+        weight: 0.7
+        description: "CUCM metadata field for remote address"
+
+      - pattern: '\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2},\d{3}'
+        weight: 0.6
+        description: "CUCM timestamp format (e.g., 2024-01-15 10:30:00,123)"
+
+      - pattern: '\|ClusterID='
+        weight: 0.75
+        description: "CUCM cluster identifier"
+
+      - pattern: '\|NodeID='
+        weight: 0.7
+        description: "CUCM node identifier"
+
+  cisco_jabber:
+    name: "Cisco Jabber Client"
+    product: "Jabber"
+    confidence_threshold: 0.7
+    signatures:
+      - pattern: 'CSFClient\['
+        weight: 0.9
+        description: "Jabber client identifier - very distinctive"
+
+      - pattern: '\[csf\.'
+        weight: 0.85
+        description: "CSF (Client Services Framework) marker"
+
+      - pattern: 'SIP_MSG_(?:RECV|SENT)'
+        weight: 0.8
+        description: "Jabber SIP message direction indicator"
+
+      - pattern: '\[0x[0-9a-fA-F]+\]'
+        weight: 0.6
+        description: "Thread ID in hex format"
+
+      - pattern: '\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2},\d{3}'
+        weight: 0.5
+        description: "Jabber timestamp format"
+
+      - pattern: '\[csf\.sip(?:\.|-)'
+        weight: 0.75
+        description: "Jabber SIP subsystem marker"
+
+      - pattern: 'werx\\jwcpp'
+        weight: 0.7
+        description: "Webex/Jabber C++ component path"
+
+  cisco_cuc:
+    name: "Cisco Unity Connection"
+    product: "CUC"
+    confidence_threshold: 0.75
+    signatures:
+      - pattern: '\[CUC-'
+        weight: 0.95
+        description: "CUC log marker - highly distinctive"
+
+      - pattern: 'SIP\.Stack'
+        weight: 0.8
+        description: "CUC SIP stack identifier"
+
+      - pattern: 'Unity Connection'
+        weight: 0.7
+        description: "CUC product name in logs"
+
+      - pattern: 'CiscoUnityConnection'
+        weight: 0.85
+        description: "CUC application identifier"
+
+      - pattern: '\[Voicemail\]'
+        weight: 0.65
+        description: "CUC voicemail component"
+
+  cisco_cup:
+    name: "Cisco Unified Presence/CUP Proxy"
+    product: "CUP"
+    confidence_threshold: 0.7
+    signatures:
+      - pattern: 'SIPProxy'
+        weight: 0.9
+        description: "CUP Proxy identifier"
+
+      - pattern: 'Presence Engine'
+        weight: 0.85
+        description: "CUP presence engine marker"
+
+      - pattern: '\|CUP\|'
+        weight: 0.8
+        description: "CUP log marker"
+
+      - pattern: 'XCP Router'
+        weight: 0.75
+        description: "XCP (eXtensible Communications Platform) router"
+
+      - pattern: 'Cisco Unified Presence'
+        weight: 0.7
+        description: "CUP product name"
+
+  cisco_expressway:
+    name: "Cisco Expressway"
+    product: "Expressway"
+    confidence_threshold: 0.75
+    signatures:
+      - pattern: 'Expressway-[CE]'
+        weight: 0.95
+        description: "Expressway Core or Edge identifier"
+
+      - pattern: 'Traversal(?:Client|Server)'
+        weight: 0.85
+        description: "Expressway traversal components"
+
+      - pattern: '\btandberg\.'
+        weight: 0.7
+        description: "Tandberg namespace (pre-Cisco acquisition)"
+
+      - pattern: 'B2BUA'
+        weight: 0.75
+        description: "Back-to-Back User Agent"
+
+  cisco_vcs:
+    name: "Cisco Video Communication Server"
+    product: "VCS"
+    confidence_threshold: 0.75
+    signatures:
+      - pattern: 'VCS-[CE]'
+        weight: 0.95
+        description: "VCS Control or Expressway identifier"
+
+      - pattern: 'Video Communication Server'
+        weight: 0.9
+        description: "VCS product name"
+
+      - pattern: '\btandberg\.vcs\.'
+        weight: 0.8
+        description: "VCS namespace"
+
+  cisco_webex_meetings:
+    name: "Cisco Webex Meetings Client"
+    product: "Webex Meetings"
+    confidence_threshold: 0.7
+    signatures:
+      - pattern: 'atmgr_'
+        weight: 0.9
+        description: "Webex AT Manager component"
+
+      - pattern: 'atclient'
+        weight: 0.85
+        description: "Webex AT Client"
+
+      - pattern: '\[MCS\]'
+        weight: 0.8
+        description: "Webex Media Control Service"
+
+      - pattern: 'XMLAPICtrl'
+        weight: 0.75
+        description: "Webex XML API Controller"
+
+      - pattern: 'WebEx'
+        weight: 0.6
+        description: "WebEx product name (old branding)"
+
+  cisco_webex_teams:
+    name: "Cisco Webex Teams/App"
+    product: "Webex Teams"
+    confidence_threshold: 0.7
+    signatures:
+      - pattern: '\[spark\.'
+        weight: 0.9
+        description: "Webex Spark namespace"
+
+      - pattern: 'webex-desktop'
+        weight: 0.85
+        description: "Webex desktop application"
+
+      - pattern: 'mercury-connection'
+        weight: 0.8
+        description: "Webex Mercury service connection"
+
+      - pattern: 'wdm\.service'
+        weight: 0.75
+        description: "Webex Device Manager service"
+
+  cisco_imp:
+    name: "Cisco IM and Presence"
+    product: "IMP"
+    confidence_threshold: 0.75
+    signatures:
+      - pattern: '\|IMP\|'
+        weight: 0.95
+        description: "IM and Presence marker"
+
+      - pattern: 'XCP\s+(?:Router|CM)'
+        weight: 0.85
+        description: "XCP Router or Connection Manager"
+
+      - pattern: 'Cisco\s+IM\s+and\s+Presence'
+        weight: 0.8
+        description: "IMP product name"
+
+# Detection configuration
+detection:
+  # Default detection mode: quick, full, or adaptive
+  default_mode: "adaptive"
+
+  # Cache detection results per file (improves performance)
+  cache_results: true
+
+  # Number of lines to sample for file-level detection
+  sample_size: 50
+
+  # Minimum lines with consistent vendor to confirm detection
+  consistency_threshold: 0.7
+
+  # Enable multi-vendor detection (slower but more accurate)
+  multi_vendor_detection: true
+
+# Learning hints (these can be updated by the system at runtime)
+learning:
+  # Track which patterns are most effective for quick detection
+  pattern_effectiveness: {}
+
+  # Track false positives to improve accuracy
+  false_positives: []
+
+  # Auto-update this file with learned patterns
+  auto_update: false

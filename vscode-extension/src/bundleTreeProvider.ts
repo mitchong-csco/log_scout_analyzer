@@ -1,5 +1,14 @@
 import * as vscode from "vscode";
 import { getLSPClient } from "./lspClient";
+import * as path from "path";
+
+interface ImportProgress {
+  bundleId: string;
+  fileName: string;
+  message: string;
+  percentage: number;
+  startTime: number;
+}
 
 /**
  * Bundle tree provider for VS Code sidebar
@@ -12,7 +21,18 @@ export class BundleTreeProvider implements vscode.TreeDataProvider<BundleItem> {
   readonly onDidChangeTreeData: vscode.Event<BundleItem | undefined | null> =
     this._onDidChangeTreeData.event;
 
-  constructor() {}
+  private importingBundles = new Map<string, ImportProgress>();
+  private bundles: BundleItem[] = [];
+
+  constructor() {
+    // Listen for progress notifications from LSP
+    const client = getLSPClient();
+    if (client) {
+      client.onNotification("$/progress", (params: any) => {
+        this.handleProgressNotification(params);
+      });
+    }
+  }
 
   refresh(): void {
     this._onDidChangeTreeData.fire(undefined);
@@ -24,8 +44,9 @@ export class BundleTreeProvider implements vscode.TreeDataProvider<BundleItem> {
 
   async getChildren(element?: BundleItem): Promise<BundleItem[]> {
     if (!element) {
-      // Root level - show all bundles
-      return this.loadBundles();
+      // Root level - show all bundles including importing ones
+      const loadedBundles = await this.loadBundles();
+      return [...this.bundles, ...loadedBundles];
     } else if (element.type === "bundle") {
       // Show logs in this bundle
       return this.loadBundleLogs(element.bundleId);
@@ -43,11 +64,11 @@ export class BundleTreeProvider implements vscode.TreeDataProvider<BundleItem> {
     ) {
       return [
         new BundleItem(
-          "No workspace open",
+          "📁 No workspace open",
           "",
           0,
           0,
-          "Open a folder to manage bundles",
+          "Open a folder to start using Log Scout bundles",
           "info",
         ),
       ];
@@ -73,11 +94,11 @@ export class BundleTreeProvider implements vscode.TreeDataProvider<BundleItem> {
       if (!index.bundles || index.bundles.length === 0) {
         return [
           new BundleItem(
-            "No bundles yet",
+            "📦 No bundles yet",
             "",
             0,
             0,
-            'Create a bundle with "Scout: Create New Bundle"',
+            'Click "+" or use Command Palette: "Scout: Create New Bundle"',
             "info",
           ),
         ];
@@ -113,11 +134,11 @@ export class BundleTreeProvider implements vscode.TreeDataProvider<BundleItem> {
       // Bundles directory doesn't exist yet
       return [
         new BundleItem(
-          "No bundles yet",
+          "📦 No bundles yet",
           "",
           0,
           0,
-          'Create a bundle with "Scout: Create New Bundle"',
+          'Click "+" or use Command Palette: "Scout: Create New Bundle"',
           "info",
         ),
       ];
@@ -147,11 +168,11 @@ export class BundleTreeProvider implements vscode.TreeDataProvider<BundleItem> {
       if (!bundle.logs || bundle.logs.length === 0) {
         return [
           new BundleItem(
-            "No logs in bundle",
+            "📄 No logs yet",
             bundleId,
             0,
             0,
-            "Add logs with right-click on files",
+            "Right-click .log files and select 'Scout: Add to Bundle'",
             "info",
           ),
         ];
@@ -184,7 +205,10 @@ export class BundleTreeProvider implements vscode.TreeDataProvider<BundleItem> {
       !vscode.workspace.workspaceFolders ||
       vscode.workspace.workspaceFolders.length === 0
     ) {
-      vscode.window.showErrorMessage("No workspace folder open");
+      vscode.window.showErrorMessage(
+        "❌ No workspace folder open. Please open a folder first.",
+      );
+      console.error("Cannot create bundle: No workspace folder open");
       return undefined;
     }
 
@@ -192,6 +216,8 @@ export class BundleTreeProvider implements vscode.TreeDataProvider<BundleItem> {
     const bundlesPath = `${workspaceRoot}/.log-scout/bundles`;
 
     try {
+      console.log(`Creating bundle: ${name}`, { description, caseId });
+
       // Generate bundle ID
       const bundleId = `bundle_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const now = new Date().toISOString();
@@ -199,6 +225,7 @@ export class BundleTreeProvider implements vscode.TreeDataProvider<BundleItem> {
       // Create bundle directory
       const bundleDir = vscode.Uri.file(`${bundlesPath}/${bundleId}`);
       await vscode.workspace.fs.createDirectory(bundleDir);
+      console.log(`Created bundle directory: ${bundlesPath}/${bundleId}`);
 
       // Create bundle.json
       const bundle = {
@@ -226,14 +253,19 @@ export class BundleTreeProvider implements vscode.TreeDataProvider<BundleItem> {
         bundlePath,
         Buffer.from(JSON.stringify(bundle, null, 2), "utf8"),
       );
+      console.log(`Created bundle.json for: ${name}`);
 
       // Update index.json
       await this.updateIndex(bundlesPath, bundleId, name);
+      console.log(`Updated index.json with bundle: ${name}`);
 
       this.refresh();
+      console.log(`✓ Bundle created successfully: ${name} (${bundleId})`);
       return bundleId;
     } catch (error) {
-      vscode.window.showErrorMessage(`Failed to create bundle: ${error}`);
+      const errorMsg = `Failed to create bundle "${name}": ${error}`;
+      vscode.window.showErrorMessage(`❌ ${errorMsg}`);
+      console.error(errorMsg, error);
       return undefined;
     }
   }
@@ -291,37 +323,150 @@ export class BundleTreeProvider implements vscode.TreeDataProvider<BundleItem> {
     }
   }
 
-  async importPackage(packagePath: string): Promise<any> {
+  async importPackage(
+    packagePath: string,
+    bundleName?: string,
+    caseId?: string,
+  ): Promise<any> {
     const client = getLSPClient();
     if (!client) {
-      throw new Error("LSP client not available");
+      const errorMsg = "LSP client not available for package import";
+      console.error(errorMsg);
+      throw new Error(errorMsg);
     }
 
-    // Use workspace/executeCommand instead of custom request
-    const response = await client.sendRequest("workspace/executeCommand", {
-      command: "logScout.bundle.importPackage",
-      arguments: [
-        {
-          packagePath: packagePath,
-          bundleName: null,
-          caseId: null,
-        },
-      ],
+    const progressToken = `import_${Date.now()}`;
+    const fileName = path.basename(packagePath);
+
+    console.log(`Importing package: ${packagePath}`, {
+      bundleName,
+      caseId,
+      progressToken,
     });
 
-    this.refresh();
-    return response;
+    // Create optimistic bundle entry immediately
+    const optimisticBundle = new BundleItem(
+      `📦 Importing ${fileName}...`,
+      progressToken,
+      0,
+      0,
+      "0% Starting...",
+      "bundle-importing",
+    );
+    optimisticBundle.iconPath = new vscode.ThemeIcon("loading~spin");
+
+    // Add to importing map
+    this.importingBundles.set(progressToken, {
+      bundleId: progressToken,
+      fileName: fileName,
+      message: "Starting...",
+      percentage: 0,
+      startTime: Date.now(),
+    });
+
+    // Show in tree immediately
+    this.bundles.unshift(optimisticBundle);
+    this._onDidChangeTreeData.fire(undefined);
+
+    try {
+      // Use workspace/executeCommand with progress token
+      const response = await client.sendRequest("workspace/executeCommand", {
+        command: "scout/bundle/importPackage",
+        arguments: [
+          {
+            packagePath: packagePath,
+            bundleName: bundleName || null,
+            caseId: caseId || null,
+            progressToken: progressToken,
+          },
+        ],
+      });
+
+      // Remove optimistic entry
+      this.importingBundles.delete(progressToken);
+      this.bundles = this.bundles.filter((b) => b.bundleId !== progressToken);
+
+      console.log(`Package import completed`, response);
+
+      // Refresh to show real bundle
+      this.refresh();
+
+      // Show success notification
+      const result = response as any;
+      if (result && result.importedCount !== undefined) {
+        vscode.window.showInformationMessage(
+          `✅ Successfully imported ${result.importedCount} log files to ${result.bundleName}`,
+        );
+      } else {
+        vscode.window.showInformationMessage(`✅ Package import completed`);
+      }
+
+      return response;
+    } catch (error) {
+      // Remove optimistic entry on error
+      this.importingBundles.delete(progressToken);
+      this.bundles = this.bundles.filter((b) => b.bundleId !== progressToken);
+      this._onDidChangeTreeData.fire(undefined);
+
+      vscode.window.showErrorMessage(`Failed to import archive: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Handle progress notifications from LSP
+   */
+  private handleProgressNotification(params: any): void {
+    const token = params.token;
+    const value = params.value;
+
+    // Check if this is one of our import operations
+    const importProgress = this.importingBundles.get(token);
+    if (!importProgress) {
+      return; // Not our import
+    }
+
+    // Update progress
+    if (value.kind === "begin") {
+      importProgress.message = value.message || "Starting...";
+      importProgress.percentage = value.percentage || 0;
+    } else if (value.kind === "report") {
+      importProgress.message = value.message || "";
+      importProgress.percentage = value.percentage || 0;
+    } else if (value.kind === "end") {
+      importProgress.message = value.message || "Complete";
+      importProgress.percentage = 100;
+    }
+
+    // Update the tree item
+    const bundleIndex = this.bundles.findIndex((b) => b.bundleId === token);
+    if (bundleIndex !== -1) {
+      const elapsed = Math.floor(
+        (Date.now() - importProgress.startTime) / 1000,
+      );
+
+      this.bundles[bundleIndex].description =
+        `${importProgress.percentage}% - ${importProgress.message} (${elapsed}s)`;
+
+      // Fire change event to update UI
+      this._onDidChangeTreeData.fire(this.bundles[bundleIndex]);
+    }
   }
 
   async analyzeBundle(bundleId: string): Promise<any> {
     const client = getLSPClient();
     if (!client) {
-      throw new Error("LSP client not available");
+      const errorMsg = "LSP client not available for bundle analysis";
+      console.error(errorMsg);
+      throw new Error(errorMsg);
     }
 
-    return await client.sendRequest("scout/bundle/analyze", {
+    console.log(`Analyzing bundle: ${bundleId}`);
+    const result = await client.sendRequest("scout/bundle/analyze", {
       bundleId: bundleId,
     });
+    console.log(`Bundle analysis completed for: ${bundleId}`);
+    return result;
   }
 }
 
@@ -334,13 +479,13 @@ export class BundleItem extends vscode.TreeItem {
     public readonly bundleId: string,
     public readonly logCount: number,
     public readonly sizeBytes: number,
-    public readonly description: string | undefined,
-    public readonly type: "bundle" | "log" | "info",
+    public description: string | undefined,
+    public readonly type: "bundle" | "log" | "info" | "bundle-importing",
     public readonly uri?: string,
   ) {
     super(
       label,
-      type === "bundle"
+      type === "bundle" || type === "bundle-importing"
         ? vscode.TreeItemCollapsibleState.Collapsed
         : vscode.TreeItemCollapsibleState.None,
     );
@@ -352,6 +497,11 @@ export class BundleItem extends vscode.TreeItem {
       this.tooltip =
         description ||
         `Bundle: ${label}\n${logCount} logs\n${this.formatSize(sizeBytes)}`;
+    } else if (type === "bundle-importing") {
+      this.contextValue = "bundle-importing";
+      this.iconPath = new vscode.ThemeIcon("loading~spin");
+      // description will be updated by progress handler
+      this.tooltip = `Importing: ${label}`;
     } else if (type === "log") {
       this.contextValue = "bundleLog";
       this.iconPath = new vscode.ThemeIcon("file");

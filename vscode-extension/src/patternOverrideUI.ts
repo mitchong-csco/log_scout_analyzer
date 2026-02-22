@@ -13,19 +13,20 @@ function formatPatternLabel(pattern: PatternOverride): string {
 }
 
 async function pickSeverity(
-  defaultValue?: string,
+  _defaultValue?: string,
 ): Promise<SeverityOption | undefined> {
-  const defaultIndex = defaultValue
-    ? SEVERITY_OPTIONS.indexOf(defaultValue as SeverityOption)
-    : -1;
-
-  return vscode.window.showQuickPick(SEVERITY_OPTIONS, {
+  const items = SEVERITY_OPTIONS.map((option) => ({
+    label: option,
+    value: option,
+  }));
+  const selected = await vscode.window.showQuickPick(items, {
     title: "Select severity",
     placeHolder: "Choose severity",
     canPickMany: false,
     ignoreFocusOut: true,
-    activeItem: defaultIndex >= 0 ? SEVERITY_OPTIONS[defaultIndex] : undefined,
   });
+
+  return selected?.value as SeverityOption | undefined;
 }
 
 async function pickPattern(

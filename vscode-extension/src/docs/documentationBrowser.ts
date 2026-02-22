@@ -1,16 +1,16 @@
 // API Discovery and Documentation Browser
 // File: vscode-extension/src/docs/documentationBrowser.ts
 
-import * as vscode from 'vscode';
-import axios, { AxiosInstance } from 'axios';
+import * as vscode from "vscode";
+import axios, { AxiosInstance } from "axios";
 
 interface ApiEndpoint {
   path: string;
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
   description: string;
   parameters?: Record<string, any>;
   response?: Record<string, any>;
-  authentication: 'Bearer' | 'Cookie' | 'Both';
+  authentication: "Bearer" | "Cookie" | "Both";
   requiresCookie: boolean;
 }
 
@@ -32,14 +32,12 @@ export class DocumentationBrowser {
   private accessToken: string | null = null;
   private bdbCookie: string | null = null;
   private cachedDocs: ApiDocumentation | null = null;
-  private context: vscode.ExtensionContext;
 
   constructor(
-    baseUrl: string = 'https://scripts.cisco.com',
-    context: vscode.ExtensionContext
+    baseUrl: string = "https://scripts.cisco.com",
+    _context: vscode.ExtensionContext,
   ) {
     this.baseUrl = baseUrl;
-    this.context = context;
     this.httpClient = axios.create({
       baseURL: baseUrl,
       timeout: 15000,
@@ -55,12 +53,12 @@ export class DocumentationBrowser {
     this.bdbCookie = bdbCookie;
 
     // Update axios instance with credentials
-    this.httpClient.defaults.headers.common[
-      'Authorization'
-    ] = `Bearer ${accessToken}`;
+    this.httpClient.defaults.headers.common["Authorization"] =
+      `Bearer ${accessToken}`;
 
     if (bdbCookie) {
-      this.httpClient.defaults.headers.common['Cookie'] = `bdb_cookie=${bdbCookie}`;
+      this.httpClient.defaults.headers.common["Cookie"] =
+        `bdb_cookie=${bdbCookie}`;
     }
   }
 
@@ -72,20 +70,22 @@ export class DocumentationBrowser {
     try {
       if (!this.accessToken || !this.bdbCookie) {
         vscode.window.showErrorMessage(
-          'Not authenticated. Please log in first.'
+          "Not authenticated. Please log in first.",
         );
         return null;
       }
 
-      vscode.window.showInformationMessage('Discovering APIs from documentation...');
+      vscode.window.showInformationMessage(
+        "Discovering APIs from documentation...",
+      );
 
       // Try multiple documentation endpoints
       const docEndpoints = [
-        '/api/v2/documentation',
-        '/api/docs',
-        '/api/v2/docs',
-        '/docs/api',
-        '/api/v2/endpoints',
+        "/api/v2/documentation",
+        "/api/docs",
+        "/api/v2/docs",
+        "/docs/api",
+        "/api/v2/endpoints",
       ];
 
       for (const endpoint of docEndpoints) {
@@ -106,7 +106,7 @@ export class DocumentationBrowser {
       return await this.discoverCommonEndpoints();
     } catch (error) {
       vscode.window.showErrorMessage(
-        `Failed to discover APIs: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to discover APIs: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
       return null;
     }
@@ -119,89 +119,89 @@ export class DocumentationBrowser {
   private async discoverCommonEndpoints(): Promise<ApiDocumentation> {
     const commonEndpoints: ApiEndpoint[] = [
       {
-        path: '/api/v2/scripts',
-        method: 'GET',
-        description: 'List all available scripts',
+        path: "/api/v2/scripts",
+        method: "GET",
+        description: "List all available scripts",
         parameters: {
-          limit: 'number (optional)',
-          offset: 'number (optional)',
-          search: 'string (optional)',
+          limit: "number (optional)",
+          offset: "number (optional)",
+          search: "string (optional)",
         },
         response: {
-          scripts: 'array of script objects',
-          total: 'number',
+          scripts: "array of script objects",
+          total: "number",
         },
-        authentication: 'Both',
+        authentication: "Both",
         requiresCookie: true,
       },
       {
-        path: '/api/v2/scripts/:id',
-        method: 'GET',
-        description: 'Get a specific script by ID',
+        path: "/api/v2/scripts/:id",
+        method: "GET",
+        description: "Get a specific script by ID",
         parameters: {
-          id: 'string (required) - Script ID',
+          id: "string (required) - Script ID",
         },
         response: {
-          id: 'string',
-          name: 'string',
-          description: 'string',
-          content: 'string',
+          id: "string",
+          name: "string",
+          description: "string",
+          content: "string",
         },
-        authentication: 'Both',
+        authentication: "Both",
         requiresCookie: true,
       },
       {
-        path: '/api/v2/scripts/:id/execute',
-        method: 'POST',
-        description: 'Execute a script with given parameters',
+        path: "/api/v2/scripts/:id/execute",
+        method: "POST",
+        description: "Execute a script with given parameters",
         parameters: {
-          id: 'string (required) - Script ID',
-          params: 'object (optional) - Script parameters',
+          id: "string (required) - Script ID",
+          params: "object (optional) - Script parameters",
         },
         response: {
-          result: 'object',
-          status: 'string',
-          timestamp: 'string',
+          result: "object",
+          status: "string",
+          timestamp: "string",
         },
-        authentication: 'Both',
+        authentication: "Both",
         requiresCookie: true,
       },
       {
-        path: '/api/v2/templates',
-        method: 'GET',
-        description: 'List all available templates',
+        path: "/api/v2/templates",
+        method: "GET",
+        description: "List all available templates",
         parameters: {
-          limit: 'number (optional)',
-          offset: 'number (optional)',
+          limit: "number (optional)",
+          offset: "number (optional)",
         },
         response: {
-          templates: 'array of template objects',
-          total: 'number',
+          templates: "array of template objects",
+          total: "number",
         },
-        authentication: 'Both',
+        authentication: "Both",
         requiresCookie: true,
       },
       {
-        path: '/api/v2/auth/redirect:path',
-        method: 'GET',
-        description: 'Exchange authorization code for access token',
+        path: "/api/v2/auth/redirect:path",
+        method: "GET",
+        description: "Exchange authorization code for access token",
         parameters: {
-          path: 'string (required) - Redirect path',
-          code: 'string (required) - Authorization code',
+          path: "string (required) - Redirect path",
+          code: "string (required) - Authorization code",
         },
         response: {
-          access_token: 'string',
-          token_type: 'string',
-          expires_in: 'number',
+          access_token: "string",
+          token_type: "string",
+          expires_in: "number",
         },
-        authentication: 'Bearer',
+        authentication: "Bearer",
         requiresCookie: false,
       },
     ];
 
     return {
-      title: 'Cisco Scripts API',
-      description: 'Available endpoints for Cisco Scripts',
+      title: "Cisco Scripts API",
+      description: "Available endpoints for Cisco Scripts",
       baseUrl: this.baseUrl,
       endpoints: commonEndpoints,
       lastUpdated: new Date(),
@@ -215,8 +215,8 @@ export class DocumentationBrowser {
     // This would parse the actual documentation from Cisco's API
     // For now, return the structure
     return {
-      title: data.title || 'Cisco Scripts API',
-      description: data.description || 'API Documentation',
+      title: data.title || "Cisco Scripts API",
+      description: data.description || "API Documentation",
       baseUrl: this.baseUrl,
       endpoints: data.endpoints || [],
       lastUpdated: new Date(),
@@ -241,7 +241,7 @@ export class DocumentationBrowser {
    */
   async testEndpoint(
     endpoint: ApiEndpoint,
-    params?: Record<string, any>
+    params?: Record<string, any>,
   ): Promise<any> {
     try {
       let url = endpoint.path;
@@ -256,8 +256,8 @@ export class DocumentationBrowser {
       const response = await this.httpClient({
         method: endpoint.method,
         url,
-        data: endpoint.method !== 'GET' ? params : undefined,
-        params: endpoint.method === 'GET' ? params : undefined,
+        data: endpoint.method !== "GET" ? params : undefined,
+        params: endpoint.method === "GET" ? params : undefined,
       });
 
       return {
@@ -267,8 +267,11 @@ export class DocumentationBrowser {
       };
     } catch (error) {
       return {
-        status: error instanceof axios.AxiosError ? error.response?.status : 500,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        status:
+          error instanceof axios.AxiosError
+            ? (error as any).response?.status
+            : 500,
+        error: error instanceof Error ? error.message : "Unknown error",
       };
     }
   }
@@ -278,17 +281,17 @@ export class DocumentationBrowser {
    */
   generateCodeSnippet(
     endpoint: ApiEndpoint,
-    language: 'typescript' | 'python' | 'javascript' = 'typescript'
+    language: "typescript" | "python" | "javascript" = "typescript",
   ): string {
     switch (language) {
-      case 'typescript':
+      case "typescript":
         return this.generateTypeScriptSnippet(endpoint);
-      case 'python':
+      case "python":
         return this.generatePythonSnippet(endpoint);
-      case 'javascript':
+      case "javascript":
         return this.generateJavaScriptSnippet(endpoint);
       default:
-        return '';
+        return "";
     }
   }
 
@@ -296,12 +299,12 @@ export class DocumentationBrowser {
     const params = endpoint.parameters
       ? Object.entries(endpoint.parameters)
           .map(([key]) => `  ${key}: 'value',`)
-          .join('\n')
-      : '';
+          .join("\n")
+      : "";
 
     return `// ${endpoint.description}
-const response = await authClient.${endpoint.method === 'GET' ? 'getWithCookies' : 'post'}(
-  '${endpoint.path}'${endpoint.method !== 'GET' ? `,\n  {\n${params}\n  }` : ''}
+const response = await authClient.${endpoint.method === "GET" ? "getWithCookies" : "post"}(
+  '${endpoint.path}'${endpoint.method !== "GET" ? `,\n  {\n${params}\n  }` : ""}
 );
 
 console.log(response);`;
@@ -310,9 +313,9 @@ console.log(response);`;
   private generatePythonSnippet(endpoint: ApiEndpoint): string {
     const params = endpoint.parameters
       ? Object.entries(endpoint.parameters)
-          .map(([key]) => f`    '{key}': 'value',`)
-          .join('\n')
-      : '';
+          .map(([_key, _value]) => `    '${_key}': 'value',`)
+          .join("\n")
+      : "";
 
     return `# ${endpoint.description}
 import requests
@@ -322,7 +325,7 @@ response = requests.${endpoint.method.toLowerCase()}(
     headers={
         'Authorization': f'Bearer {token}',
         'Cookie': f'bdb_cookie={cookie}'
-    }${params ? `,\n    json={\n${params}\n    }` : ''}
+    }${params ? `,\n    json={\n${params}\n    }` : ""}
 )
 
 print(response.json())`;
@@ -332,8 +335,8 @@ print(response.json())`;
     const params = endpoint.parameters
       ? Object.entries(endpoint.parameters)
           .map(([key]) => `  ${key}: 'value',`)
-          .join('\n')
-      : '';
+          .join("\n")
+      : "";
 
     return `// ${endpoint.description}
 const response = await fetch('${this.baseUrl}${endpoint.path}', {
@@ -341,7 +344,7 @@ const response = await fetch('${this.baseUrl}${endpoint.path}', {
   headers: {
     'Authorization': \`Bearer \${token}\`,
     'Cookie': \`bdb_cookie=\${cookie}\`
-  }${params ? `,\n  body: JSON.stringify({\n${params}\n  })` : ''}
+  }${params ? `,\n  body: JSON.stringify({\n${params}\n  })` : ""}
 });
 
 const data = await response.json();
@@ -367,17 +370,15 @@ console.log(data);`;
  * Documentation WebView Panel
  */
 export class DocsWebViewProvider {
-  private static readonly viewType = 'ciscoScripts.docs';
+  private static readonly viewType = "ciscoScripts.docs";
   private panel: vscode.WebviewPanel | undefined;
   private context: vscode.ExtensionContext;
-  private browser: DocumentationBrowser;
 
   constructor(
     context: vscode.ExtensionContext,
-    browser: DocumentationBrowser
+    _browser: DocumentationBrowser,
   ) {
     this.context = context;
-    this.browser = browser;
   }
 
   /**
@@ -387,12 +388,12 @@ export class DocsWebViewProvider {
     if (!this.panel) {
       this.panel = vscode.window.createWebviewPanel(
         DocsWebViewProvider.viewType,
-        'Cisco Scripts Documentation',
+        "Cisco Scripts Documentation",
         vscode.ViewColumn.Beside,
         {
           enableScripts: true,
           retainContextWhenHidden: true,
-        }
+        },
       );
 
       this.panel.onDidDispose(
@@ -400,13 +401,13 @@ export class DocsWebViewProvider {
           this.panel = undefined;
         },
         undefined,
-        this.context.subscriptions
+        this.context.subscriptions,
       );
 
       this.panel.webview.onDidReceiveMessage(
         (message) => this.handleWebViewMessage(message),
         undefined,
-        this.context.subscriptions
+        this.context.subscriptions,
       );
     }
 
@@ -418,12 +419,12 @@ export class DocsWebViewProvider {
    */
   private async handleWebViewMessage(message: any): Promise<void> {
     switch (message.command) {
-      case 'testEndpoint':
+      case "testEndpoint":
         // Handle endpoint testing
         break;
-      case 'copySnippet':
+      case "copySnippet":
         await vscode.env.clipboard.writeText(message.snippet);
-        vscode.window.showInformationMessage('Snippet copied to clipboard!');
+        vscode.window.showInformationMessage("Snippet copied to clipboard!");
         break;
     }
   }
@@ -452,11 +453,11 @@ export class DocsWebViewProvider {
             <ul>
               ${Object.entries(ep.parameters)
                 .map(([key, value]) => `<li><code>${key}</code>: ${value}</li>`)
-                .join('')}
+                .join("")}
             </ul>
           </div>
         `
-            : ''
+            : ""
         }
 
         ${
@@ -467,21 +468,21 @@ export class DocsWebViewProvider {
             <ul>
               ${Object.entries(ep.response)
                 .map(([key, value]) => `<li><code>${key}</code>: ${value}</li>`)
-                .join('')}
+                .join("")}
             </ul>
           </div>
         `
-            : ''
+            : ""
         }
 
         <div class="endpoint-footer">
           <span class="auth">Auth: ${ep.authentication}</span>
-          ${ep.requiresCookie ? '<span class="cookie">Requires Cookie</span>' : ''}
+          ${ep.requiresCookie ? '<span class="cookie">Requires Cookie</span>' : ""}
         </div>
       </div>
-    `
+    `,
       )
-      .join('');
+      .join("");
 
     return `
 <!DOCTYPE html>
@@ -669,8 +670,8 @@ export class DocsWebViewProvider {
     </style>
 </head>
 <body>
-    <h1>📚 ${docs.title || 'Cisco Scripts API'}</h1>
-    <p class="subtitle">${docs.description || 'API Documentation'}</p>
+    <h1>📚 ${docs.title || "Cisco Scripts API"}</h1>
+    <p class="subtitle">${docs.description || "API Documentation"}</p>
 
     <h2>Available Endpoints</h2>
     <div class="endpoints">
