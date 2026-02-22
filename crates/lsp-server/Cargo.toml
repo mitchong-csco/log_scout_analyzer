@@ -33,6 +33,9 @@ bson = { workspace = true }
 zip = { workspace = true }
 tar = { workspace = true }
 flate2 = { workspace = true }
+regex = { workspace = true }
+dateparser = { workspace = true }
+futures = { workspace = true }
 
 [dev-dependencies]
 tokio-test = { workspace = true }

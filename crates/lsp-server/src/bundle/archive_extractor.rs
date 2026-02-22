@@ -372,7 +372,7 @@ impl ArchiveExtractor {
 
             if path.is_dir() {
                 // Recurse into subdirectories
-                log_files.extend(Self::find_and_extract_nested(&path, depth)?);
+                log_files.extend(Self::find_and_extract_nested(&path, depth, policy)?);
             } else if ArchiveFormat::is_archive(&path) {
                 // Found nested archive - extract it
                 tracing::info!("Found nested archive: {}", path.display());

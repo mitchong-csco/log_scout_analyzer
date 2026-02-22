@@ -30,6 +30,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 /// Vendor detector that identifies log formats
+#[derive(Clone)]
 pub struct VendorDetector {
     signatures: HashMap<String, VendorSignature>,
     quick_patterns: Vec<QuickPattern>,

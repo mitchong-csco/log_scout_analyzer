@@ -298,3 +298,209 @@ mod tests {
         assert!(log_files.contains(&PathBuf::from("debug.txt")));
     }
 }
+
+// Phase 3: Archive Extraction Tests (6 tests)
+#[cfg(test)]
+mod extraction_tests {
+    use super::*;
+    use std::fs::File;
+    use std::io::Write;
+    use tempfile::TempDir;
+
+    #[test]
+    fn test_extract_zip_creates_files() {
+        // Setup
+        let temp_dir = TempDir::new().unwrap();
+        let test_zip = PathBuf::from("../test-data/quick-test.zip");
+
+        if !test_zip.exists() {
+            eprintln!("Skipping test: {} not found", test_zip.display());
+            return;
+        }
+
+        // Execute
+        let result = ArchiveExtractor::extract_zip(&test_zip, temp_dir.path());
+
+        // Assert
+        assert!(result.is_ok(), "ZIP extraction should succeed");
+        let extracted = result.unwrap();
+
+        assert!(
+            extracted.len() > 0,
+            "Should extract at least one file from ZIP"
+        );
+
+        // Verify files exist on disk
+        for file in &extracted {
+            assert!(file.exists(), "Extracted file should exist: {:?}", file);
+        }
+    }
+
+    #[test]
+    fn test_extract_tar_creates_files() {
+        // Setup - create a simple TAR for testing if none exists
+        let temp_dir = TempDir::new().unwrap();
+
+        // Look for any existing TAR files in test-data
+        let test_data_dir = PathBuf::from("../test-data");
+        if !test_data_dir.exists() {
+            eprintln!("Skipping test: test-data directory not found");
+            return;
+        }
+
+        // Try to find a .tar or .tar.gz file
+        let tar_files: Vec<PathBuf> = std::fs::read_dir(&test_data_dir)
+            .unwrap()
+            .filter_map(|e| e.ok())
+            .map(|e| e.path())
+            .filter(|p| {
+                p.extension()
+                    .and_then(|e| e.to_str())
+                    .map(|e| e == "tar" || e == "gz")
+                    .unwrap_or(false)
+            })
+            .collect();
+
+        if tar_files.is_empty() {
+            eprintln!("Skipping test: no TAR files found in test-data");
+            return;
+        }
+
+        let test_tar = &tar_files[0];
+
+        // Execute
+        let result = ArchiveExtractor::extract_tar(test_tar, temp_dir.path());
+
+        // Assert
+        assert!(result.is_ok(), "TAR extraction should succeed");
+        let extracted = result.unwrap();
+
+        assert!(
+            extracted.len() > 0,
+            "Should extract at least one file from TAR"
+        );
+
+        // Verify files exist
+        for file in &extracted {
+            assert!(file.exists(), "Extracted file should exist: {:?}", file);
+        }
+    }
+
+    #[test]
+    fn test_extract_archive_auto_detects_format() {
+        // Setup
+        let temp_dir = TempDir::new().unwrap();
+        let test_zip = PathBuf::from("../test-data/quick-test.zip");
+
+        if !test_zip.exists() {
+            eprintln!("Skipping test: {} not found", test_zip.display());
+            return;
+        }
+
+        // Execute - use extract_archive which auto-detects format
+        let result = ArchiveExtractor::extract_archive(&test_zip, temp_dir.path());
+
+        // Assert
+        assert!(
+            result.is_ok(),
+            "Archive extraction with auto-detection should succeed"
+        );
+        let extracted = result.unwrap();
+
+        assert!(
+            extracted.len() > 0,
+            "Should extract files using auto-detection"
+        );
+    }
+
+    #[test]
+    fn test_extract_handles_nested_directories() {
+        // Setup
+        let temp_dir = TempDir::new().unwrap();
+
+        // QCSONE archives typically have nested directory structures
+        let test_archive = PathBuf::from("../test-data/700440257_qcsone_download_selected.zip");
+
+        if !test_archive.exists() {
+            eprintln!("Skipping test: {} not found", test_archive.display());
+            return;
+        }
+
+        // Execute
+        let result = ArchiveExtractor::extract_archive(&test_archive, temp_dir.path());
+
+        // Assert
+        assert!(result.is_ok(), "Nested directory extraction should succeed");
+        let extracted = result.unwrap();
+
+        // Verify we got files (not just directories)
+        let file_count = extracted.iter().filter(|p| p.is_file()).count();
+        assert!(
+            file_count > 0,
+            "Should extract actual files, not just directories"
+        );
+
+        // Verify nested paths exist
+        let has_nested = extracted.iter().any(|p| p.components().count() > 2);
+        if has_nested {
+            println!("Successfully handled nested directory structure");
+        }
+    }
+
+    #[test]
+    fn test_extract_handles_corrupted_archive() {
+        // Setup
+        let temp_dir = TempDir::new().unwrap();
+        let test_archive = PathBuf::from("../test-data/invalid-archive.zip");
+
+        if !test_archive.exists() {
+            eprintln!("Skipping test: {} not found", test_archive.display());
+            return;
+        }
+
+        // Execute
+        let result = ArchiveExtractor::extract_archive(&test_archive, temp_dir.path());
+
+        // Assert - should return error
+        assert!(result.is_err(), "Should fail on corrupted archive");
+
+        let err = result.unwrap_err();
+        let err_msg = format!("{:?}", err);
+        assert!(
+            err_msg.contains("Failed") || err_msg.contains("Invalid") || err_msg.contains("Error"),
+            "Error should indicate extraction failure: {}",
+            err_msg
+        );
+    }
+
+    #[test]
+    fn test_summarize_extraction_calculates_correctly() {
+        // Setup - create temp files with known sizes
+        let temp_dir = TempDir::new().unwrap();
+
+        let log1 = temp_dir.path().join("app.log");
+        let log2 = temp_dir.path().join("debug.txt");
+        let json = temp_dir.path().join("data.json");
+
+        // Create files with content
+        std::fs::write(&log1, "Log file 1 content").unwrap();
+        std::fs::write(&log2, "Log file 2 content that is longer").unwrap();
+        std::fs::write(&json, r#"{"key": "value"}"#).unwrap();
+
+        let files = vec![log1.clone(), log2.clone(), json.clone()];
+
+        // Execute
+        let summary = ArchiveExtractor::summarize_extraction(&files);
+
+        // Assert
+        assert_eq!(summary.total_files, 3, "Should count all files");
+        assert_eq!(summary.log_files_count, 2, "Should identify 2 log files");
+        assert!(summary.total_size_bytes > 0, "Should calculate total size");
+
+        // Verify log files list
+        assert_eq!(summary.log_files.len(), 2);
+        assert!(summary.log_files.contains(&log1));
+        assert!(summary.log_files.contains(&log2));
+        assert!(!summary.log_files.contains(&json));
+    }
+}

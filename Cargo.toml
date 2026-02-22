@@ -67,6 +67,9 @@ flate2 = "1.0"
 # Directory utilities
 dirs = "5.0"
 
+# Date parsing
+dateparser = "0.2"
+
 # Dev dependencies
 tokio-test = "0.4"
 tempfile = "3"

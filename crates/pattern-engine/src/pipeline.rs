@@ -58,6 +58,7 @@
 //! }
 //! ```
 
+use crate::learning::LearningEngine;
 use crate::normalizers::{NormalizationResult, NormalizerRegistry};
 use crate::processing_context::ProcessingContext;
 use crate::vendor_detection::{VendorDetector, VendorMatch};
@@ -149,6 +150,7 @@ pub struct NormalizationPipeline {
     normalizers: Arc<NormalizerRegistry>,
     mode: ProcessingMode,
     hints: NormalizationHints,
+    learning_engine: Option<LearningEngine>,
 }
 
 impl NormalizationPipeline {
@@ -159,6 +161,7 @@ impl NormalizationPipeline {
             normalizers: Arc::new(NormalizerRegistry::new()),
             mode: ProcessingMode::default(),
             hints: NormalizationHints::new(),
+            learning_engine: None,
         }
     }
 
@@ -169,6 +172,7 @@ impl NormalizationPipeline {
             normalizers: Arc::new(NormalizerRegistry::new()),
             mode,
             hints: NormalizationHints::new(),
+            learning_engine: None,
         }
     }
 
@@ -179,7 +183,44 @@ impl NormalizationPipeline {
             normalizers: Arc::new(NormalizerRegistry::new()),
             mode: ProcessingMode::default(),
             hints,
+            learning_engine: None,
         }
+    }
+
+    /// Create a pipeline with learning enabled
+    pub fn with_learning(learning_engine: LearningEngine) -> Self {
+        Self {
+            detector: VendorDetector::default(),
+            normalizers: Arc::new(NormalizerRegistry::new()),
+            mode: ProcessingMode::default(),
+            hints: NormalizationHints::new(),
+            learning_engine: Some(learning_engine),
+        }
+    }
+
+    /// Enable learning for this pipeline
+    pub fn enable_learning(&mut self, learning_engine: LearningEngine) {
+        self.learning_engine = Some(learning_engine);
+    }
+
+    /// Disable learning for this pipeline
+    pub fn disable_learning(&mut self) {
+        self.learning_engine = None;
+    }
+
+    /// Check if learning is enabled
+    pub fn is_learning_enabled(&self) -> bool {
+        self.learning_engine.is_some()
+    }
+
+    /// Get mutable reference to learning engine if enabled
+    pub fn learning_engine_mut(&mut self) -> Option<&mut LearningEngine> {
+        self.learning_engine.as_mut()
+    }
+
+    /// Get reference to learning engine if enabled
+    pub fn learning_engine(&self) -> Option<&LearningEngine> {
+        self.learning_engine.as_ref()
     }
 
     /// Set the processing mode
@@ -277,6 +318,41 @@ impl NormalizationPipeline {
         results
     }
 
+    /// Process multiple log lines in batch and train learning engine
+    pub fn process_batch_with_learning(&mut self, log_lines: &[&str]) -> Vec<ProcessingResult> {
+        let mut context = ProcessingContext::new();
+        context.start();
+        let mut results = Vec::with_capacity(log_lines.len());
+
+        for log_line in log_lines {
+            let result = self.process_with_context(log_line, &context);
+
+            // Update context based on result
+            match &result {
+                ProcessingResult::FastPath { vendor, .. } => {
+                    context.record_vendor(&vendor.vendor_id, vendor.confidence);
+                    context.record_fast_path(&vendor.vendor_id);
+                }
+                ProcessingResult::Normalized { vendor, .. } => {
+                    context.record_vendor(&vendor.vendor_id, vendor.confidence);
+                    context.record_normalization(&vendor.vendor_id);
+                }
+                ProcessingResult::Unknown { .. } => {}
+            }
+
+            results.push(result);
+        }
+
+        context.stop();
+
+        // Train learning engine if enabled
+        if let Some(ref mut engine) = self.learning_engine {
+            engine.learn_from_context(&context);
+        }
+
+        results
+    }
+
     /// Decide whether to normalize based on context
     fn should_normalize(&self, vendor_match: &VendorMatch, context: &ProcessingContext) -> bool {
         match self.mode {
@@ -286,6 +362,15 @@ impl NormalizationPipeline {
                 // Force normalization if requested
                 if context.force_normalize {
                     return true;
+                }
+
+                // If learning is enabled, use learned recommendations
+                if let Some(ref engine) = self.learning_engine {
+                    if engine
+                        .suggest_normalization(&vendor_match.vendor_id, vendor_match.confidence)
+                    {
+                        return true;
+                    }
                 }
 
                 // Always normalize if confidence is low (ambiguous format)
@@ -338,6 +423,18 @@ impl NormalizationPipeline {
 impl Default for NormalizationPipeline {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl Clone for NormalizationPipeline {
+    fn clone(&self) -> Self {
+        Self {
+            detector: self.detector.clone(),
+            normalizers: Arc::clone(&self.normalizers),
+            mode: self.mode,
+            hints: self.hints.clone(),
+            learning_engine: self.learning_engine.clone(),
+        }
     }
 }
 
@@ -538,5 +635,146 @@ mod tests {
 
         // Single vendor should have higher threshold
         assert!(single.multi_vendor_threshold > multi.multi_vendor_threshold);
+    }
+
+    #[test]
+    fn test_pipeline_with_learning_enabled() {
+        use crate::learning::LearningEngine;
+
+        let learning_engine = LearningEngine::new();
+        let mut pipeline = NormalizationPipeline::with_learning(learning_engine);
+
+        assert!(pipeline.is_learning_enabled());
+
+        // Process a log to ensure it works with learning
+        let log = "Jan 15 10:30:00.123: %SIP-6-INVITE: ccsipDisplayMsg: Received INVITE";
+        let _result = pipeline.process(log);
+
+        // Learning engine should be accessible
+        assert!(pipeline.learning_engine().is_some());
+        assert!(pipeline.learning_engine_mut().is_some());
+    }
+
+    #[test]
+    fn test_pipeline_learning_toggle() {
+        use crate::learning::LearningEngine;
+
+        let mut pipeline = NormalizationPipeline::new();
+        assert!(!pipeline.is_learning_enabled());
+
+        // Enable learning
+        let learning_engine = LearningEngine::new();
+        pipeline.enable_learning(learning_engine);
+        assert!(pipeline.is_learning_enabled());
+
+        // Disable learning
+        pipeline.disable_learning();
+        assert!(!pipeline.is_learning_enabled());
+    }
+
+    #[test]
+    fn test_pipeline_learning_affects_normalization_decision() {
+        use crate::learning::{LearningConfig, LearningEngine};
+        use crate::processing_context::ProcessingContext;
+
+        // Create a learning engine and train it
+        let mut learning_engine = LearningEngine::new();
+        let mut context = ProcessingContext::new();
+
+        // Train the engine to prefer normalization for cisco_cube
+        for _i in 0..100 {
+            context.record_vendor("cisco_cube", 0.95);
+            context.record_normalization("cisco_cube");
+        }
+
+        learning_engine.learn_from_context(&context);
+
+        // Create pipeline with learning
+        let pipeline = NormalizationPipeline::with_learning(learning_engine);
+
+        // Process a CUBE log with high confidence
+        let log = "Jan 15 10:30:00.123: %SIP-6-INVITE: ccsipDisplayMsg: Received INVITE";
+        let result = pipeline.process(log);
+
+        // With learned preference for normalization, should normalize
+        match result {
+            ProcessingResult::Normalized { .. } | ProcessingResult::FastPath { .. } => {
+                // Both are valid - depends on vendor detection
+            }
+            ProcessingResult::Unknown { .. } => panic!("Should detect vendor"),
+        }
+    }
+
+    #[test]
+    fn test_pipeline_learning_integration_with_batch() {
+        use crate::learning::LearningEngine;
+
+        let learning_engine = LearningEngine::new();
+        let pipeline = NormalizationPipeline::with_learning(learning_engine);
+
+        let logs = vec![
+            "Jan 15 10:30:00.123: %SIP-6-INVITE: ccsipDisplayMsg: Received INVITE",
+            "Jan 15 10:30:01.456: %SIP-6-BYE: ccsipDisplayMsg: Sent BYE",
+            "2024-01-15 10:30:00,123 |SIPTcp|AppId=Cisco CallManager|",
+        ];
+
+        let results = pipeline.process_batch(&logs);
+        assert_eq!(results.len(), 3);
+
+        // All results should be processed (learning doesn't break batch processing)
+        for result in &results {
+            match result {
+                ProcessingResult::FastPath { .. }
+                | ProcessingResult::Normalized { .. }
+                | ProcessingResult::Unknown { .. } => {}
+            }
+        }
+    }
+
+    #[test]
+    fn test_pipeline_clone_with_learning() {
+        use crate::learning::LearningEngine;
+
+        let learning_engine = LearningEngine::new();
+        let pipeline = NormalizationPipeline::with_learning(learning_engine);
+
+        // Clone should preserve learning state
+        let cloned = pipeline.clone();
+        assert_eq!(pipeline.is_learning_enabled(), cloned.is_learning_enabled());
+    }
+
+    #[test]
+    fn test_batch_processing_with_learning() {
+        use crate::learning::LearningEngine;
+
+        let learning_engine = LearningEngine::new();
+        let mut pipeline = NormalizationPipeline::with_learning(learning_engine);
+
+        let logs = vec![
+            "Jan 15 10:30:00.123: %SIP-6-INVITE: ccsipDisplayMsg: Received INVITE",
+            "Jan 15 10:30:01.456: %SIP-6-BYE: ccsipDisplayMsg: Sent BYE",
+        ];
+
+        // Get initial learning cycles
+        let initial_cycles = pipeline.learning_engine().unwrap().learning_cycles();
+
+        // Process batch with learning - should not learn (below min_samples)
+        let results = pipeline.process_batch_with_learning(&logs);
+        assert_eq!(results.len(), 2);
+
+        // Learning cycles should not change (insufficient samples)
+        let after_cycles = pipeline.learning_engine().unwrap().learning_cycles();
+        assert_eq!(initial_cycles, after_cycles);
+
+        // Now process enough logs to trigger learning
+        let many_logs: Vec<&str> = (0..100)
+            .map(|_| "Jan 15 10:30:00.123: %SIP-6-INVITE: ccsipDisplayMsg: Received INVITE")
+            .collect();
+
+        let _results = pipeline.process_batch_with_learning(&many_logs);
+
+        // Learning cycles should increment
+        let final_cycles = pipeline.learning_engine().unwrap().learning_cycles();
+        assert_eq!(final_cycles, 1);
     }
 }

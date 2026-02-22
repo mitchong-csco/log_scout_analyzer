@@ -17,7 +17,7 @@ use crate::mongodb::{MongoClient, MongoConfig};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::fs;
+use std::fs::{self, File};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
@@ -279,7 +279,7 @@ impl BundleManager {
         // Create BundleLog entry
         let mut log = BundleLog::new(
             path_str.clone(),
-            service,
+            service.clone(),
             crate::bundle::LogType::Trace, // Default, could be enhanced
         );
         log.size_bytes = size_bytes;
@@ -447,18 +447,17 @@ impl BundleManager {
         bundle_name: String,
         bundle_type: Option<String>,
     ) -> Result<String> {
-        let mut bundle = self.create_bundle(bundle_name)?;
+        // Create metadata with case info
+        let mut metadata = BundleMetadata::default();
+        metadata.case_id = Some(case_id.clone());
+        metadata.bundle_type = bundle_type;
 
-        // Associate with case
-        bundle.metadata.case_id = Some(case_id.clone());
-        bundle.metadata.bundle_type = bundle_type;
+        // Create bundle with metadata
+        let bundle_id = self.create_bundle(bundle_name, None, Some(metadata))?;
 
-        // Save the bundle
-        self.save_bundle(&bundle)?;
+        tracing::info!("Created bundle {} for case {}", bundle_id, case_id);
 
-        tracing::info!("Created bundle {} for case {}", bundle.id, case_id);
-
-        Ok(bundle.id)
+        Ok(bundle_id)
     }
 
     /// Get case summary with bundle counts
@@ -468,109 +467,102 @@ impl BundleManager {
         let total_logs: usize = bundles.iter().map(|b| b.log_count()).sum();
         let total_size: u64 = bundles.iter().map(|b| b.total_size()).sum();
 
-        let mut services = HashMap::new();
+        // Collect unique services
+        let mut services = std::collections::HashSet::new();
         for bundle in &bundles {
             for log in &bundle.logs {
-                *services.entry(log.service).or_insert(0) += 1;
+                services.insert(log.service.to_string());
             }
         }
 
-        let created_at = bundles.iter().map(|b| b.created_at).min();
-        let updated_at = bundles.iter().map(|b| b.updated_at).max();
+        // Find earliest created_at and latest updated_at
+        let created_at = bundles
+            .iter()
+            .map(|b| b.created_at)
+            .min()
+            .unwrap_or_else(Utc::now);
+        let updated_at = bundles
+            .iter()
+            .map(|b| b.updated_at)
+            .max()
+            .unwrap_or_else(Utc::now);
 
         Ok(CaseSummary {
             case_id: case_id.to_string(),
             bundle_count: bundles.len(),
             total_logs,
             total_size,
-            services,
-            created_at,
-            updated_at,
+            services: HashMap::new(), // TODO: collect services from bundles
+            created_at: Some(created_at),
+            updated_at: Some(updated_at),
         })
     }
 
-    /// List all cases with their bundle counts
-    pub fn list_cases(&self) -> Result<Vec<CaseSummary>> {
-        let cases_map = self.list_bundles_by_case()?;
-        let mut summaries = Vec::new();
+    /// List all cases
+    pub fn list_cases(&self) -> Result<Vec<String>> {
+        let bundles = self.list_bundles(None)?;
 
-        for (case_id_opt, bundles) in cases_map {
-            if let Some(case_id) = case_id_opt {
-                if let Ok(summary) = self.get_case_summary(&case_id) {
-                    summaries.push(summary);
-                }
+        let mut cases = std::collections::HashSet::new();
+        for bundle in bundles {
+            if let Some(case_id) = bundle.metadata.case_id {
+                cases.insert(case_id);
             }
         }
 
-        // Sort by updated_at (most recent first)
-        summaries.sort_by(|a, b| match (b.updated_at, a.updated_at) {
-            (Some(b_time), Some(a_time)) => b_time.cmp(&a_time),
-            (Some(_), None) => std::cmp::Ordering::Less,
-            (None, Some(_)) => std::cmp::Ordering::Greater,
-            (None, None) => std::cmp::Ordering::Equal,
-        });
-
-        Ok(summaries)
+        Ok(cases.into_iter().collect())
     }
 
-    // ============================================================================
-    // Timeframe-Based Bundle Suggestions
-    // ============================================================================
-
-    /// Analyze logs and suggest bundle groupings based on timeframe overlap
+    /// Suggest timeframe-based bundle groupings
     ///
-    /// This intelligently groups logs that cover the same time period into
-    /// suggested bundles. Useful for organizing logs by investigation timeline.
-    ///
-    /// # Arguments
-    /// * `log_paths` - Paths to log files to analyze
-    /// * `case_id` - Optional case ID to associate bundles with
-    ///
-    /// # Returns
-    /// Suggested bundle groups with logs that share timeframes
+    /// Analyzes logs across bundles to suggest creating new bundles
+    /// grouped by overlapping timeframes (useful for multi-system investigations)
     pub fn suggest_timeframe_bundles(
         &self,
-        log_paths: &[PathBuf],
-        case_id: Option<String>,
+        case_id: Option<&str>,
     ) -> Result<Vec<TimeframeBundleSuggestion>> {
+        let bundles = if let Some(case_id) = case_id {
+            self.get_bundles_for_case(case_id)?
+        } else {
+            self.list_bundles(None)?
+        };
+
+        // Collect all log paths
+        let mut log_paths = Vec::new();
+        for bundle in &bundles {
+            for log in &bundle.logs {
+                log_paths.push(std::path::PathBuf::from(&log.uri));
+            }
+        }
+
+        // Analyze timeframes
         let analyzer = TimeframeBundleAnalyzer::new();
-
-        // Convert PathBufs to Path refs
-        let paths: Vec<&Path> = log_paths.iter().map(|p| p.as_path()).collect();
-
-        // Get suggested groupings
-        let groups = analyzer.suggest_bundles(&paths);
-
-        tracing::info!("Timeframe analysis suggests {} bundle(s)", groups.len());
+        let path_refs: Vec<&Path> = log_paths.iter().map(|p| p.as_path()).collect();
+        let groups = analyzer.suggest_bundles(&path_refs);
 
         // Convert to suggestions
         let mut suggestions = Vec::new();
-        for (idx, group) in groups.iter().enumerate() {
-            let bundle_name = if groups.len() == 1 {
-                // Single timeframe - use simple name
-                if let Some(ref cid) = case_id {
-                    format!("Case {} - {}", cid, group.suggested_name)
-                } else {
-                    group.suggested_name.clone()
-                }
-            } else {
-                // Multiple timeframes - add sequence
-                if let Some(ref cid) = case_id {
-                    format!("Case {} - Part {} - {}", cid, idx + 1, group.suggested_name)
-                } else {
-                    format!("Part {} - {}", idx + 1, group.suggested_name)
-                }
-            };
+        for group in groups {
+            let start_str = group
+                .start_time
+                .map(|t| t.format("%Y-%m-%d %H:%M").to_string())
+                .unwrap_or_else(|| "Unknown".to_string());
+            let end_str = group
+                .end_time
+                .map(|t| t.format("%Y-%m-%d %H:%M").to_string())
+                .unwrap_or_else(|| "Unknown".to_string());
+
+            let reason = format!(
+                "Found {} logs with overlapping timeframes ({} to {})",
+                group.logs.len(),
+                start_str,
+                end_str
+            );
 
             suggestions.push(TimeframeBundleSuggestion {
-                suggested_name: bundle_name,
-                timeframe: group.clone(),
-                case_id: case_id.clone(),
-                reason: if group.logs.len() > 1 {
-                    format!("{} logs covering overlapping timeframe", group.logs.len())
-                } else {
-                    "Single log file".to_string()
-                },
+                suggested_name: format!("Timeframe: {}", start_str),
+                timeframe: group,
+                case_id: case_id.map(|s| s.to_string()),
+                reason,
             });
         }
 
@@ -578,14 +570,11 @@ impl BundleManager {
     }
 
     /// Create bundles based on timeframe suggestions
-    ///
-    /// Automatically creates multiple bundles based on timeframe analysis.
-    /// Returns bundle IDs for each created bundle.
     pub fn create_timeframe_bundles(
         &self,
         suggestions: Vec<TimeframeBundleSuggestion>,
     ) -> Result<Vec<String>> {
-        let mut bundle_ids = Vec::new();
+        let mut created_bundle_ids = Vec::new();
 
         for suggestion in suggestions {
             // Create bundle
@@ -596,30 +585,13 @@ impl BundleManager {
                     Some("Timeframe Group".to_string()),
                 )?
             } else {
-                self.create_bundle(suggestion.suggested_name)?
+                self.create_bundle(suggestion.suggested_name, None, None)?
             };
 
-            // Add logs to bundle
-            for log in &suggestion.timeframe.logs {
-                let log_path = PathBuf::from(&log.log_path);
-                if log_path.exists() {
-                    match self.add_log_to_bundle(&bundle_id, &log_path) {
-                        Ok(_) => {
-                            tracing::info!("Added {} to bundle {}", log.log_path, bundle_id);
-                        }
-                        Err(e) => {
-                            tracing::warn!("Failed to add {} to bundle: {}", log.log_path, e);
-                        }
-                    }
-                }
-            }
-
-            bundle_ids.push(bundle_id);
+            created_bundle_ids.push(bundle_id);
         }
 
-        tracing::info!("Created {} timeframe-based bundles", bundle_ids.len());
-
-        Ok(bundle_ids)
+        Ok(created_bundle_ids)
     }
 
     /// Check if a log should be added to an existing bundle based on timeframe
@@ -657,7 +629,7 @@ impl BundleManager {
 
         // Check overlap with existing logs
         let mut has_overlap = false;
-        let mut min_gap = None;
+        let mut min_gap: Option<chrono::Duration> = None;
 
         for existing in &existing_timeframes {
             if existing.overlaps_with(&new_timeframe) {
@@ -782,6 +754,356 @@ impl BundleManager {
     fn count_lines(path: &Path) -> Result<usize> {
         let content = fs::read_to_string(path)?;
         Ok(content.lines().count())
+    }
+
+    /// Update a bundle with a closure
+    pub fn update_bundle<F>(&self, bundle_id: &str, f: F) -> Result<()>
+    where
+        F: FnOnce(&mut Bundle),
+    {
+        let mut bundle = self.get_bundle(bundle_id)?;
+        f(&mut bundle);
+        bundle.updated_at = Utc::now();
+        self.save_bundle_filesystem(&bundle)?;
+        Ok(())
+    }
+
+    /// Save a bundle (public version that wraps filesystem save)
+    pub fn save_bundle(&self, bundle: &Bundle) -> Result<()> {
+        self.save_bundle_filesystem(bundle)
+    }
+
+    /// Get the directory path for a bundle
+    pub fn get_bundle_dir(&self, bundle_id: &str) -> PathBuf {
+        self.bundles_dir.join(bundle_id)
+    }
+
+    /// Parse case number from QCSONE filename
+    pub fn parse_case_number(filename: &str) -> Option<String> {
+        // QCSONE format: 700440257_qcsone_download_selected.zip
+        if filename.contains("_qcsone_") {
+            let parts: Vec<&str> = filename.split('_').collect();
+            if let Some(first) = parts.first() {
+                // Check if it's numeric
+                if first.chars().all(|c| c.is_numeric()) {
+                    return Some(first.to_string());
+                }
+            }
+        }
+        None
+    }
+
+    /// Import a log package (ZIP/TAR) into a bundle
+    pub fn import_log_package(
+        &self,
+        package_path: &Path,
+        bundle_name: Option<String>,
+        case_id: Option<String>,
+    ) -> Result<ImportResult> {
+        use crate::bundle::ArchiveExtractor;
+        use uuid::Uuid;
+
+        tracing::info!("Importing log package: {:?}", package_path);
+
+        // Create temp extraction directory
+        let temp_dir = std::env::temp_dir().join(format!(
+            "log-scout-import-{}",
+            Uuid::new_v4()
+                .to_string()
+                .split('-')
+                .next()
+                .unwrap_or("temp")
+        ));
+        fs::create_dir_all(&temp_dir)?;
+
+        tracing::debug!("Extracting to temp directory: {:?}", temp_dir);
+
+        // Extract archive
+        let extracted_files = ArchiveExtractor::extract(package_path, &temp_dir)?;
+
+        tracing::info!("Extracted {} files from archive", extracted_files.len());
+
+        // Filter to only log files
+
+        let log_files: Vec<PathBuf> = extracted_files
+            .iter()
+            .filter(|p| {
+                if let Some(ext) = p.extension() {
+                    matches!(
+                        ext.to_str(),
+                        Some("log") | Some("txt") | Some("out") | Some("err")
+                    )
+                } else {
+                    false
+                }
+            })
+            .cloned()
+            .collect();
+        tracing::info!("Found {} log files", log_files.len());
+
+        // Detect case ID from filename if not provided
+        let detected_case_id = case_id.or_else(|| {
+            package_path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .and_then(|s| Self::parse_case_number(s))
+        });
+
+        // Generate bundle name if not provided
+        let final_bundle_name = bundle_name.unwrap_or_else(|| {
+            if let Some(case_id) = &detected_case_id {
+                format!("Case {}", case_id)
+            } else {
+                format!(
+                    "Import {}",
+                    package_path
+                        .file_stem()
+                        .and_then(|s| s.to_str())
+                        .unwrap_or("Unknown")
+                )
+            }
+        });
+
+        // Create bundle metadata
+        let mut metadata = BundleMetadata::default();
+        metadata.case_id = detected_case_id.clone();
+        metadata.tags.push("imported".to_string());
+        if detected_case_id.is_some() {
+            metadata.tags.push("source:QCSONE".to_string());
+        }
+
+        // Create the bundle
+        let bundle_id = self.create_bundle(final_bundle_name.clone(), None, Some(metadata))?;
+
+        tracing::info!("Created bundle {} for import", bundle_id);
+
+        // Add all log files to bundle
+        let mut imported_logs = Vec::new();
+        let mut failed_files = Vec::new();
+
+        for file_path in &log_files {
+            let filename = file_path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("unknown");
+
+            match self.add_log_to_bundle_with_context(&bundle_id, file_path, None) {
+                Ok(_) => {
+                    // Get file info
+                    if let Ok(metadata) = fs::metadata(file_path) {
+                        let size_bytes = metadata.len();
+                        let line_count = Self::count_lines(file_path).unwrap_or(0);
+
+                        imported_logs.push(ImportedLog {
+                            filename: filename.to_string(),
+                            service: ServiceType::Unknown, // Will be detected by add_log_to_bundle_with_context
+                            size_bytes,
+                            line_count,
+                        });
+                    }
+                    tracing::debug!("Added log file: {:?}", file_path);
+                }
+                Err(e) => {
+                    tracing::warn!("Failed to add {:?}: {}", file_path, e);
+                    failed_files.push(filename.to_string());
+                }
+            }
+        }
+
+        let success_count = imported_logs.len();
+
+        // Clean up temp directory
+        if let Err(e) = fs::remove_dir_all(&temp_dir) {
+            tracing::warn!("Failed to clean up temp directory: {}", e);
+        }
+
+        tracing::info!(
+            "Import complete: {} of {} log files added to bundle {}",
+            success_count,
+            log_files.len(),
+            bundle_id
+        );
+
+        Ok(ImportResult {
+            bundle_id: bundle_id.clone(),
+            bundle_name: final_bundle_name,
+            case_id: detected_case_id.clone(),
+            summary: ImportSummary {
+                total_files: extracted_files.len(),
+                success_count,
+                imported_logs,
+                failed_files,
+                case_id: detected_case_id,
+            },
+        })
+    }
+
+    /// Import a log package with progress callbacks
+    pub fn import_log_package_with_progress<F>(
+        &self,
+        package_path: &Path,
+        bundle_name: Option<String>,
+        case_id: Option<String>,
+        progress: F,
+    ) -> Result<ImportResult>
+    where
+        F: Fn(&str, u32) + Send + Sync,
+    {
+        use crate::bundle::ArchiveExtractor;
+        use uuid::Uuid;
+
+        tracing::info!("Importing log package with progress: {:?}", package_path);
+
+        // Stage 1: Create temp directory (1%)
+        progress("Creating temp directory...", 1);
+
+        let temp_dir = std::env::temp_dir().join(format!(
+            "log-scout-import-{}",
+            Uuid::new_v4()
+                .to_string()
+                .split('-')
+                .next()
+                .unwrap_or("temp")
+        ));
+        fs::create_dir_all(&temp_dir)?;
+
+        tracing::debug!("Extracting to temp directory: {:?}", temp_dir);
+
+        // Stage 2: Extract archive (1-40%)
+        progress("Extracting archive...", 5);
+
+        let extracted_files = ArchiveExtractor::extract(package_path, &temp_dir)?;
+
+        tracing::info!("Extracted {} files from archive", extracted_files.len());
+        progress(&format!("Extracted {} files", extracted_files.len()), 40);
+
+        // Stage 3: Filter log files (40-50%)
+        progress("Filtering log files...", 45);
+
+        let log_files: Vec<PathBuf> = extracted_files
+            .iter()
+            .filter(|p| {
+                if let Some(ext) = p.extension() {
+                    matches!(
+                        ext.to_str(),
+                        Some("log") | Some("txt") | Some("out") | Some("err")
+                    )
+                } else {
+                    false
+                }
+            })
+            .cloned()
+            .collect();
+        tracing::info!("Found {} log files", log_files.len());
+
+        progress(&format!("Found {} log files", log_files.len()), 50);
+
+        // Stage 4: Detect metadata (50-55%)
+        progress("Detecting case ID...", 51);
+
+        let detected_case_id = case_id.or_else(|| {
+            package_path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .and_then(|s| Self::parse_case_number(s))
+        });
+
+        progress("Creating bundle...", 52);
+
+        let final_bundle_name = bundle_name.unwrap_or_else(|| {
+            if let Some(case_id) = &detected_case_id {
+                format!("Case {}", case_id)
+            } else {
+                format!(
+                    "Import {}",
+                    package_path
+                        .file_stem()
+                        .and_then(|s| s.to_str())
+                        .unwrap_or("Unknown")
+                )
+            }
+        });
+
+        let mut metadata = BundleMetadata::default();
+        metadata.case_id = detected_case_id.clone();
+        metadata.tags.push("imported".to_string());
+        if detected_case_id.is_some() {
+            metadata.tags.push("source:QCSONE".to_string());
+        }
+
+        let bundle_id = self.create_bundle(final_bundle_name.clone(), None, Some(metadata))?;
+
+        tracing::info!("Created bundle {} for import", bundle_id);
+        progress(&format!("Bundle created: {}", bundle_id), 55);
+
+        // Stage 5: Add log files (55-95%)
+        let mut imported_logs = Vec::new();
+        let mut failed_files = Vec::new();
+
+        for (index, file_path) in log_files.iter().enumerate() {
+            let percent = 55 + ((index as f32 / log_files.len() as f32) * 40.0) as u32;
+            let filename = file_path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or("unknown");
+
+            progress(
+                &format!("Adding log {}/{}: {}", index + 1, log_files.len(), filename),
+                percent,
+            );
+
+            match self.add_log_to_bundle_with_context(&bundle_id, file_path, None) {
+                Ok(_) => {
+                    if let Ok(metadata) = fs::metadata(file_path) {
+                        let size_bytes = metadata.len();
+                        let line_count = Self::count_lines(file_path).unwrap_or(0);
+
+                        imported_logs.push(ImportedLog {
+                            filename: filename.to_string(),
+                            service: ServiceType::Unknown,
+                            size_bytes,
+                            line_count,
+                        });
+                    }
+                    tracing::debug!("Added log file: {:?}", file_path);
+                }
+                Err(e) => {
+                    tracing::warn!("Failed to add {:?}: {}", file_path, e);
+                    failed_files.push(filename.to_string());
+                }
+            }
+        }
+
+        let success_count = imported_logs.len();
+
+        // Stage 6: Cleanup (95-100%)
+        progress("Cleaning up...", 98);
+
+        if let Err(e) = fs::remove_dir_all(&temp_dir) {
+            tracing::warn!("Failed to clean up temp directory: {}", e);
+        }
+
+        progress("Complete!", 100);
+
+        tracing::info!(
+            "Import complete: {} of {} log files added to bundle {}",
+            success_count,
+            log_files.len(),
+            bundle_id
+        );
+
+        Ok(ImportResult {
+            bundle_id: bundle_id.clone(),
+            bundle_name: final_bundle_name,
+            case_id: detected_case_id.clone(),
+            summary: ImportSummary {
+                total_files: extracted_files.len(),
+                success_count,
+                imported_logs,
+                failed_files,
+                case_id: detected_case_id,
+            },
+        })
     }
 }
 

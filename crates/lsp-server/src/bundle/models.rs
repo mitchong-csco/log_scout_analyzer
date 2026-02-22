@@ -115,7 +115,7 @@ impl BundleLog {
 }
 
 /// Type of service the log is from
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum ServiceType {
     /// Cisco Jabber client
     Jabber,
@@ -129,11 +129,17 @@ pub enum ServiceType {
     /// Cisco Unity (voicemail)
     Unity,
 
+    /// Cisco Webex (Teams/Meetings)
+    Webex,
+
     /// SIP protocol traces
     SIP,
 
     /// Network-level logs
     Network,
+
+    /// Unknown service type
+    Unknown,
 
     /// Custom/unknown service
     Custom(String),
@@ -146,15 +152,17 @@ impl fmt::Display for ServiceType {
             ServiceType::CUCM => write!(f, "CUCM"),
             ServiceType::CUP => write!(f, "CUP"),
             ServiceType::Unity => write!(f, "Unity"),
+            ServiceType::Webex => write!(f, "Webex"),
             ServiceType::SIP => write!(f, "SIP"),
             ServiceType::Network => write!(f, "Network"),
+            ServiceType::Unknown => write!(f, "Unknown"),
             ServiceType::Custom(name) => write!(f, "Custom({})", name),
         }
     }
 }
 
 /// Type of log file
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum LogType {
     /// Trace-level logs
     Trace,

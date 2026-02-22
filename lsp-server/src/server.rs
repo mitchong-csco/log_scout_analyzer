@@ -2,6 +2,8 @@
 //!
 //! Implements the Language Server Protocol for log file analysis.
 
+const LSP_VERSION: &str = env!("CARGO_PKG_VERSION");
+
 use crate::bundle::BundleManager;
 use crate::pattern_engine::{Detection, PatternEngine, Severity};
 use crate::pattern_loader;
@@ -13,7 +15,12 @@ use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tower_lsp::jsonrpc::{Error as JsonRpcError, Result};
+use tower_lsp::lsp_types::notification::Progress;
 use tower_lsp::lsp_types::*;
+use tower_lsp::lsp_types::{
+    NumberOrString, ProgressParams, ProgressParamsValue, WorkDoneProgress, WorkDoneProgressBegin,
+    WorkDoneProgressEnd, WorkDoneProgressReport,
+};
 use tower_lsp::{Client, LanguageServer};
 
 /// Main LSP server structure
@@ -160,6 +167,49 @@ impl LogScoutServer {
         // No default patterns - rely entirely on TagScout for meaningful categorization
         // Return None to ensure no pattern engine is initialized until TagScout loads
         None
+    }
+
+    /// Send progress notification to client
+    async fn send_progress(&self, token: &str, message: &str, percentage: u32) {
+        let params = ProgressParams {
+            token: NumberOrString::String(token.to_string()),
+            value: ProgressParamsValue::WorkDone(WorkDoneProgress::Report(
+                WorkDoneProgressReport {
+                    cancellable: Some(true),
+                    message: Some(message.to_string()),
+                    percentage: Some(percentage),
+                },
+            )),
+        };
+
+        self.client.send_notification::<Progress>(params).await;
+    }
+
+    /// Begin progress notification
+    async fn begin_progress(&self, token: &str, title: &str) {
+        let params = ProgressParams {
+            token: NumberOrString::String(token.to_string()),
+            value: ProgressParamsValue::WorkDone(WorkDoneProgress::Begin(WorkDoneProgressBegin {
+                title: title.to_string(),
+                cancellable: Some(true),
+                message: Some("Starting...".to_string()),
+                percentage: Some(0),
+            })),
+        };
+
+        self.client.send_notification::<Progress>(params).await;
+    }
+
+    /// End progress notification
+    async fn end_progress(&self, token: &str, message: &str) {
+        let params = ProgressParams {
+            token: NumberOrString::String(token.to_string()),
+            value: ProgressParamsValue::WorkDone(WorkDoneProgress::End(WorkDoneProgressEnd {
+                message: Some(message.to_string()),
+            })),
+        };
+
+        self.client.send_notification::<Progress>(params).await;
     }
 
     /// Re-analyze all open documents and publish diagnostics
@@ -668,6 +718,8 @@ impl LogScoutServer {
                     bundle_name: Option<String>,
                     #[serde(rename = "caseId")]
                     case_id: Option<String>,
+                    #[serde(rename = "progressToken")]
+                    progress_token: Option<String>,
                 }
 
                 let params: ImportPackageParams = serde_json::from_value(params).map_err(|e| {
@@ -675,7 +727,20 @@ impl LogScoutServer {
                     JsonRpcError::invalid_params("Invalid parameters".to_string())
                 })?;
 
-                tracing::info!("Importing package: {}", params.package_path);
+                // Generate progress token if not provided
+                let progress_token = params
+                    .progress_token
+                    .unwrap_or_else(|| format!("import_{}", uuid::Uuid::new_v4()));
+
+                tracing::info!(
+                    "Importing package: {} (token: {})",
+                    params.package_path,
+                    progress_token
+                );
+
+                // Begin progress
+                self.begin_progress(&progress_token, "Importing Archive")
+                    .await;
 
                 // Need mutable access to bundle manager
                 drop(manager_opt);
@@ -685,17 +750,49 @@ impl LogScoutServer {
                     JsonRpcError::method_not_found()
                 })?;
 
-                // Import the package
+                // Create progress callback
+                let client = Arc::new(self.client.clone());
+                let token = progress_token.clone();
+                let progress_callback: Box<dyn Fn(&str, u32) + Send + Sync> =
+                    Box::new(move |message: &str, percentage: u32| {
+                        let client = Arc::clone(&client);
+                        let token = token.clone();
+                        let message = message.to_string();
+
+                        tokio::spawn(async move {
+                            let params = ProgressParams {
+                                token: NumberOrString::String(token),
+                                value: ProgressParamsValue::WorkDone(WorkDoneProgress::Report(
+                                    WorkDoneProgressReport {
+                                        cancellable: Some(true),
+                                        message: Some(message),
+                                        percentage: Some(percentage),
+                                    },
+                                )),
+                            };
+                            client.send_notification::<Progress>(params).await;
+                        });
+                    });
+
+                // Import the package with progress
                 let result = manager_mut
-                    .import_log_package(
+                    .import_log_package_with_progress(
                         std::path::Path::new(&params.package_path),
                         params.bundle_name,
                         params.case_id,
+                        progress_callback,
                     )
                     .map_err(|e| {
                         tracing::error!("Import failed: {}", e);
                         JsonRpcError::internal_error()
                     })?;
+
+                // End progress
+                self.end_progress(
+                    &progress_token,
+                    &format!("Imported {} files", result.success_count),
+                )
+                .await;
 
                 // Build response
                 let response = serde_json::json!({
@@ -908,11 +1005,16 @@ impl LanguageServer for LogScoutServer {
                 }),
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
                 document_symbol_provider: Some(OneOf::Left(true)),
+                completion_provider: Some(CompletionOptions {
+                    trigger_characters: Some(vec!["[".to_string(), " ".to_string()]),
+                    resolve_provider: Some(false),
+                    ..Default::default()
+                }),
                 ..Default::default()
             },
             server_info: Some(ServerInfo {
                 name: "Log Scout Analyzer".to_string(),
-                version: Some(env!("CARGO_PKG_VERSION").to_string()),
+                version: Some(LSP_VERSION.to_string()),
             }),
         })
     }
@@ -1110,29 +1212,32 @@ impl LanguageServer for LogScoutServer {
     ) -> Result<Option<serde_json::Value>> {
         tracing::info!("Executing command: {}", params.command);
 
-        match params.command.as_str() {
-            // Route bundle commands to handler
-            cmd if cmd.starts_with("logScout.bundle.") => {
-                let method = cmd.replace("logScout.bundle.", "scout/bundle/");
-                let args = params
-                    .arguments
-                    .get(0)
-                    .cloned()
-                    .unwrap_or(serde_json::json!({}));
+        let cmd = params.command.as_str();
 
-                match self.handle_bundle_request(&method, args).await {
-                    Ok(response) => Ok(Some(response)),
-                    Err(e) => {
-                        self.client
-                            .show_message(
-                                MessageType::ERROR,
-                                &format!("Bundle operation failed: {:?}", e),
-                            )
-                            .await;
-                        Err(e)
-                    }
+        // Route bundle commands to handler
+        if cmd.starts_with("logScout.bundle.") {
+            let method = cmd.replace("logScout.bundle.", "scout/bundle/");
+            let args = params
+                .arguments
+                .get(0)
+                .cloned()
+                .unwrap_or(serde_json::json!({}));
+
+            return match self.handle_bundle_request(&method, args).await {
+                Ok(response) => Ok(Some(response)),
+                Err(e) => {
+                    self.client
+                        .show_message(
+                            MessageType::ERROR,
+                            &format!("Bundle operation failed: {:?}", e),
+                        )
+                        .await;
+                    Err(e)
                 }
-            }
+            };
+        }
+
+        match cmd {
             "logScout.analyze" => {
                 self.client
                     .log_message(MessageType::INFO, "Running full analysis...")
@@ -1335,6 +1440,128 @@ impl LanguageServer for LogScoutServer {
         }
 
         Ok(None)
+    }
+
+    async fn completion(&self, params: CompletionParams) -> Result<Option<CompletionResponse>> {
+        let uri = params.text_document_position.text_document.uri;
+
+        tracing::debug!("Completion requested for {}", uri);
+
+        // Get the document text
+        let doc_text = match self.documents.get(&uri) {
+            Some(text) => text.clone(),
+            None => {
+                tracing::warn!("Document not found for completion: {}", uri);
+                return Ok(None);
+            }
+        };
+
+        let position = params.text_document_position.position;
+
+        // Convert position to byte offset
+        let mut current_line = 0u32;
+        let mut offset = 0usize;
+
+        for line in doc_text.lines() {
+            if current_line == position.line {
+                offset += position.character as usize;
+                break;
+            }
+            offset += line.len() + 1; // +1 for newline
+            current_line += 1;
+        }
+
+        // Get text up to cursor
+        let text_before_cursor = &doc_text[..offset.min(doc_text.len())];
+
+        // Check if we're in a severity context (e.g., after "[" or in a log level)
+        let in_severity_context = text_before_cursor.ends_with('[')
+            || text_before_cursor.ends_with("level=")
+            || text_before_cursor.ends_with("severity=");
+
+        let mut completions = Vec::new();
+
+        if in_severity_context {
+            // Provide severity level completions
+            completions.push(CompletionItem {
+                label: "ERROR".to_string(),
+                kind: Some(CompletionItemKind::KEYWORD),
+                detail: Some("Error severity level".to_string()),
+                documentation: Some(Documentation::String(
+                    "Critical errors that require immediate attention".to_string(),
+                )),
+                insert_text: Some("ERROR]".to_string()),
+                ..Default::default()
+            });
+
+            completions.push(CompletionItem {
+                label: "WARN".to_string(),
+                kind: Some(CompletionItemKind::KEYWORD),
+                detail: Some("Warning severity level".to_string()),
+                documentation: Some(Documentation::String(
+                    "Warning conditions that should be reviewed".to_string(),
+                )),
+                insert_text: Some("WARN]".to_string()),
+                ..Default::default()
+            });
+
+            completions.push(CompletionItem {
+                label: "INFO".to_string(),
+                kind: Some(CompletionItemKind::KEYWORD),
+                detail: Some("Info severity level".to_string()),
+                documentation: Some(Documentation::String("Informational messages".to_string())),
+                insert_text: Some("INFO]".to_string()),
+                ..Default::default()
+            });
+
+            completions.push(CompletionItem {
+                label: "DEBUG".to_string(),
+                kind: Some(CompletionItemKind::KEYWORD),
+                detail: Some("Debug severity level".to_string()),
+                documentation: Some(Documentation::String(
+                    "Detailed debugging information".to_string(),
+                )),
+                insert_text: Some("DEBUG]".to_string()),
+                ..Default::default()
+            });
+
+            completions.push(CompletionItem {
+                label: "TRACE".to_string(),
+                kind: Some(CompletionItemKind::KEYWORD),
+                detail: Some("Trace severity level".to_string()),
+                documentation: Some(Documentation::String(
+                    "Very detailed tracing information".to_string(),
+                )),
+                insert_text: Some("TRACE]".to_string()),
+                ..Default::default()
+            });
+        }
+
+        // Get pattern suggestions from the pattern engine
+        if let Some(engine) = self.pattern_engine.read().await.as_ref() {
+            let patterns = engine.get_patterns();
+
+            for compiled_pattern in patterns.iter().take(10) {
+                let pattern = &compiled_pattern.pattern;
+                completions.push(CompletionItem {
+                    label: pattern.name.clone(),
+                    kind: Some(CompletionItemKind::TEXT),
+                    detail: Some(format!(
+                        "Pattern: {} | Severity: {:?}",
+                        pattern.category, pattern.severity
+                    )),
+                    documentation: Some(Documentation::String(pattern.annotation.clone())),
+                    insert_text: Some(pattern.name.clone()),
+                    ..Default::default()
+                });
+            }
+        }
+
+        if completions.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(CompletionResponse::Array(completions)))
+        }
     }
 
     async fn diagnostic(

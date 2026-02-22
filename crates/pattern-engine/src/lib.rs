@@ -4,6 +4,7 @@
 //! It includes pattern matching, parameter extraction, and severity evaluation.
 
 pub mod engine;
+pub mod learning;
 pub mod matcher;
 pub mod normalizers;
 pub mod pipeline;
@@ -12,6 +13,10 @@ pub mod types;
 pub mod vendor_detection;
 
 pub use engine::PatternEngine;
+pub use learning::{
+    LearningConfig, LearningEngine, LearningSummary, NormalizationRecommendation, PatternHint,
+    PerformanceThresholds, VendorRecommendation,
+};
 pub use matcher::PatternMatcher;
 pub use normalizers::{
     CubeNormalizer, CucNormalizer, CucmNormalizer, JabberNormalizer, NormalizerRegistry,

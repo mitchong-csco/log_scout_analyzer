@@ -5,7 +5,9 @@
 pub mod config;
 pub mod diagnostics;
 pub mod document;
+pub mod normalized_event;
 
 pub use config::Config;
 pub use diagnostics::Diagnostic;
 pub use document::Document;
+pub use normalized_event::NormalizedEvent;
