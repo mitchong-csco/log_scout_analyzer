@@ -34,7 +34,7 @@ members = [
     "crates/pattern-engine",
     "crates/pattern-loader",
     "crates/quality-system",
-    "crates/tagscout-integration",
+    "crates/tagscout-integration", "crates/log-scout-cli",
     # "crates/lsp-server-PLACEHOLDER-DO-NOT-USE",  # ❌ EXPERIMENTAL - Excluded to prevent confusion
 ]
 exclude = [

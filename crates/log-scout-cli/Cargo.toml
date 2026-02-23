@@ -1,0 +1,21 @@
+[package]
+name = "log-scout-cli"
+version = "0.1.0"
+edition = "2021"
+authors = ["Log Scout Team"]
+description = "Command-line interface for Log Scout Analyzer"
+license = "MIT"
+
+[[bin]]
+name = "log-scout"
+path = "src/main.rs"
+
+[dependencies]
+pattern-engine = { path = "../pattern-engine" }
+clap = { version = "4.5", features = ["derive", "cargo"] }
+anyhow = "1.0"
+colored = "2.1"
+
+[dev-dependencies]
+assert_cmd = "2.0"
+predicates = "3.1"
