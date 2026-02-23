@@ -179,7 +179,6 @@ suite("Command Contract Tests", () => {
 
         // Check for required parameters according to schema
         const requiredParams = ["packagePath"];
-        const schemaParams = schema.commands["scout/bundle/importPackage"].request;
 
         requiredParams.forEach((param) => {
           const hasParam = commandText.includes(param);

@@ -38,13 +38,13 @@ function getServerPath(context) {
     const binDir = path.join(context.extensionPath, "bin");
     let serverExecutable;
     if (platform === "win32") {
-        serverExecutable = path.join(binDir, "log-scout-lsp-server-win.exe");
+        serverExecutable = path.join(binDir, "log-scout-lsp-server.exe");
     }
     else if (platform === "linux") {
-        serverExecutable = path.join(binDir, "log-scout-lsp-server-linux");
+        serverExecutable = path.join(binDir, "log-scout-lsp-server");
     }
     else if (platform === "darwin") {
-        serverExecutable = path.join(binDir, "log-scout-lsp-server-mac");
+        serverExecutable = path.join(binDir, "log-scout-lsp-server");
     }
     else {
         throw new Error(`Unsupported platform: ${platform}`);
@@ -75,6 +75,13 @@ async function startLSPClient(context, outputChannel) {
         logger?.logLSP("Initializing LSP client", "info");
         // Get configuration
         const config = vscode.workspace.getConfiguration("logScoutAnalyzer");
+        // Check if LSP is disabled
+        const lspEnabled = config.get("lsp.enabled", true);
+        if (!lspEnabled) {
+            outputChannel.appendLine("⚠️  LSP is disabled in settings");
+            logger?.logLSP("LSP disabled by user setting", "info");
+            return undefined;
+        }
         const remoteHost = config.get("lsp.serverHost");
         const remotePort = config.get("lsp.serverPort", 8080);
         const traceLevel = config.get("lsp.trace", "off");

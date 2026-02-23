@@ -8,7 +8,7 @@
     "update:versions": "node update-versions.js",
     "build": "npm run update:versions && node generate-build-info.js && cargo build --release --target wasm32-wasip1",
     "build:lsp": "cd ../lsp-server && cargo build --release --bin log-scout-lsp-server",
-    "build:all": "npm run build:lsp && npm run build",
+    "build:all": "npm run version:increment && npm run build:lsp && npm run build",
     "check": "npm run check:lsp && npm run check:extension",
     "check:lsp": "cd ../lsp-server && cargo check",
     "check:extension": "cargo check --target wasm32-wasip1",
@@ -22,10 +22,11 @@
     "help": "node help.js",
     "status": "node show-status.js",
     "version:increment": "node increment-version.js",
-    "package": "npm run version:increment && npm run build:all && node package-extension.js",
+    "package": "npm run build:all && node package-extension.js",
+    "package:only": "node package-extension.js",
     "postpackage": "node copy-package.js",
     "install:zed": "node install-to-zed.js",
-    "deploy": "npm run package && npm run install:zed"
+    "deploy": "npm run package:only && npm run install:zed"
   },
   "devDependencies": {
     "@types/node": "^20.0.0"

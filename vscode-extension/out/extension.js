@@ -60,13 +60,11 @@ let gutterDecorator;
 let annotationRenderer; // AnnotationRenderer | undefined;
 let scenarioManager;
 let patternOverrideManager;
-let scoutInventorProvider; // ScoutInventorProvider | undefined;
+// Removed unused placeholder variables: _scoutInventorProvider, _caseManager, _casesTreeProvider
 let highlightDecoration;
 let highlightTimeout;
 let splitViewProvider;
 let timelineVisualization;
-let caseManager; // CaseManager | undefined;
-let casesTreeProvider; // CasesTreeProvider | undefined;
 let patternOverrideTreeProvider;
 let bundleTreeProvider;
 // Store all results from last analysis for category filtering
@@ -736,14 +734,13 @@ function activate(context) {
     // });
     // context.subscriptions.push(scoutInventorTreeView);
     outputChannel.appendLine("✓ Scout Inventor view initialized");
-    if (patternOverrideTreeProvider) {
-        const patternOverridesTreeView = vscode.window.createTreeView("scoutPatternOverrides", {
-            treeDataProvider: patternOverrideTreeProvider,
-            showCollapseAll: true,
-        });
-        context.subscriptions.push(patternOverridesTreeView);
-        outputChannel.appendLine("✓ Pattern Overrides view initialized");
-    }
+    // Register Pattern Overrides tree view (must be registered synchronously during activation)
+    const patternOverridesTreeView = vscode.window.createTreeView("scoutPatternOverrides", {
+        treeDataProvider: patternOverrideTreeProvider,
+        showCollapseAll: true,
+    });
+    context.subscriptions.push(patternOverridesTreeView);
+    outputChannel.appendLine("✓ Pattern Overrides view initialized");
     // Initialize Bundle Tree Provider
     bundleTreeProvider = new bundleTreeProvider_1.BundleTreeProvider();
     const bundleTreeView = vscode.window.createTreeView("scoutBundles", {

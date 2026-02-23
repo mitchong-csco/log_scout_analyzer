@@ -55,7 +55,9 @@ class BundleTreeProvider {
         if (!element) {
             // Root level - show all bundles including importing ones
             const loadedBundles = await this.loadBundles();
-            return [...this.bundles, ...loadedBundles];
+            // Filter out any duplicates between optimistic bundles and loaded bundles
+            const optimisticBundles = this.bundles.filter((b) => b.type === "bundle-importing");
+            return [...optimisticBundles, ...loadedBundles];
         }
         else if (element.type === "bundle") {
             // Show logs in this bundle
@@ -280,10 +282,13 @@ class BundleTreeProvider {
             this.importingBundles.delete(progressToken);
             this.bundles = this.bundles.filter((b) => b.bundleId !== progressToken);
             console.log(`Package import completed`, response);
+            // Clear the local cache to force reload from disk
+            this.bundles = [];
+            // Wait for the bundle.json file to be written by watching the file system
+            const result = response;
             // Refresh to show real bundle
             this.refresh();
             // Show success notification
-            const result = response;
             if (result && result.importedCount !== undefined) {
                 vscode.window.showInformationMessage(`✅ Successfully imported ${result.importedCount} log files to ${result.bundleName}`);
             }

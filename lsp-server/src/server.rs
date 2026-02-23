@@ -5,6 +5,7 @@
 const LSP_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 use crate::bundle::BundleManager;
+use crate::notifications::NotificationManager;
 use crate::pattern_engine::{Detection, PatternEngine, Severity};
 use crate::pattern_loader;
 use crate::tagscout::{SyncMode, SyncService, SyncServiceConfig};
@@ -27,6 +28,7 @@ use tower_lsp::{Client, LanguageServer};
 #[derive(Clone)]
 pub struct LogScoutServer {
     client: Client,
+    notifier: NotificationManager,
     pattern_engine: Arc<RwLock<Option<PatternEngine>>>,
     tagscout_service: Arc<RwLock<Option<SyncService>>>,
     documents: Arc<DashMap<Url, String>>,
@@ -37,6 +39,9 @@ pub struct LogScoutServer {
 impl LogScoutServer {
     /// Create a new LSP server instance
     pub fn new(client: Client) -> Self {
+        // Initialize notification manager
+        let notifier = NotificationManager::new(client.clone());
+
         // No default patterns - rely entirely on TagScout
         let pattern_engine = Self::load_default_patterns();
 
@@ -48,6 +53,7 @@ impl LogScoutServer {
 
         Self {
             client,
+            notifier,
             pattern_engine: Arc::new(RwLock::new(pattern_engine)),
             tagscout_service: Arc::new(RwLock::new(None)),
             documents: Arc::new(DashMap::new()),
@@ -170,7 +176,7 @@ impl LogScoutServer {
     }
 
     /// Send progress notification to client
-    async fn send_progress(&self, token: &str, message: &str, percentage: u32) {
+    async fn _send_progress(&self, token: &str, message: &str, percentage: u32) {
         let params = ProgressParams {
             token: NumberOrString::String(token.to_string()),
             value: ProgressParamsValue::WorkDone(WorkDoneProgress::Report(
@@ -376,11 +382,10 @@ impl LogScoutServer {
             .publish_diagnostics(uri.clone(), diagnostics, None)
             .await;
 
-        self.client
-            .log_message(
-                MessageType::INFO,
-                &format!("✅ Analysis complete: {} issues found", count),
-            )
+        // Notify analysis complete
+        let file_name = uri.path().split('/').last().unwrap_or("file");
+        self.notifier
+            .notify_analysis_complete(file_name, count)
             .await;
     }
 
@@ -617,7 +622,7 @@ impl LogScoutServer {
                 tracing::info!("Handling scout/bundle/list request");
                 let bundles = manager
                     .list_bundles(None, None, None)
-                    .map_err(|e| JsonRpcError::internal_error())?;
+                    .map_err(|_e| JsonRpcError::internal_error())?;
 
                 let response = serde_json::json!({
                     "bundles": bundles.iter().map(|b| {
@@ -1226,11 +1231,8 @@ impl LanguageServer for LogScoutServer {
             return match self.handle_bundle_request(&method, args).await {
                 Ok(response) => Ok(Some(response)),
                 Err(e) => {
-                    self.client
-                        .show_message(
-                            MessageType::ERROR,
-                            &format!("Bundle operation failed: {:?}", e),
-                        )
+                    self.notifier
+                        .notify_error(format!("Bundle operation failed: {:?}", e))
                         .await;
                     Err(e)
                 }
@@ -1263,19 +1265,11 @@ impl LanguageServer for LogScoutServer {
 
                 match self.refresh_tagscout_patterns().await {
                     Ok(count) => {
-                        self.client
-                            .show_message(
-                                MessageType::INFO,
-                                &format!("Refreshed {} patterns", count),
-                            )
-                            .await;
+                        self.notifier.notify_patterns_refreshed(count).await;
                     }
                     Err(e) => {
-                        self.client
-                            .show_message(
-                                MessageType::ERROR,
-                                &format!("Failed to refresh patterns: {}", e),
-                            )
+                        self.notifier
+                            .notify_error(format!("Failed to refresh patterns: {}", e))
                             .await;
                     }
                 }

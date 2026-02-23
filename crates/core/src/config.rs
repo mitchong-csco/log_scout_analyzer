@@ -3,7 +3,6 @@
 //! Core configuration structures used across Log Scout components
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 /// Main configuration structure
 #[derive(Debug, Clone, Serialize, Deserialize)]

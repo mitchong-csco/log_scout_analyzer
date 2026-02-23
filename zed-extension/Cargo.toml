@@ -1,6 +1,6 @@
 [package]
 name = "log-scout-analyzer"
-version = "0.0.3"
+version = "0.0.10"
 edition = "2021"
 authors = ["Log Scout Team"]
 description = "A comprehensive log analysis extension for Zed editor"

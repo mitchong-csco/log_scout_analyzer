@@ -51,13 +51,11 @@ let gutterDecorator: GutterDecorator | undefined;
 let annotationRenderer: any | undefined; // AnnotationRenderer | undefined;
 let scenarioManager: ScenarioManager | undefined;
 let patternOverrideManager: PatternOverrideManager | undefined;
-let scoutInventorProvider: any | undefined; // ScoutInventorProvider | undefined;
+// Removed unused placeholder variables: _scoutInventorProvider, _caseManager, _casesTreeProvider
 let highlightDecoration: vscode.TextEditorDecorationType | undefined;
 let highlightTimeout: NodeJS.Timeout | undefined;
 let splitViewProvider: SplitViewProvider | undefined;
 let timelineVisualization: TimelineVisualizationProvider | undefined;
-let caseManager: any | undefined; // CaseManager | undefined;
-let casesTreeProvider: any | undefined; // CasesTreeProvider | undefined;
 let patternOverrideTreeProvider: PatternOverrideTreeProvider | undefined;
 let bundleTreeProvider: BundleTreeProvider | undefined;
 
@@ -990,17 +988,16 @@ export function activate(context: vscode.ExtensionContext) {
   // context.subscriptions.push(scoutInventorTreeView);
   outputChannel.appendLine("✓ Scout Inventor view initialized");
 
-  if (patternOverrideTreeProvider) {
-    const patternOverridesTreeView = vscode.window.createTreeView(
-      "scoutPatternOverrides",
-      {
-        treeDataProvider: patternOverrideTreeProvider,
-        showCollapseAll: true,
-      },
-    );
-    context.subscriptions.push(patternOverridesTreeView);
-    outputChannel.appendLine("✓ Pattern Overrides view initialized");
-  }
+  // Register Pattern Overrides tree view (must be registered synchronously during activation)
+  const patternOverridesTreeView = vscode.window.createTreeView(
+    "scoutPatternOverrides",
+    {
+      treeDataProvider: patternOverrideTreeProvider,
+      showCollapseAll: true,
+    },
+  );
+  context.subscriptions.push(patternOverridesTreeView);
+  outputChannel.appendLine("✓ Pattern Overrides view initialized");
 
   // Initialize Bundle Tree Provider
   bundleTreeProvider = new BundleTreeProvider();

@@ -1,6 +1,6 @@
 [package]
 name = "log-scout-lsp-server"
-version = "0.1.24"
+version = "0.1.41"
 edition = "2021"
 authors = ["Log Scout Team"]
 description = "Language Server Protocol server for log file analysis"
@@ -66,22 +66,13 @@ flate2 = "1.0"
 tokio-test = "0.4"
 tempfile = "3"
 
+[features]
+default = []
+disabled_tests = []
+
 [profile.release]
 opt-level = 3
 lto = true
 codegen-units = 1
 strip = true
 panic = "abort"
-
-# Cross-compilation targets
-[target.x86_64-pc-windows-gnu]
-linker = "x86_64-w64-mingw32-gcc"
-
-[target.x86_64-apple-darwin]
-# macOS Intel
-
-[target.aarch64-apple-darwin]
-# macOS Apple Silicon
-
-[target.x86_64-unknown-linux-gnu]
-# Linux x64

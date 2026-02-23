@@ -1,0 +1,42 @@
+[package]
+name = "lsp-server-modular"
+version = "0.1.0"
+edition = "2021"
+authors = ["Log Scout Team"]
+description = "LSP Server orchestrator - integrates all features (EXPERIMENTAL - DO NOT USE IN PRODUCTION)"
+license = "MIT"
+
+[[bin]]
+name = "log-scout-lsp-server-MODULAR-EXPERIMENTAL"
+path = "src/main.rs"
+
+[dependencies]
+log-scout-core = { path = "../core" }
+pattern-engine = { path = "../pattern-engine" }
+pattern-loader = { path = "../pattern-loader" }
+quality-system = { path = "../quality-system" }
+
+tower-lsp = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
+serde_yaml = { workspace = true }
+urlencoding = { workspace = true }
+mongodb = { workspace = true }
+bson = { workspace = true }
+zip = { workspace = true }
+tar = { workspace = true }
+flate2 = { workspace = true }
+regex = { workspace = true }
+dateparser = { workspace = true }
+futures = { workspace = true }
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+tempfile = { workspace = true }

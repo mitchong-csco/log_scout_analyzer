@@ -69,7 +69,6 @@ suite("Tree View UI Component Tests", () => {
         );
 
         // Validate known context values
-        const validContexts = ["bundle", "log-file", "case", "empty"];
         if (item.contextValue) {
           // Context value should be recognized
           assert.ok(
@@ -340,7 +339,7 @@ suite("Tree View UI Component Tests", () => {
 
       // Should not throw
       try {
-        const children = await provider.getChildren(fakeItem);
+        const children = await provider.getChildren(fakeItem as any);
         assert.ok(Array.isArray(children), "Should return array even for invalid parent");
       } catch (err) {
         // If it throws, that's also acceptable - just shouldn't crash

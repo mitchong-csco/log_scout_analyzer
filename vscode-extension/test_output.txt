@@ -1,0 +1,335 @@
+
+> log-scout-analyzer@0.0.175 pretest
+> npm run compile && npm run lint
+
+
+> log-scout-analyzer@0.0.175 compile
+> tsc -p ./ --noEmitOnError false || echo TypeScript warnings present && tsc -p tsconfig.webview.json --noEmitOnError false || echo TypeScript warnings present
+
+src/extension.ts(54,5): error TS6133: 'scoutInventorProvider' is declared but its value is never read.
+src/extension.ts(59,5): error TS6133: 'caseManager' is declared but its value is never read.
+src/extension.ts(60,5): error TS6133: 'casesTreeProvider' is declared but its value is never read.
+src/test/suite/integration/addCurrentFileIntegration.test.ts(226,15): error TS6133: 'bundleData' is declared but its value is never read.
+src/test/suite/integration/addCurrentFileIntegration.test.ts(309,15): error TS6133: 'bundle1Path' is declared but its value is never read.
+src/test/suite/integration/addCurrentFileIntegration.test.ts(314,15): error TS6133: 'bundle2Path' is declared but its value is never read.
+src/test/suite/integration/patternWorkflows.test.ts(67,15): error TS6133: 'editor' is declared but its value is never read.
+src/test/suite/integration/patternWorkflows.test.ts(401,13): error TS6133: 'message' is declared but its value is never read.
+src/test/suite/integration/patternWorkflows.test.ts(402,16): error TS6133: 'items' is declared but its value is never read.
+src/test/suite/integration/patternWorkflows.test.ts(459,58): error TS6133: 'options' is declared but its value is never read.
+src/test/suite/integration/patternWorkflows.test.ts(519,58): error TS6133: 'options' is declared but its value is never read.
+src/test/suite/integration/patternWorkflows.test.ts(706,15): error TS6133: 'editor' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(52,45): error TS6133: 'options' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(140,69): error TS6133: 'items' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(175,13): error TS6133: 'warningShown' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(177,51): error TS6133: 'message' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(177,71): error TS6133: 'items' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(229,43): error TS6133: 'options' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(234,15): error TS6133: 'result' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(244,11): error TS6133: 'placeholderProvided' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(267,11): error TS6133: 'quickPickShown' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(269,44): error TS6133: 'items' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(269,56): error TS6133: 'options' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(289,65): error TS6133: 'options' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(304,15): error TS6133: 'hasCreateOption' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(322,11): error TS6133: 'successShown' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(324,53): error TS6133: 'message' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(324,73): error TS6133: 'items' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(330,45): error TS6133: 'options' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(349,11): error TS6133: 'successShown' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(351,53): error TS6133: 'message' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(351,73): error TS6133: 'items' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(369,11): error TS6133: 'errorShown' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(370,11): error TS6133: 'errorMessage' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(372,67): error TS6133: 'items' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(379,45): error TS6133: 'options' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(396,67): error TS6133: 'items' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(423,11): error TS6133: 'progressShown' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(435,22): error TS6133: 'value' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(443,45): error TS6133: 'options' is declared but its value is never read.
+src/test/suite/ui/treeView.test.ts(72,15): error TS6133: 'validContexts' is declared but its value is never read.
+src/test/suite/ui/treeView.test.ts(343,53): error TS2345: Argument of type 'TreeItem' is not assignable to parameter of type 'BundleItem'.
+  Type 'TreeItem' is missing the following properties from type 'BundleItem': bundleId, logCount, sizeBytes, type, formatSize
+src/test/suite/unit/commandValidation.test.ts(663,45): error TS6133: 'shouldExist' is declared but its value is never read.
+src/test/suite/unit/patternManagement.test.ts(293,45): error TS2345: Argument of type '{ id: string; priority: number; }[]' is not assignable to parameter of type 'Pattern[]'.
+  Type '{ id: string; priority: number; }' is missing the following properties from type 'Pattern': name, regex, severity
+src/test/suite/unit/patternManagement.test.ts(308,45): error TS2345: Argument of type '{ id: string; priority: number; createdAt: string; }[]' is not assignable to parameter of type 'Pattern[]'.
+  Type '{ id: string; priority: number; createdAt: string; }' is missing the following properties from type 'Pattern': name, regex, severity
+src/test/suite/unit/patternManagement.test.ts(323,36): error TS2345: Argument of type '{ id: string; regex: string; priority: number; }[]' is not assignable to parameter of type 'Pattern[]'.
+  Type '{ id: string; regex: string; priority: number; }' is missing the following properties from type 'Pattern': name, severity
+src/test/suite/unit/patternManagement.test.ts(335,36): error TS2345: Argument of type '{ id: string; regex: string; priority: number; enabled: boolean; }[]' is not assignable to parameter of type 'Pattern[]'.
+  Type '{ id: string; regex: string; priority: number; enabled: boolean; }' is missing the following properties from type 'Pattern': name, severity
+src/test/suite/unit/patternManagement.test.ts(412,36): error TS2345: Argument of type '{ id: string; name: string; regex: string; }[]' is not assignable to parameter of type 'Pattern[]'.
+  Property 'severity' is missing in type '{ id: string; name: string; regex: string; }' but required in type 'Pattern'.
+src/test/suite/unit/patternManagement.test.ts(416,38): error TS2345: Argument of type '{ id: string; name: string; regex: string; }[]' is not assignable to parameter of type 'Pattern[]'.
+src/test/suite/unit/patternManagement.test.ts(420,34): error TS2345: Argument of type '{ id: string; name: string; regex: string; }[]' is not assignable to parameter of type 'Pattern[]'.
+TypeScript warnings present 
+
+> log-scout-analyzer@0.0.175 lint
+> eslint src --ext ts
+
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\annotationDashboardPanel.ts
+  710:21  warning  Object Literal Property name `JSON files` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  711:21  warning  Object Literal Property name `All files` must match one of the following formats: camelCase   @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\auth\ciscoAuthClient.ts
+    9:3   warning  Type Property name `access_token` must match one of the following formats: camelCase             @typescript-eslint/naming-convention
+   10:3   warning  Type Property name `token_type` must match one of the following formats: camelCase               @typescript-eslint/naming-convention
+   11:3   warning  Type Property name `expires_in` must match one of the following formats: camelCase               @typescript-eslint/naming-convention
+   12:3   warning  Type Property name `refresh_token` must match one of the following formats: camelCase            @typescript-eslint/naming-convention
+   39:9   warning  Object Literal Property name `User-Agent` must match one of the following formats: camelCase     @typescript-eslint/naming-convention
+  218:7   warning  Object Literal Property name `Authorization` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  253:11  warning  Object Literal Property name `Authorization` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  282:11  warning  Object Literal Property name `Authorization` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  341:28  warning  Expected { after 'if' condition                                                                  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\bundleTreeProvider.ts
+  237:11  warning  Object Literal Property name `case_id` must match one of the following formats: camelCase        @typescript-eslint/naming-convention
+  241:11  warning  Object Literal Property name `team_members` must match one of the following formats: camelCase   @typescript-eslint/naming-convention
+  242:11  warning  Object Literal Property name `custom_fields` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  244:9   warning  Object Literal Property name `created_at` must match one of the following formats: camelCase     @typescript-eslint/naming-convention
+  245:9   warning  Object Literal Property name `updated_at` must match one of the following formats: camelCase     @typescript-eslint/naming-convention
+  289:9   warning  Object Literal Property name `last_updated` must match one of the following formats: camelCase   @typescript-eslint/naming-convention
+  528:23  warning  Expected { after 'if' condition                                                                  curly
+  529:30  warning  Expected { after 'if' condition                                                                  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\cachedFilesTreeProvider.ts
+   83:44  warning  Expected { after 'if' condition  curly
+   84:46  warning  Expected { after 'if' condition  curly
+   85:43  warning  Expected { after 'if' condition  curly
+   86:44  warning  Expected { after 'if' condition  curly
+  169:49  warning  Expected { after 'if' condition  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\caseManager.ts
+  35:22  warning  Class Property name `CASES_STORAGE_KEY` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\categoriesTreeProvider.ts
+  129:38  warning  Expected { after 'if' condition  curly
+  141:29  warning  Expected { after 'if' condition  curly
+  142:31  warning  Expected { after 'if' condition  curly
+  143:28  warning  Expected { after 'if' condition  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\consoleWebview.ts
+  131:20  warning  Expected { after 'if' condition  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\diagnosticsProvider.ts
+  73:21  warning  Expected { after 'if' condition  curly
+  75:21  warning  Expected { after 'if' condition  curly
+  77:21  warning  Expected { after 'if' condition  curly
+  81:21  warning  Expected { after 'if' condition  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\docs\documentationBrowser.ts
+  193:11  warning  Object Literal Property name `access_token` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  194:11  warning  Object Literal Property name `token_type` must match one of the following formats: camelCase    @typescript-eslint/naming-convention
+  195:11  warning  Object Literal Property name `expires_in` must match one of the following formats: camelCase    @typescript-eslint/naming-convention
+  231:16  warning  Expected { after 'if' condition                                                                 curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\extension.ts
+   396:11  warning  Variable name `merged_template` must match one of the following formats: camelCase, UPPER_CASE          @typescript-eslint/naming-convention
+   399:11  warning  Variable name `pattern_regex` must match one of the following formats: camelCase, UPPER_CASE            @typescript-eslint/naming-convention
+   444:7   warning  Object Literal Property name `merged_template` must match one of the following formats: camelCase       @typescript-eslint/naming-convention
+   445:7   warning  Object Literal Property name `extracted_parameters` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+   448:7   warning  Object Literal Property name `pattern_regex` must match one of the following formats: camelCase         @typescript-eslint/naming-convention
+   449:7   warning  Object Literal Property name `log_line` must match one of the following formats: camelCase              @typescript-eslint/naming-convention
+   511:7   warning  Object Literal Property name `merged_template` must match one of the following formats: camelCase       @typescript-eslint/naming-convention
+   512:7   warning  Object Literal Property name `extracted_parameters` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+   513:7   warning  Object Literal Property name `pattern_regex` must match one of the following formats: camelCase         @typescript-eslint/naming-convention
+   514:7   warning  Object Literal Property name `log_line` must match one of the following formats: camelCase              @typescript-eslint/naming-convention
+  1057:25  warning  Expected { after 'if' condition                                                                         curly
+  1828:9   warning  Object Literal Property name `merged_template` must match one of the following formats: camelCase       @typescript-eslint/naming-convention
+  1829:9   warning  Object Literal Property name `extracted_parameters` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  1830:9   warning  Object Literal Property name `pattern_regex` must match one of the following formats: camelCase         @typescript-eslint/naming-convention
+  1831:9   warning  Object Literal Property name `log_line` must match one of the following formats: camelCase              @typescript-eslint/naming-convention
+  2305:31  warning  Expected { after 'if' condition                                                                         curly
+  2359:49  warning  Expected { after 'if' condition                                                                         curly
+  2575:9   warning  Object Literal Property name `0` must match one of the following formats: camelCase                     @typescript-eslint/naming-convention
+  2576:9   warning  Object Literal Property name `1` must match one of the following formats: camelCase                     @typescript-eslint/naming-convention
+  2577:9   warning  Object Literal Property name `2` must match one of the following formats: camelCase                     @typescript-eslint/naming-convention
+  2578:9   warning  Object Literal Property name `3` must match one of the following formats: camelCase                     @typescript-eslint/naming-convention
+  3019:15  warning  Object Literal Property name `QCSONE Packages` must match one of the following formats: camelCase       @typescript-eslint/naming-convention
+  3020:15  warning  Object Literal Property name `All Archives` must match one of the following formats: camelCase          @typescript-eslint/naming-convention
+  3329:13  warning  Object Literal Property name `Archives` must match one of the following formats: camelCase              @typescript-eslint/naming-convention
+  3638:20  warning  Expected { after 'if' condition                                                                         curly
+  3639:22  warning  Expected { after 'if' condition                                                                         curly
+  3640:21  warning  Expected { after 'if' condition                                                                         curly
+  3643:20  warning  Expected { after 'if' condition                                                                         curly
+  3644:19  warning  Expected { after 'if' condition                                                                         curly
+  3647:19  warning  Expected { after 'if' condition                                                                         curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\fileLogger.ts
+  43:24  warning  Expected { after 'if' condition  curly
+  59:24  warning  Expected { after 'if' condition  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\filterTreeProvider.ts
+  102:35  warning  Expected { after 'if' condition  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\gutterDecorator.ts
+  16:3  warning  Type Property name `merged_template` must match one of the following formats: camelCase       @typescript-eslint/naming-convention
+  17:3  warning  Type Property name `extracted_parameters` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  18:3  warning  Type Property name `pattern_regex` must match one of the following formats: camelCase         @typescript-eslint/naming-convention
+  19:3  warning  Type Property name `log_line` must match one of the following formats: camelCase              @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\lspClient.ts
+  114:15  warning  Object Literal Property name `RUST_LOG` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  125:15  warning  Object Literal Property name `RUST_LOG` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\lspDiagnosticConverter.ts
+   99:5  warning  Object Literal Property name `merged_template` must match one of the following formats: camelCase       @typescript-eslint/naming-convention
+  100:5  warning  Object Literal Property name `log_line` must match one of the following formats: camelCase              @typescript-eslint/naming-convention
+  101:5  warning  Object Literal Property name `extracted_parameters` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  102:5  warning  Object Literal Property name `pattern_id` must match one of the following formats: camelCase            @typescript-eslint/naming-convention
+  103:5  warning  Object Literal Property name `pattern_regex` must match one of the following formats: camelCase         @typescript-eslint/naming-convention
+  104:5  warning  Object Literal Property name `log_level` must match one of the following formats: camelCase             @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\modernResultsTreeProvider.ts
+  15:3  warning  Type Property name `merged_template` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\patternOverrideManager.ts
+  345:17  warning  Object Literal Property name `JSON` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  375:17  warning  Object Literal Property name `JSON` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\patternViewerPanel.ts
+   83:9   warning  Object Literal Property name `JSON files` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+   84:9   warning  Object Literal Property name `All files` must match one of the following formats: camelCase   @typescript-eslint/naming-convention
+  135:34  warning  Expected { after 'if' condition                                                               curly
+  136:34  warning  Expected { after 'if' condition                                                               curly
+  137:32  warning  Expected { after 'if' condition                                                               curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\resultsPanel.ts
+  132:35  warning  Expected { after 'if' condition  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\resultsTreeProvider.ts
+   18:3   warning  Type Property name `merged_template` must match one of the following formats: camelCase       @typescript-eslint/naming-convention
+   19:3   warning  Type Property name `log_line` must match one of the following formats: camelCase              @typescript-eslint/naming-convention
+   20:3   warning  Type Property name `extracted_parameters` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+   21:3   warning  Type Property name `pattern_id` must match one of the following formats: camelCase            @typescript-eslint/naming-convention
+   22:3   warning  Type Property name `pattern_regex` must match one of the following formats: camelCase         @typescript-eslint/naming-convention
+   23:3   warning  Type Property name `log_level` must match one of the following formats: camelCase             @typescript-eslint/naming-convention
+   99:45  warning  Expected { after 'if' condition                                                               curly
+  100:29  warning  Expected { after 'if' condition                                                               curly
+  101:29  warning  Expected { after 'if' condition                                                               curly
+  183:25  warning  Expected { after 'if' condition                                                               curly
+  184:27  warning  Expected { after 'if' condition                                                               curly
+  185:24  warning  Expected { after 'if' condition                                                               curly
+  186:25  warning  Expected { after 'if' condition                                                               curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\scenarioManager.ts
+  298:17  warning  Object Literal Property name `JSON` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  321:17  warning  Object Literal Property name `JSON` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\scoutInventorProvider.ts
+   8:5  warning  Enum Member name `Category` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+   9:5  warning  Enum Member name `Product` must match one of the following formats: camelCase   @typescript-eslint/naming-convention
+  10:5  warning  Enum Member name `Pattern` must match one of the following formats: camelCase   @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\sipCallFlowParser.ts
+  309:23  warning  Expected { after 'if' condition  curly
+  375:23  warning  Expected { after 'if' condition  curly
+  583:23  warning  Expected { after 'if' condition  curly
+  584:21  warning  Expected { after 'if' condition  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\splitViewProvider.ts
+  486:42  warning  Expected { after 'if' condition  curly
+  487:43  warning  Expected { after 'if' condition  curly
+  515:19  warning  Expected { after 'if' condition  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\statusBarProgress.ts
+  149:3  warning  Enum Member name `Creating` must match one of the following formats: camelCase    @typescript-eslint/naming-convention
+  150:3  warning  Enum Member name `Extracting` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  151:3  warning  Enum Member name `Importing` must match one of the following formats: camelCase   @typescript-eslint/naming-convention
+  152:3  warning  Enum Member name `Analyzing` must match one of the following formats: camelCase   @typescript-eslint/naming-convention
+  153:3  warning  Enum Member name `Processing` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  154:3  warning  Enum Member name `Validating` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  155:3  warning  Enum Member name `Finalizing` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\test\suite\addCurrentFile.test.ts
+  462:21  warning  Expected { after 'if' condition  curly
+  463:28  warning  Expected { after 'if' condition  curly
+  465:5   warning  Expected { after 'if' condition  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\test\suite\integration\addCurrentFileIntegration.test.ts
+  165:9  warning  Object Literal Property name `log_type` must match one of the following formats: camelCase          @typescript-eslint/naming-convention
+  166:9  warning  Object Literal Property name `added_at` must match one of the following formats: camelCase          @typescript-eslint/naming-convention
+  167:9  warning  Object Literal Property name `size_bytes` must match one of the following formats: camelCase        @typescript-eslint/naming-convention
+  168:9  warning  Object Literal Property name `line_count` must match one of the following formats: camelCase        @typescript-eslint/naming-convention
+  169:9  warning  Object Literal Property name `timestamp_format` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  427:9  warning  Object Literal Property name `log_type` must match one of the following formats: camelCase          @typescript-eslint/naming-convention
+  428:9  warning  Object Literal Property name `added_at` must match one of the following formats: camelCase          @typescript-eslint/naming-convention
+  429:9  warning  Object Literal Property name `size_bytes` must match one of the following formats: camelCase        @typescript-eslint/naming-convention
+  430:9  warning  Object Literal Property name `line_count` must match one of the following formats: camelCase        @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\test\suite\unit\bundleTreeProvider.test.ts
+  604:42  warning  Expected { after 'if' condition  curly
+  605:26  warning  Expected { after 'if' condition  curly
+  647:34  warning  Expected { after 'if' condition  curly
+  648:25  warning  Expected { after 'if' condition  curly
+  650:21  warning  Expected { after 'if' condition  curly
+  651:28  warning  Expected { after 'if' condition  curly
+  652:35  warning  Expected { after 'if' condition  curly
+  657:30  warning  Expected { after 'if' condition  curly
+  666:20  warning  Expected { after 'if' condition  curly
+  667:22  warning  Expected { after 'if' condition  curly
+  668:21  warning  Expected { after 'if' condition  curly
+  671:20  warning  Expected { after 'if' condition  curly
+  672:19  warning  Expected { after 'if' condition  curly
+  675:19  warning  Expected { after 'if' condition  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\test\suite\unit\commandValidation.test.ts
+  599:9  warning  Object Literal Property name `case_id` must match one of the following formats: camelCase     @typescript-eslint/naming-convention
+  600:9  warning  Object Literal Property name `created_at` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  602:9  warning  Object Literal Property name `size_bytes` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  760:5  warning  Object Literal Property name `ENOENT` must match one of the following formats: camelCase      @typescript-eslint/naming-convention
+  761:5  warning  Object Literal Property name `EACCES` must match one of the following formats: camelCase      @typescript-eslint/naming-convention
+  762:5  warning  Object Literal Property name `EISDIR` must match one of the following formats: camelCase      @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\timelineTreeProvider.ts
+   85:49  warning  Expected { after 'if' condition                                                        curly
+  141:36  warning  Expected { after 'if' condition                                                        curly
+  230:13  warning  Object Literal Property name `5` must match one of the following formats: camelCase    @typescript-eslint/naming-convention
+  231:13  warning  Object Literal Property name `15` must match one of the following formats: camelCase   @typescript-eslint/naming-convention
+  232:13  warning  Object Literal Property name `30` must match one of the following formats: camelCase   @typescript-eslint/naming-convention
+  233:13  warning  Object Literal Property name `60` must match one of the following formats: camelCase   @typescript-eslint/naming-convention
+  234:13  warning  Object Literal Property name `120` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  235:13  warning  Object Literal Property name `240` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  315:29  warning  Expected { after 'if' condition                                                        curly
+  316:31  warning  Expected { after 'if' condition                                                        curly
+  317:28  warning  Expected { after 'if' condition                                                        curly
+  318:29  warning  Expected { after 'if' condition                                                        curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\timelineVisualization.ts
+  906:60  warning  Expected { after 'if' condition  curly
+  907:60  warning  Expected { after 'if' condition  curly
+  908:60  warning  Expected { after 'if' condition  curly
+  909:38  warning  Expected { after 'if' condition  curly
+
+✖ 172 problems (0 errors, 172 warnings)
+  0 errors and 75 warnings potentially fixable with the `--fix` option.
+
+
+> log-scout-analyzer@0.0.175 test
+> node ./out/test/runTest.js
+
+Extension Development Path: C:\Users\mitchong\code\log_scout_analyzer\vscode-extension
+Extension Tests Path: C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\index
+Test Workspace: C:\Users\mitchong\code\log_scout_analyzer\test-data
+- Resolving version...
+✔ Validated version: 1.109.5
+✔ Found existing install in C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\.vscode-test\vscode-win32-x64-archive-1.109.5
+(node:19136) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[main 2026-02-22T01:28:00.586Z] Running extension tests from the command line is currently only supported if no other instance of Code is running.
+[main 2026-02-22T01:28:00.590Z] Error: Running extension tests from the command line is currently only supported if no other instance of Code is running.
+    at q2.f (file:///C:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/main.js:176:46461)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async file:///C:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/main.js:176:43457
+    at async q2.a (file:///C:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/main.js:176:43369)
+Exit code:   1
+❌ Failed to run tests
+TestRunFailedError: Test run failed with code 1
+    at ChildProcess.onProcessClosed (C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\node_modules\@vscode\test-electron\out\runTest.js:110:24)
+    at ChildProcess.emit (node:events:508:28)
+    at ChildProcess._handle.onexit (node:internal/child_process:294:12) {
+  code: 1,
+  signal: undefined
+}

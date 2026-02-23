@@ -660,7 +660,7 @@ function validateBundleName(name: string): ValidationResult {
   return { isValid: true };
 }
 
-function validateFilePath(filePath: string, shouldExist: boolean): ValidationResult {
+function validateFilePath(filePath: string, _shouldExist: boolean): ValidationResult {
   if (!filePath) {
     return { isValid: false, error: "File path is required" };
   }

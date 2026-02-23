@@ -1,0 +1,1110 @@
+
+> log-scout-analyzer@0.0.175 pretest
+> npm run compile && npm run lint
+
+
+> log-scout-analyzer@0.0.175 compile
+> tsc -p ./ --noEmitOnError false || echo TypeScript warnings present && tsc -p tsconfig.webview.json --noEmitOnError false || echo TypeScript warnings present
+
+src/extension.ts(54,5): error TS6133: 'scoutInventorProvider' is declared but its value is never read.
+src/extension.ts(59,5): error TS6133: 'caseManager' is declared but its value is never read.
+src/extension.ts(60,5): error TS6133: 'casesTreeProvider' is declared but its value is never read.
+src/test/suite/integration/addCurrentFileIntegration.test.ts(226,15): error TS6133: 'bundleData' is declared but its value is never read.
+src/test/suite/integration/addCurrentFileIntegration.test.ts(309,15): error TS6133: 'bundle1Path' is declared but its value is never read.
+src/test/suite/integration/addCurrentFileIntegration.test.ts(314,15): error TS6133: 'bundle2Path' is declared but its value is never read.
+src/test/suite/integration/patternWorkflows.test.ts(67,15): error TS6133: 'editor' is declared but its value is never read.
+src/test/suite/integration/patternWorkflows.test.ts(401,13): error TS6133: 'message' is declared but its value is never read.
+src/test/suite/integration/patternWorkflows.test.ts(402,16): error TS6133: 'items' is declared but its value is never read.
+src/test/suite/integration/patternWorkflows.test.ts(459,58): error TS6133: 'options' is declared but its value is never read.
+src/test/suite/integration/patternWorkflows.test.ts(519,58): error TS6133: 'options' is declared but its value is never read.
+src/test/suite/integration/patternWorkflows.test.ts(706,15): error TS6133: 'editor' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(52,45): error TS6133: 'options' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(140,69): error TS6133: 'items' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(175,13): error TS6133: 'warningShown' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(177,51): error TS6133: 'message' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(177,71): error TS6133: 'items' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(229,43): error TS6133: 'options' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(234,15): error TS6133: 'result' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(244,11): error TS6133: 'placeholderProvided' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(267,11): error TS6133: 'quickPickShown' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(269,44): error TS6133: 'items' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(269,56): error TS6133: 'options' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(289,65): error TS6133: 'options' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(304,15): error TS6133: 'hasCreateOption' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(322,11): error TS6133: 'successShown' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(324,53): error TS6133: 'message' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(324,73): error TS6133: 'items' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(330,45): error TS6133: 'options' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(349,11): error TS6133: 'successShown' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(351,53): error TS6133: 'message' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(351,73): error TS6133: 'items' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(369,11): error TS6133: 'errorShown' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(370,11): error TS6133: 'errorMessage' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(372,67): error TS6133: 'items' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(379,45): error TS6133: 'options' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(396,67): error TS6133: 'items' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(423,11): error TS6133: 'progressShown' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(435,22): error TS6133: 'value' is declared but its value is never read.
+src/test/suite/ui/commands.test.ts(443,45): error TS6133: 'options' is declared but its value is never read.
+src/test/suite/ui/treeView.test.ts(72,15): error TS6133: 'validContexts' is declared but its value is never read.
+src/test/suite/ui/treeView.test.ts(343,53): error TS2345: Argument of type 'TreeItem' is not assignable to parameter of type 'BundleItem'.
+  Type 'TreeItem' is missing the following properties from type 'BundleItem': bundleId, logCount, sizeBytes, type, formatSize
+src/test/suite/unit/commandValidation.test.ts(663,45): error TS6133: 'shouldExist' is declared but its value is never read.
+src/test/suite/unit/patternManagement.test.ts(293,45): error TS2345: Argument of type '{ id: string; priority: number; }[]' is not assignable to parameter of type 'Pattern[]'.
+  Type '{ id: string; priority: number; }' is missing the following properties from type 'Pattern': name, regex, severity
+src/test/suite/unit/patternManagement.test.ts(308,45): error TS2345: Argument of type '{ id: string; priority: number; createdAt: string; }[]' is not assignable to parameter of type 'Pattern[]'.
+  Type '{ id: string; priority: number; createdAt: string; }' is missing the following properties from type 'Pattern': name, regex, severity
+src/test/suite/unit/patternManagement.test.ts(323,36): error TS2345: Argument of type '{ id: string; regex: string; priority: number; }[]' is not assignable to parameter of type 'Pattern[]'.
+  Type '{ id: string; regex: string; priority: number; }' is missing the following properties from type 'Pattern': name, severity
+src/test/suite/unit/patternManagement.test.ts(335,36): error TS2345: Argument of type '{ id: string; regex: string; priority: number; enabled: boolean; }[]' is not assignable to parameter of type 'Pattern[]'.
+  Type '{ id: string; regex: string; priority: number; enabled: boolean; }' is missing the following properties from type 'Pattern': name, severity
+src/test/suite/unit/patternManagement.test.ts(412,36): error TS2345: Argument of type '{ id: string; name: string; regex: string; }[]' is not assignable to parameter of type 'Pattern[]'.
+  Property 'severity' is missing in type '{ id: string; name: string; regex: string; }' but required in type 'Pattern'.
+src/test/suite/unit/patternManagement.test.ts(416,38): error TS2345: Argument of type '{ id: string; name: string; regex: string; }[]' is not assignable to parameter of type 'Pattern[]'.
+src/test/suite/unit/patternManagement.test.ts(420,34): error TS2345: Argument of type '{ id: string; name: string; regex: string; }[]' is not assignable to parameter of type 'Pattern[]'.
+TypeScript warnings present 
+
+> log-scout-analyzer@0.0.175 lint
+> eslint src --ext ts
+
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\annotationDashboardPanel.ts
+  710:21  warning  Object Literal Property name `JSON files` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  711:21  warning  Object Literal Property name `All files` must match one of the following formats: camelCase   @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\auth\ciscoAuthClient.ts
+    9:3   warning  Type Property name `access_token` must match one of the following formats: camelCase             @typescript-eslint/naming-convention
+   10:3   warning  Type Property name `token_type` must match one of the following formats: camelCase               @typescript-eslint/naming-convention
+   11:3   warning  Type Property name `expires_in` must match one of the following formats: camelCase               @typescript-eslint/naming-convention
+   12:3   warning  Type Property name `refresh_token` must match one of the following formats: camelCase            @typescript-eslint/naming-convention
+   39:9   warning  Object Literal Property name `User-Agent` must match one of the following formats: camelCase     @typescript-eslint/naming-convention
+  218:7   warning  Object Literal Property name `Authorization` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  253:11  warning  Object Literal Property name `Authorization` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  282:11  warning  Object Literal Property name `Authorization` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  341:28  warning  Expected { after 'if' condition                                                                  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\bundleTreeProvider.ts
+  237:11  warning  Object Literal Property name `case_id` must match one of the following formats: camelCase        @typescript-eslint/naming-convention
+  241:11  warning  Object Literal Property name `team_members` must match one of the following formats: camelCase   @typescript-eslint/naming-convention
+  242:11  warning  Object Literal Property name `custom_fields` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  244:9   warning  Object Literal Property name `created_at` must match one of the following formats: camelCase     @typescript-eslint/naming-convention
+  245:9   warning  Object Literal Property name `updated_at` must match one of the following formats: camelCase     @typescript-eslint/naming-convention
+  289:9   warning  Object Literal Property name `last_updated` must match one of the following formats: camelCase   @typescript-eslint/naming-convention
+  528:23  warning  Expected { after 'if' condition                                                                  curly
+  529:30  warning  Expected { after 'if' condition                                                                  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\cachedFilesTreeProvider.ts
+   83:44  warning  Expected { after 'if' condition  curly
+   84:46  warning  Expected { after 'if' condition  curly
+   85:43  warning  Expected { after 'if' condition  curly
+   86:44  warning  Expected { after 'if' condition  curly
+  169:49  warning  Expected { after 'if' condition  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\caseManager.ts
+  35:22  warning  Class Property name `CASES_STORAGE_KEY` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\categoriesTreeProvider.ts
+  129:38  warning  Expected { after 'if' condition  curly
+  141:29  warning  Expected { after 'if' condition  curly
+  142:31  warning  Expected { after 'if' condition  curly
+  143:28  warning  Expected { after 'if' condition  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\consoleWebview.ts
+  131:20  warning  Expected { after 'if' condition  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\diagnosticsProvider.ts
+  73:21  warning  Expected { after 'if' condition  curly
+  75:21  warning  Expected { after 'if' condition  curly
+  77:21  warning  Expected { after 'if' condition  curly
+  81:21  warning  Expected { after 'if' condition  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\docs\documentationBrowser.ts
+  193:11  warning  Object Literal Property name `access_token` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  194:11  warning  Object Literal Property name `token_type` must match one of the following formats: camelCase    @typescript-eslint/naming-convention
+  195:11  warning  Object Literal Property name `expires_in` must match one of the following formats: camelCase    @typescript-eslint/naming-convention
+  231:16  warning  Expected { after 'if' condition                                                                 curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\extension.ts
+   396:11  warning  Variable name `merged_template` must match one of the following formats: camelCase, UPPER_CASE          @typescript-eslint/naming-convention
+   399:11  warning  Variable name `pattern_regex` must match one of the following formats: camelCase, UPPER_CASE            @typescript-eslint/naming-convention
+   444:7   warning  Object Literal Property name `merged_template` must match one of the following formats: camelCase       @typescript-eslint/naming-convention
+   445:7   warning  Object Literal Property name `extracted_parameters` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+   448:7   warning  Object Literal Property name `pattern_regex` must match one of the following formats: camelCase         @typescript-eslint/naming-convention
+   449:7   warning  Object Literal Property name `log_line` must match one of the following formats: camelCase              @typescript-eslint/naming-convention
+   511:7   warning  Object Literal Property name `merged_template` must match one of the following formats: camelCase       @typescript-eslint/naming-convention
+   512:7   warning  Object Literal Property name `extracted_parameters` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+   513:7   warning  Object Literal Property name `pattern_regex` must match one of the following formats: camelCase         @typescript-eslint/naming-convention
+   514:7   warning  Object Literal Property name `log_line` must match one of the following formats: camelCase              @typescript-eslint/naming-convention
+  1057:25  warning  Expected { after 'if' condition                                                                         curly
+  1828:9   warning  Object Literal Property name `merged_template` must match one of the following formats: camelCase       @typescript-eslint/naming-convention
+  1829:9   warning  Object Literal Property name `extracted_parameters` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  1830:9   warning  Object Literal Property name `pattern_regex` must match one of the following formats: camelCase         @typescript-eslint/naming-convention
+  1831:9   warning  Object Literal Property name `log_line` must match one of the following formats: camelCase              @typescript-eslint/naming-convention
+  2305:31  warning  Expected { after 'if' condition                                                                         curly
+  2359:49  warning  Expected { after 'if' condition                                                                         curly
+  2575:9   warning  Object Literal Property name `0` must match one of the following formats: camelCase                     @typescript-eslint/naming-convention
+  2576:9   warning  Object Literal Property name `1` must match one of the following formats: camelCase                     @typescript-eslint/naming-convention
+  2577:9   warning  Object Literal Property name `2` must match one of the following formats: camelCase                     @typescript-eslint/naming-convention
+  2578:9   warning  Object Literal Property name `3` must match one of the following formats: camelCase                     @typescript-eslint/naming-convention
+  3019:15  warning  Object Literal Property name `QCSONE Packages` must match one of the following formats: camelCase       @typescript-eslint/naming-convention
+  3020:15  warning  Object Literal Property name `All Archives` must match one of the following formats: camelCase          @typescript-eslint/naming-convention
+  3329:13  warning  Object Literal Property name `Archives` must match one of the following formats: camelCase              @typescript-eslint/naming-convention
+  3638:20  warning  Expected { after 'if' condition                                                                         curly
+  3639:22  warning  Expected { after 'if' condition                                                                         curly
+  3640:21  warning  Expected { after 'if' condition                                                                         curly
+  3643:20  warning  Expected { after 'if' condition                                                                         curly
+  3644:19  warning  Expected { after 'if' condition                                                                         curly
+  3647:19  warning  Expected { after 'if' condition                                                                         curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\fileLogger.ts
+  43:24  warning  Expected { after 'if' condition  curly
+  59:24  warning  Expected { after 'if' condition  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\filterTreeProvider.ts
+  102:35  warning  Expected { after 'if' condition  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\gutterDecorator.ts
+  16:3  warning  Type Property name `merged_template` must match one of the following formats: camelCase       @typescript-eslint/naming-convention
+  17:3  warning  Type Property name `extracted_parameters` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  18:3  warning  Type Property name `pattern_regex` must match one of the following formats: camelCase         @typescript-eslint/naming-convention
+  19:3  warning  Type Property name `log_line` must match one of the following formats: camelCase              @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\lspClient.ts
+  114:15  warning  Object Literal Property name `RUST_LOG` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  125:15  warning  Object Literal Property name `RUST_LOG` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\lspDiagnosticConverter.ts
+   99:5  warning  Object Literal Property name `merged_template` must match one of the following formats: camelCase       @typescript-eslint/naming-convention
+  100:5  warning  Object Literal Property name `log_line` must match one of the following formats: camelCase              @typescript-eslint/naming-convention
+  101:5  warning  Object Literal Property name `extracted_parameters` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  102:5  warning  Object Literal Property name `pattern_id` must match one of the following formats: camelCase            @typescript-eslint/naming-convention
+  103:5  warning  Object Literal Property name `pattern_regex` must match one of the following formats: camelCase         @typescript-eslint/naming-convention
+  104:5  warning  Object Literal Property name `log_level` must match one of the following formats: camelCase             @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\modernResultsTreeProvider.ts
+  15:3  warning  Type Property name `merged_template` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\patternOverrideManager.ts
+  345:17  warning  Object Literal Property name `JSON` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  375:17  warning  Object Literal Property name `JSON` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\patternViewerPanel.ts
+   83:9   warning  Object Literal Property name `JSON files` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+   84:9   warning  Object Literal Property name `All files` must match one of the following formats: camelCase   @typescript-eslint/naming-convention
+  135:34  warning  Expected { after 'if' condition                                                               curly
+  136:34  warning  Expected { after 'if' condition                                                               curly
+  137:32  warning  Expected { after 'if' condition                                                               curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\resultsPanel.ts
+  132:35  warning  Expected { after 'if' condition  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\resultsTreeProvider.ts
+   18:3   warning  Type Property name `merged_template` must match one of the following formats: camelCase       @typescript-eslint/naming-convention
+   19:3   warning  Type Property name `log_line` must match one of the following formats: camelCase              @typescript-eslint/naming-convention
+   20:3   warning  Type Property name `extracted_parameters` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+   21:3   warning  Type Property name `pattern_id` must match one of the following formats: camelCase            @typescript-eslint/naming-convention
+   22:3   warning  Type Property name `pattern_regex` must match one of the following formats: camelCase         @typescript-eslint/naming-convention
+   23:3   warning  Type Property name `log_level` must match one of the following formats: camelCase             @typescript-eslint/naming-convention
+   99:45  warning  Expected { after 'if' condition                                                               curly
+  100:29  warning  Expected { after 'if' condition                                                               curly
+  101:29  warning  Expected { after 'if' condition                                                               curly
+  183:25  warning  Expected { after 'if' condition                                                               curly
+  184:27  warning  Expected { after 'if' condition                                                               curly
+  185:24  warning  Expected { after 'if' condition                                                               curly
+  186:25  warning  Expected { after 'if' condition                                                               curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\scenarioManager.ts
+  298:17  warning  Object Literal Property name `JSON` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  321:17  warning  Object Literal Property name `JSON` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\scoutInventorProvider.ts
+   8:5  warning  Enum Member name `Category` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+   9:5  warning  Enum Member name `Product` must match one of the following formats: camelCase   @typescript-eslint/naming-convention
+  10:5  warning  Enum Member name `Pattern` must match one of the following formats: camelCase   @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\sipCallFlowParser.ts
+  309:23  warning  Expected { after 'if' condition  curly
+  375:23  warning  Expected { after 'if' condition  curly
+  583:23  warning  Expected { after 'if' condition  curly
+  584:21  warning  Expected { after 'if' condition  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\splitViewProvider.ts
+  486:42  warning  Expected { after 'if' condition  curly
+  487:43  warning  Expected { after 'if' condition  curly
+  515:19  warning  Expected { after 'if' condition  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\statusBarProgress.ts
+  149:3  warning  Enum Member name `Creating` must match one of the following formats: camelCase    @typescript-eslint/naming-convention
+  150:3  warning  Enum Member name `Extracting` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  151:3  warning  Enum Member name `Importing` must match one of the following formats: camelCase   @typescript-eslint/naming-convention
+  152:3  warning  Enum Member name `Analyzing` must match one of the following formats: camelCase   @typescript-eslint/naming-convention
+  153:3  warning  Enum Member name `Processing` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  154:3  warning  Enum Member name `Validating` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  155:3  warning  Enum Member name `Finalizing` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\test\suite\addCurrentFile.test.ts
+  462:21  warning  Expected { after 'if' condition  curly
+  463:28  warning  Expected { after 'if' condition  curly
+  465:5   warning  Expected { after 'if' condition  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\test\suite\integration\addCurrentFileIntegration.test.ts
+  165:9  warning  Object Literal Property name `log_type` must match one of the following formats: camelCase          @typescript-eslint/naming-convention
+  166:9  warning  Object Literal Property name `added_at` must match one of the following formats: camelCase          @typescript-eslint/naming-convention
+  167:9  warning  Object Literal Property name `size_bytes` must match one of the following formats: camelCase        @typescript-eslint/naming-convention
+  168:9  warning  Object Literal Property name `line_count` must match one of the following formats: camelCase        @typescript-eslint/naming-convention
+  169:9  warning  Object Literal Property name `timestamp_format` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  427:9  warning  Object Literal Property name `log_type` must match one of the following formats: camelCase          @typescript-eslint/naming-convention
+  428:9  warning  Object Literal Property name `added_at` must match one of the following formats: camelCase          @typescript-eslint/naming-convention
+  429:9  warning  Object Literal Property name `size_bytes` must match one of the following formats: camelCase        @typescript-eslint/naming-convention
+  430:9  warning  Object Literal Property name `line_count` must match one of the following formats: camelCase        @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\test\suite\unit\bundleTreeProvider.test.ts
+  604:42  warning  Expected { after 'if' condition  curly
+  605:26  warning  Expected { after 'if' condition  curly
+  647:34  warning  Expected { after 'if' condition  curly
+  648:25  warning  Expected { after 'if' condition  curly
+  650:21  warning  Expected { after 'if' condition  curly
+  651:28  warning  Expected { after 'if' condition  curly
+  652:35  warning  Expected { after 'if' condition  curly
+  657:30  warning  Expected { after 'if' condition  curly
+  666:20  warning  Expected { after 'if' condition  curly
+  667:22  warning  Expected { after 'if' condition  curly
+  668:21  warning  Expected { after 'if' condition  curly
+  671:20  warning  Expected { after 'if' condition  curly
+  672:19  warning  Expected { after 'if' condition  curly
+  675:19  warning  Expected { after 'if' condition  curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\test\suite\unit\commandValidation.test.ts
+  599:9  warning  Object Literal Property name `case_id` must match one of the following formats: camelCase     @typescript-eslint/naming-convention
+  600:9  warning  Object Literal Property name `created_at` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  602:9  warning  Object Literal Property name `size_bytes` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  760:5  warning  Object Literal Property name `ENOENT` must match one of the following formats: camelCase      @typescript-eslint/naming-convention
+  761:5  warning  Object Literal Property name `EACCES` must match one of the following formats: camelCase      @typescript-eslint/naming-convention
+  762:5  warning  Object Literal Property name `EISDIR` must match one of the following formats: camelCase      @typescript-eslint/naming-convention
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\timelineTreeProvider.ts
+   85:49  warning  Expected { after 'if' condition                                                        curly
+  141:36  warning  Expected { after 'if' condition                                                        curly
+  230:13  warning  Object Literal Property name `5` must match one of the following formats: camelCase    @typescript-eslint/naming-convention
+  231:13  warning  Object Literal Property name `15` must match one of the following formats: camelCase   @typescript-eslint/naming-convention
+  232:13  warning  Object Literal Property name `30` must match one of the following formats: camelCase   @typescript-eslint/naming-convention
+  233:13  warning  Object Literal Property name `60` must match one of the following formats: camelCase   @typescript-eslint/naming-convention
+  234:13  warning  Object Literal Property name `120` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  235:13  warning  Object Literal Property name `240` must match one of the following formats: camelCase  @typescript-eslint/naming-convention
+  315:29  warning  Expected { after 'if' condition                                                        curly
+  316:31  warning  Expected { after 'if' condition                                                        curly
+  317:28  warning  Expected { after 'if' condition                                                        curly
+  318:29  warning  Expected { after 'if' condition                                                        curly
+
+C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\src\timelineVisualization.ts
+  906:60  warning  Expected { after 'if' condition  curly
+  907:60  warning  Expected { after 'if' condition  curly
+  908:60  warning  Expected { after 'if' condition  curly
+  909:38  warning  Expected { after 'if' condition  curly
+
+✖ 172 problems (0 errors, 172 warnings)
+  0 errors and 75 warnings potentially fixable with the `--fix` option.
+
+
+> log-scout-analyzer@0.0.175 test
+> node ./out/test/runTest.js --reporter json
+
+Extension Development Path: C:\Users\mitchong\code\log_scout_analyzer\vscode-extension
+Extension Tests Path: C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\index
+Test Workspace: C:\Users\mitchong\code\log_scout_analyzer\test-data
+- Resolving version...
+✔ Validated version: 1.109.5
+✔ Found existing install in C:\Users\mitchong\code\log_scout_analyzer\vscode-extension\.vscode-test\vscode-win32-x64-archive-1.109.5
+(node:4456) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+[main 2026-02-22T01:12:35.299Z] update#setState disabled
+[main 2026-02-22T01:12:35.301Z] update#ctor - updates are disabled by the environment
+Loading development extension at c:\Users\mitchong\code\log_scout_analyzer\vscode-extension
+[log-scout-team.log-scout-analyzer]: Menu item references a command `logScoutAnalyzer.showConsole` which is not defined in the 'commands' section.
+[log-scout-team.log-scout-analyzer]: Menu item references a command `logScoutAnalyzer.clearCache` which is not defined in the 'commands' section.
+[log-scout-team.log-scout-analyzer]: Menu item references a command `logScoutAnalyzer.viewCacheMetadata` which is not defined in the 'commands' section.
+[log-scout-team.log-scout-analyzer]: Menu item references a command `logScoutAnalyzer.downloadCase` which is not defined in the 'commands' section.
+[log-scout-team.log-scout-analyzer]: Menu item references a command `logScoutAnalyzer.importCase` which is not defined in the 'commands' section.
+[log-scout-team.log-scout-analyzer]: Menu item references a command `logScoutAnalyzer.refreshCases` which is not defined in the 'commands' section.
+[log-scout-team.log-scout-analyzer]: Menu item references a command `logScoutAnalyzer.bundle.openDashboard` which is not defined in the 'commands' section.
+[log-scout-team.log-scout-analyzer]: Menu item references a command `logScoutAnalyzer.showCacheData` which is not defined in the 'commands' section.
+[log-scout-team.log-scout-analyzer]: Menu item references a command `logScoutAnalyzer.openCachedFile` which is not defined in the 'commands' section.
+[log-scout-team.log-scout-analyzer]: Menu item references a command `logScoutAnalyzer.openFileInEditor` which is not defined in the 'commands' section.
+[log-scout-team.log-scout-analyzer]: Menu item references a command `logScoutAnalyzer.revealInExplorer` which is not defined in the 'commands' section.
+[log-scout-team.log-scout-analyzer]: Menu item references a command `logScoutAnalyzer.removeCachedFile` which is not defined in the 'commands' section.
+[log-scout-team.log-scout-analyzer]: Menu item references a command `logScoutAnalyzer.openInNewWindow` which is not defined in the 'commands' section.
+[log-scout-team.log-scout-analyzer]: Menu item references a command `logScoutAnalyzer.patterns.createOverrideFromDiagnostic` which is not defined in the 'commands' section.
+MCP Registry configured: https://api.mcp.github.com
+Settings Sync: Account status changed from uninitialized to unavailable
+Started local extension host with pid 68188.
+Log Scout Analyzer v0.0.174 (build 1771708030760) activated at 2026-02-22T01:12:45.482Z
+Log Scout Analyzer v0.0.174 (build 1771708030760): All features registered
+[0m[0m
+[0m  Add Current File to Bundle - Wiring Tests[0m
+[0m    1. Command Registration[0m
+    [32m  ✔[0m[90m Should be registered in package.json[0m
+    [32m  ✔[0m[90m Should have proper command structure in package.json[0m
+    [32m  ✔[0m[90m Should be in activation events[0m
+    [32m  ✔[0m[90m Should be registered in extension.ts[0m
+    [32m  ✔[0m[90m Should be added to context.subscriptions[0m
+[0m    2. File Extension Validation Logic[0m
+    [32m  ✔[0m[90m Should have log file extension validation[0m
+    [32m  ✔[0m[90m Should validate common log file extensions[0m
+    [32m  ✔[0m[90m Should detect non-log files[0m
+[0m    3. LSP Integration[0m
+    [32m  ✔[0m[90m Should call LSP client methods[0m
+    [32m  ✔[0m[90m Should handle bundle list request[0m
+    [32m  ✔[0m[90m Should handle add log request[0m
+    [32m  ✔[0m[90m Should check LSP client availability[0m
+[0m    4. User Interaction[0m
+    [32m  ✔[0m[90m Should check for active text editor[0m
+    [32m  ✔[0m[90m Should show warning when no file is open[0m
+    [32m  ✔[0m[90m Should show quick pick for bundle selection[0m
+    [32m  ✔[0m[90m Should show success message after adding[0m
+    [32m  ✔[0m[90m Should handle errors gracefully[0m
+[0m    5. Bundle Tree Integration[0m
+    [32m  ✔[0m[90m Should refresh bundle tree after adding[0m
+    [32m  ✔[0m[90m Should reference bundle tree provider[0m
+[0m    6. Path Handling[0m
+    [32m  ✔[0m[90m Should extract filename from path correctly[0m
+    [32m  ✔[0m[90m Should handle Windows paths[0m
+    [32m  ✔[0m[90m Should handle Unix paths[0m
+    [32m  ✔[0m[90m Should handle UNC paths[0m
+[0m    7. Bundle Selection Flow[0m
+    [32m  ✔[0m[90m Should include create new bundle option[0m
+    [32m  ✔[0m[90m Should handle empty bundle list[0m
+    [32m  ✔[0m[90m Should execute create bundle command when selected[0m
+[0m    8. Message Formatting[0m
+    [32m  ✔[0m[90m Should have descriptive success message[0m
+    [32m  ✔[0m[90m Should have descriptive error messages[0m
+[0m    9. Output Channel Logging[0m
+    [32m  ✔[0m[90m Should log to output channel[0m
+    [32m  ✔[0m[90m Should log success operations[0m
+    [32m  ✔[0m[90m Should log failures[0m
+[0m    10. Code Quality[0m
+    [32m  ✔[0m[90m Should have async command handler[0m
+    [32m  ✔[0m[90m Should have try-catch error handling[0m
+    [32m  ✔[0m[90m Should not have hardcoded paths[0m
+[0m    11. File Size Formatting[0m
+    [32m  ✔[0m[90m Should format bytes correctly[0m
+    [32m  ✔[0m[90m Should format kilobytes correctly[0m
+    [32m  ✔[0m[90m Should format megabytes correctly[0m
+    [32m  ✔[0m[90m Should format large files correctly[0m
+[0m    12. Integration with Related Commands[0m
+    [32m  ✔[0m[90m Should work with bundle.create command[0m
+    [32m  ✔[0m[90m Should work with bundle.refresh command[0m
+[0m    13. Phase 1 Completion Validation[0m
+    [32m  ✔[0m[90m ✅ Command is properly wired in package.json[0m
+    [32m  ✔[0m[90m ✅ Command is registered in extension.ts[0m
+    [32m  ✔[0m[90m ✅ LSP integration is in place[0m
+    [32m  ✔[0m[90m ✅ User interaction flow is implemented[0m
+    [32m  ✔[0m[90m ✅ Error handling is present[0m
+    [32m  ✔[0m[90m ✅ Bundle tree integration exists[0m
+[0m  BundleTreeProvider Tests[0m
+[0m    Bundle Creation[0m
+Creating bundle: Test Bundle 1771722767075 { description: 'Test bundle description' }
+Created bundle directory: c:\Users\mitchong\code\log_scout_analyzer\test-data/.log-scout/bundles/bundle_1771722767076_v142pppr8
+Created bundle.json for: Test Bundle 1771722767075
+Updated index.json with bundle: Test Bundle 1771722767075
+✓ Bundle created successfully: Test Bundle 1771722767075 (bundle_1771722767076_v142pppr8)
+    [32m  ✔[0m[90m Should create bundle with filesystem structure[0m[33m (47ms)[0m
+Creating bundle: Index Test Bundle 1771722767123 {}
+Created bundle directory: c:\Users\mitchong\code\log_scout_analyzer\test-data/.log-scout/bundles/bundle_1771722767123_hamn4we72
+Created bundle.json for: Index Test Bundle 1771722767123
+Updated index.json with bundle: Index Test Bundle 1771722767123
+✓ Bundle created successfully: Index Test Bundle 1771722767123 (bundle_1771722767123_hamn4we72)
+    [32m  ✔[0m[90m Should update index.json when creating bundle[0m
+Creating bundle: Case Bundle 1771722767144 { caseId: '700123456' }
+Created bundle directory: c:\Users\mitchong\code\log_scout_analyzer\test-data/.log-scout/bundles/bundle_1771722767144_di1rtrpjp
+Created bundle.json for: Case Bundle 1771722767144
+Updated index.json with bundle: Case Bundle 1771722767144
+✓ Bundle created successfully: Case Bundle 1771722767144 (bundle_1771722767144_di1rtrpjp)
+    [32m  ✔[0m[90m Should create bundle with optional case ID[0m
+Creating bundle: Test Bundle {}
+Created bundle directory: c:\Users\mitchong\code\log_scout_analyzer\test-data/.log-scout/bundles/bundle_1771722767164_3kznjuyxl
+Created bundle.json for: Test Bundle
+Updated index.json with bundle: Test Bundle
+✓ Bundle created successfully: Test Bundle (bundle_1771722767164_3kznjuyxl)
+    [32m  ✔[0m[90m Should handle bundle creation without workspace[0m
+[0m    Tree View Data[0m
+    [32m  ✔[0m[90m Should return BundleItem from getTreeItem[0m
+Creating bundle: List Test Bundle 1771722767184 {}
+Created bundle directory: c:\Users\mitchong\code\log_scout_analyzer\test-data/.log-scout/bundles/bundle_1771722767184_do5u0y0if
+Created bundle.json for: List Test Bundle 1771722767184
+Updated index.json with bundle: List Test Bundle 1771722767184
+✓ Bundle created successfully: List Test Bundle 1771722767184 (bundle_1771722767184_do5u0y0if)
+Failed to load bundle bundle_1771709742019_hf7em5stf: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771709742019_hf7em5stf\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771709742047_lvnlx90j2: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771709742047_lvnlx90j2\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771709742063_toahlb8vc: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771709742063_toahlb8vc\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771709742081_bnlld0nwy: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771709742081_bnlld0nwy\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771709742108_velrb6gxg: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771709742108_velrb6gxg\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771709769102_clmpzimfd: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771709769102_clmpzimfd\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771709769125_b0n00cvld: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771709769125_b0n00cvld\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771709769141_nj5f1iaad: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771709769141_nj5f1iaad\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771709769157_t7tjwn81p: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771709769157_t7tjwn81p\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771709769172_1nn8293d6: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771709769172_1nn8293d6\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771709790797_13e5prsts: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771709790797_13e5prsts\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771709790823_x57ucr523: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771709790823_x57ucr523\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771709790838_wrajt5da3: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771709790838_wrajt5da3\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771709790855_na40f6e4u: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771709790855_na40f6e4u\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771709790878_p91yznhmk: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771709790878_p91yznhmk\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771712079787_4kh9qkk4t: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771712079787_4kh9qkk4t\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771712079812_l3fpjpdc7: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771712079812_l3fpjpdc7\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771712079841_2vwk09d1v: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771712079841_2vwk09d1v\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771712079861_ctg0odpbl: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771712079861_ctg0odpbl\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771712079879_dk9sk3rk8: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771712079879_dk9sk3rk8\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721350383_zuxksozgl: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721350383_zuxksozgl\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721350410_zd2ruq478: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721350410_zd2ruq478\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721350427_w7owbv6d3: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721350427_w7owbv6d3\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721350447_jv5fgyq0z: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721350447_jv5fgyq0z\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721350474_6az98hgee: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721350474_6az98hgee\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721455945_wxwops8ux: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721455945_wxwops8ux\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721455974_xlmf3j9ra: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721455974_xlmf3j9ra\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721455993_xo7wbib4p: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721455993_xo7wbib4p\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721456021_yo0vgrb27: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721456021_yo0vgrb27\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721456040_heq6zd1hz: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721456040_heq6zd1hz\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721537999_vdjb222op: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721537999_vdjb222op\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721538025_r9s0uh7y3: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721538025_r9s0uh7y3\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721538044_ma0nfl9ru: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721538044_ma0nfl9ru\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721538065_dik7vcd2u: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721538065_dik7vcd2u\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721538089_y4nnkmhlo: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721538089_y4nnkmhlo\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721721842_l5x2jihvf: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721721842_l5x2jihvf\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721721861_pkhkc59qn: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721721861_pkhkc59qn\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721721879_n4yz316t1: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721721879_n4yz316t1\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721721901_jr3s5y6gu: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721721901_jr3s5y6gu\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721721920_cxk37j7hj: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721721920_cxk37j7hj\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721771615_jx1px6wda: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721771615_jx1px6wda\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721771648_1js1l3lzi: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721771648_1js1l3lzi\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721771665_4ulcjb3z2: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721771665_4ulcjb3z2\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721771684_teppjociu: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721771684_teppjociu\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771721771712_soyf5ffhj: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771721771712_soyf5ffhj\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722187033_1al4jgte2: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722187033_1al4jgte2\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722187065_yfimrb01z: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722187065_yfimrb01z\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722187087_rcwqx49fy: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722187087_rcwqx49fy\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722187105_2y1efdlry: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722187105_2y1efdlry\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722187125_6rbmuorf2: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722187125_6rbmuorf2\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722230020_sdejdyw26: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722230020_sdejdyw26\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722230056_qwqww81no: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722230056_qwqww81no\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722230075_8m364gewf: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722230075_8m364gewf\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722230094_f2w4jk7z6: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722230094_f2w4jk7z6\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722230125_m4iruuf8q: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722230125_m4iruuf8q\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722351402_i7dxijs7s: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722351402_i7dxijs7s\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722351434_hsjr09min: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722351434_hsjr09min\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722351455_2by2aki02: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722351455_2by2aki02\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722351474_12mtjz3vz: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722351474_12mtjz3vz\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722351494_5cvkkljp1: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722351494_5cvkkljp1\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722392180_tw1zyjtk0: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722392180_tw1zyjtk0\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722392220_6kcny6q8o: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722392220_6kcny6q8o\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722392241_q8tgpv00n: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722392241_q8tgpv00n\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722392264_86s9mr306: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722392264_86s9mr306\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722392288_9jx6o86qw: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722392288_9jx6o86qw\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722438602_ms6bs2j2y: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722438602_ms6bs2j2y\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722438647_f9awaa2mk: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722438647_f9awaa2mk\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722438670_cc9sxb1yk: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722438670_cc9sxb1yk\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722438697_jjs0o4vfc: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722438697_jjs0o4vfc\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722438721_o4j8ury6j: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722438721_o4j8ury6j\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722480577_dvvm283iz: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722480577_dvvm283iz\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722480606_coaccndkh: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722480606_coaccndkh\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722480628_96nkmez4q: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722480628_96nkmez4q\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722480649_uuqucwnmd: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722480649_uuqucwnmd\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722480668_gl2axkt0p: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722480668_gl2axkt0p\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722525869_zxqv33sxl: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722525869_zxqv33sxl\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722525907_cx3tin3yn: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722525907_cx3tin3yn\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722525924_hm32127qa: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722525924_hm32127qa\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722525944_2d51ozrti: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722525944_2d51ozrti\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722525964_0xhnfqtoo: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722525964_0xhnfqtoo\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722588338_ogwb7oucm: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722588338_ogwb7oucm\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722588365_qn3a9e50p: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722588365_qn3a9e50p\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722588382_nio5jkse5: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722588382_nio5jkse5\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722588401_oobktr5v0: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722588401_oobktr5v0\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722588421_ofwxbptx6: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722588421_ofwxbptx6\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722631705_7vxxskyb8: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722631705_7vxxskyb8\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722631736_4kjr9g0ow: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722631736_4kjr9g0ow\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722631758_m35kek4wl: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722631758_m35kek4wl\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722631779_ar6qy9o4v: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722631779_ar6qy9o4v\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722631798_608qhgau9: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722631798_608qhgau9\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722672641_grmy9jgkb: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722672641_grmy9jgkb\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722672680_j8h8yz7tu: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722672680_j8h8yz7tu\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722672702_fgn76dfm0: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722672702_fgn76dfm0\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722672723_ipqaop5nb: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722672723_ipqaop5nb\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722672745_xp8b0p97e: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722672745_xp8b0p97e\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722724954_bynd04sni: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722724954_bynd04sni\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722724984_j0ymw0xr7: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722724984_j0ymw0xr7\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722725005_ktrj09c4r: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722725005_ktrj09c4r\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722725025_pdilfyzb3: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722725025_pdilfyzb3\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722725047_0blkzcp2r: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722725047_0blkzcp2r\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722767076_v142pppr8: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722767076_v142pppr8\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722767123_hamn4we72: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722767123_hamn4we72\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722767144_di1rtrpjp: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722767144_di1rtrpjp\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+Failed to load bundle bundle_1771722767164_3kznjuyxl: EntryNotFound (FileSystemError): Error: ENOENT: no such file or directory, open 'c:\Users\mitchong\code\log_scout_analyzer\test-data\.log-scout\bundles\bundle_1771722767164_3kznjuyxl\bundle.json'
+	at Lr.e (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:18080)
+	at Object.readFile (file:///c:/Users/mitchong/code/log_scout_analyzer/vscode-extension/.vscode-test/vscode-win32-x64-archive-1.109.5/072586267e/resources/app/out/vs/workbench/api/node/extensionHostProcess.js:116:16601)
+	at async BundleTreeProvider.loadBundles (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:100:40)
+	at async BundleTreeProvider.getChildren (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\bundleTreeProvider.js:57:35)
+	at async Context.<anonymous> (c:\Users\mitchong\code\log_scout_analyzer\vscode-extension\out\test\suite\bundleTreeProvider.test.js:162:34)
+    [32m  ✔[0m[90m Should list bundles in getChildren with no element[0m[31m (232ms)[0m
+    [32m  ✔[0m[90m Should handle empty bundles directory[0m
+[0m    Tree Refresh[0m
+    [32m  ✔[0m[90m Should fire onDidChangeTreeData when refresh called[0m
+[0m    Import Package (LSP Integration)[0m
+Importing package: c:\Users\mitchong\code\log_scout_analyzer\test-data\quick-test.zip {
+  bundleName: 'Import Test Bundle',
+  progressToken: 'import_1771722767426'
+}
+Package import completed null
+    [32m  ✔[0m[90m Should call LSP client for package import[0m
+[0m  Extension Wiring Validation[0m
+[0m    package.json Configuration[0m
+    [32m  ✔[0m[90m Should have correct extension metadata[0m
+    [32m  ✔[0m[90m Should have all required views defined[0m
+[0m    Import Archive Command Wiring[0m
+    [32m  ✔[0m[90m Import Archive command should be registered in package.json[0m
+    [32m  ✔[0m[90m Import Archive command should NOT have duplicate Scout prefix[0m
+    [32m  ✔[0m[90m Import Archive command should be in activation events[0m
+    [32m  ✔[0m[90m Import Archive command should be registered in extension.ts[0m
+    [32m  ✔[0m[90m Import Archive command should call bundleTreeProvider.importPackage[0m
+    [32m  ✔[0m[90m Import Archive command should be added to subscriptions[0m
+[0m    Bundle Tree Provider Wiring[0m
+    [32m  ✔[0m[90m BundleTreeProvider should be imported in extension.ts[0m
+    [32m  ✔[0m[90m BundleTreeProvider should have importPackage method[0m
+    [32m  ✔[0m[90m BundleTreeProvider should be instantiated in extension.ts[0m
+    [32m  ✔[0m[90m BundleTreeProvider should be registered as tree data provider[0m
+    [32m  ✔[0m[90m BundleTreeProvider variable should exist and be accessible[0m
+    [32m  ✔[0m[90m Import command should check bundleTreeProvider is initialized[0m
+[0m    All Scout Commands Naming Convention[0m
+    [32m  ✔[0m[90m No Scout commands should have duplicate prefix[0m
+    [32m  ✔[0m[90m All Scout commands should have consistent prefix[0m
+[0m    File Structure Validation[0m
+    [32m  ✔[0m[90m LSP server binary should exist[0m
+    [32m  ✔[0m[90m LSP server binary should be reasonable size[0m
+    [32m  ✔[0m[90m Compiled extension.js should exist[0m
+    [32m  ✔[0m[90m BundleTreeProvider.ts should exist[0m
+[0m    Import Archive File Picker Configuration[0m
+    [32m  ✔[0m[90m Import command should show file picker with correct filters[0m
+    [32m  ✔[0m[90m File picker should accept common archive formats[0m
+[0m    Error Handling Wiring[0m
+    [32m  ✔[0m[90m Import command should have error handling[0m
+    [32m  ✔[0m[90m Import command should show error message on failure[0m
+[0m    Output Channel Wiring[0m
+    [32m  ✔[0m[90m Output channel should be created[0m
+    [32m  ✔[0m[90m Import command should log activity[0m
+[92m [0m[32m 81 passing[0m[90m (528ms)[0m
+[main 2026-02-22T01:12:47.515Z] Extension host with pid 68188 exited with code: 0, signal: unknown.
+Exit code:   0
+✅ All tests passed!

@@ -46,7 +46,13 @@ export class BundleTreeProvider implements vscode.TreeDataProvider<BundleItem> {
     if (!element) {
       // Root level - show all bundles including importing ones
       const loadedBundles = await this.loadBundles();
-      return [...this.bundles, ...loadedBundles];
+
+      // Filter out any duplicates between optimistic bundles and loaded bundles
+      const optimisticBundles = this.bundles.filter(
+        (b) => b.type === "bundle-importing",
+      );
+
+      return [...optimisticBundles, ...loadedBundles];
     } else if (element.type === "bundle") {
       // Show logs in this bundle
       return this.loadBundleLogs(element.bundleId);
@@ -388,11 +394,16 @@ export class BundleTreeProvider implements vscode.TreeDataProvider<BundleItem> {
 
       console.log(`Package import completed`, response);
 
+      // Clear the local cache to force reload from disk
+      this.bundles = [];
+
+      // Wait for the bundle.json file to be written by watching the file system
+      const result = response as any;
+
       // Refresh to show real bundle
       this.refresh();
 
       // Show success notification
-      const result = response as any;
       if (result && result.importedCount !== undefined) {
         vscode.window.showInformationMessage(
           `✅ Successfully imported ${result.importedCount} log files to ${result.bundleName}`,
@@ -529,4 +540,6 @@ export class BundleItem extends vscode.TreeItem {
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
+
+
 }

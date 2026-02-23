@@ -153,12 +153,16 @@ echo **Note**: TypeScript errors in disabled features (auth, docs, case manageme
 echo. >> ..\%LOGFILE%
 echo ```shell >> ..\%LOGFILE%
 
-REM Run build and capture output, but don't fail on TypeScript warnings
-call npm run package >> ..\%LOGFILE% 2>&1
+REM Run build:all (which increments version and builds everything)
+call npm run build:all >> ..\%LOGFILE% 2>&1
 set BUILD_EXIT_CODE=%ERRORLEVEL%
 
 echo ``` >> ..\%LOGFILE%
 echo. >> ..\%LOGFILE%
+
+REM Now package the built artifacts (no version increment, just packaging)
+echo Running package:only to create VSIX... >> ..\%LOGFILE%
+call npm run package:only >> ..\%LOGFILE% 2>&1
 
 REM Check if VSIX was created (this is what matters)
 if not exist "log-scout-analyzer.vsix" (
@@ -335,7 +339,7 @@ if not exist "vscode-extension\vsix\log-scout-analyzer.vsix" (
     echo. >> %LOGFILE%
     echo **What to check**: >> %LOGFILE%
     echo 1. Look for TypeScript compilation errors in Step 4 above >> %LOGFILE%
-    echo 2. Check if `npm run package` completed successfully >> %LOGFILE%
+    echo 2. Check if `npm run build:all` and `npm run package:only` completed successfully >> %LOGFILE%
     echo 3. Verify all TypeScript files compile without CRITICAL errors >> %LOGFILE%
     echo. >> %LOGFILE%
     echo **Note**: Warnings in disabled features (auth, docs, case management) are OK, but critical errors are not. >> %LOGFILE%

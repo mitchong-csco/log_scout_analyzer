@@ -302,6 +302,138 @@ describe('ActionPanel UX', () => {
 
 ---
 
+## 🔨 MANDATORY: Always Build Through npm
+
+**CRITICAL RULE:** All builds MUST go through npm scripts. Never use raw cargo, tsc, or other build tools directly.
+
+### Build Location: Root Folder ONLY
+
+**MANDATORY**: All npm build commands must be run from the **root folder** (`log_scout_analyzer/`), NOT from subdirectories.
+
+- ✅ **CORRECT**: `cd log_scout_analyzer && npm run build:all`
+- ❌ **WRONG**: `cd vscode-extension && npm run build`
+- ❌ **WRONG**: `cargo build --release` (direct cargo usage)
+
+### Why Root Folder?
+
+1. **Centralized package.json**: The root `package.json` orchestrates builds across all components
+2. **Consistent paths**: Relative paths work correctly from root
+3. **Cross-component builds**: LSP + Extension builds coordinate properly
+4. **Version synchronization**: Versions update consistently across all components
+
+### If Root package.json Doesn't Exist
+
+**If you need to build and there's no root `package.json`:**
+
+1. **Create root package.json** with build scripts:
+   ```json
+   {
+     "name": "log-scout-analyzer-workspace",
+     "version": "1.0.0",
+     "private": true,
+     "scripts": {
+       "build:lsp": "cd lsp-server && cargo build --release",
+       "build:extension": "cd vscode-extension && npm run compile",
+       "build:all": "npm run build:lsp && npm run build:extension",
+       "build:zed": "cd zed-extension && npm run build"
+     }
+   }
+   ```
+
+2. **Move from subdirectories**: If package.json exists in subdirectories, create root one that coordinates them
+
+3. **Update AI_ASSISTANT_GUIDE.md**: Document the new root build process
+
+### Standard Build Commands
+
+From **root folder only**:
+
+```bash
+# Check code without full build (fast)
+npm run check              # Check both LSP and extension
+npm run check:lsp          # Check Rust LSP only
+
+# Full builds (slower but complete)
+npm run build:lsp          # Build Rust LSP server binary
+npm run build:extension    # Build TypeScript extension
+npm run build:all          # Build everything (LSP + extension)
+
+# Development builds with auto-increment
+npm run build:all          # Increments version, builds LSP + extension
+
+# Package for distribution
+npm run package            # Build + create VSIX package
+```
+
+### What npm Build Scripts Do
+
+1. **Coordinate multi-language builds**: 
+   - Rust (cargo) for LSP server
+   - TypeScript (tsc) for VS Code extension
+   - WASM (cargo) for Zed extension
+
+2. **Handle paths correctly**:
+   - Copy LSP binary to extension's `bin/` folder
+   - Resolve cross-workspace dependencies
+
+3. **Version synchronization**:
+   - Update version numbers consistently
+   - Generate build info files
+
+4. **Platform detection**:
+   - Build correct LSP binary name (`.exe` on Windows)
+   - Copy to correct location
+
+### Why NOT Direct cargo/tsc?
+
+❌ **DON'T DO THIS:**
+```bash
+cd lsp-server
+cargo build --release    # Wrong! Binary won't be copied to extension
+```
+
+❌ **DON'T DO THIS:**
+```bash
+cd vscode-extension
+tsc -p ./                # Wrong! LSP won't be built, versions won't sync
+```
+
+✅ **DO THIS:**
+```bash
+cd log_scout_analyzer    # Always start from root
+npm run build:all        # Let npm orchestrate everything
+```
+
+### Quick Reference
+
+| Task | Command (from root) | What It Does |
+|------|---------------------|--------------|
+| Quick check | `npm run check` | Fast syntax/type check (no build) |
+| Build LSP only | `npm run build:lsp` | Cargo build + copy binary |
+| Build extension only | `npm run build:extension` | TypeScript compile |
+| Build everything | `npm run build:all` | Version bump + LSP + extension |
+| Create package | `npm run package` | Build all + create .vsix |
+| Check versions | `npm run status` | Show current versions |
+
+### For Zed Extension
+
+Same principle applies:
+
+```bash
+cd log_scout_analyzer         # Root folder
+npm run build:zed            # Builds Zed extension
+```
+
+### Remember
+
+- 🔨 **Always from root folder**: `cd log_scout_analyzer` first
+- 🔨 **Always use npm**: Let npm orchestrate builds
+- 🔨 **Never direct cargo/tsc**: npm handles the complexity
+- 🔨 **Create root package.json if missing**: Centralize build logic
+- 🔨 **Document in this guide**: Keep build process clear
+
+---
+
 ## Quick Start for AI Assistants
 
 ### 1. Always Read These First
@@ -447,24 +579,36 @@ See vscode-extension/UI_TESTING_GUIDE.md for examples."
    - Add handler in lsp-server/src/server.rs
    - Add usage in vscode-extension/src/*.ts
    - Command names must match schema exactly (copy-paste!)
-3. Run: npm run test:wiring
-4. Tests should PASS (GREEN phase)
-5. If tests fail, read logs/[test-name].log
-6. Fix based on actual error (not guessing)
+3. Build from root folder: cd log_scout_analyzer && npm run build:all
+4. Run: npm run test:wiring (from root)
+5. Tests should PASS (GREEN phase)
+6. If tests fail, read logs/[test-name].log
+7. Fix based on actual error (not guessing)
+
+REMEMBER: Always build from root folder using npm scripts!
 ```
 
 ### Phase 4: Verification
 
 ```markdown
-1. Run: npm run dev:verify
-2. If LSP commands were added/modified:
+1. Build from root: cd log_scout_analyzer && npm run build:all
+2. Run: npm run dev:verify (from root)
+3. If LSP commands were added/modified:
    - Run: ./scripts/test-command-contracts.sh (or .bat on Windows)
    - All contract tests MUST pass before committing
    - If tests fail, fix mismatches immediately
-3. Check: logs/dev-verify.log if failures
-4. Ensure all tests pass
-5. Document what was done
-6. UPDATE PROJECT_STATUS.md with session summary (MANDATORY!)
+4. Check: logs/dev-verify.log if failures
+5. Ensure all tests pass
+6. Check package & deployment status: npm run status (MANDATORY!)
+7. Document what was done
+8. UPDATE PROJECT_STATUS.md with session summary (MANDATORY!)
+9. Include status report at end of response (MANDATORY!)
+
+REMEMBER: 
+- Always cd to root folder first: cd log_scout_analyzer
+- Always use npm scripts for builds: npm run build:all
+- Never use cargo or tsc directly
+- Always run npm run status and report versions/deployment readiness
 ```
 
 ---
@@ -774,9 +918,11 @@ The sanitization isn't escaping script tags. I'll fix the regex."
 
 5. AI implements feature (GREEN)
 
-6. AI runs: npm run dev:verify
+6. AI builds from root: cd log_scout_analyzer && npm run build:all
 
-7. AI checks: logs/dev-verify.log (all passing)
+7. AI runs: npm run dev:verify (from root)
+
+8. AI checks: logs/dev-verify.log (all passing)
 
 8. AI documents in FEATURES.md
 
@@ -800,11 +946,13 @@ The sanitization isn't escaping script tags. I'll fix the regex."
 
 7. AI applies: Streaming instead of loading entire file
 
-8. AI tests: npm run test:performance
+8. AI builds from root: cd log_scout_analyzer && npm run build:all
 
-9. AI verifies: logs/test-performance.log shows 450MB usage
+9. AI tests: npm run test:performance (from root)
 
-10. Ready for human review
+10. AI verifies: logs/test-performance.log shows 450MB usage
+
+11. Ready for human review
 ```
 
 ### Scenario 3: Security Issue
@@ -815,6 +963,8 @@ The sanitization isn't escaping script tags. I'll fix the regex."
 2. AI reads: SECURITY_TESTING.md section 1
 
 3. AI writes test that reproduces XSS (RED)
+
+4. AI builds from root: cd log_scout_analyzer && npm run build:all
 
 4. AI runs: npm run test:security (fails as expected)
 
@@ -871,6 +1021,31 @@ npm run dev:verify
 
 ### Ready for Review
 All automated tests passing. Human can verify with manual QA steps above.
+
+---
+
+## 📦 Package & Deployment Status
+
+**Command Run**: `npm run status` (from log_scout_analyzer/)
+
+**Current Versions**:
+- Extension: v0.0.XXX
+- LSP Server: v0.1.XX
+
+**Build Status**:
+- Last Build: [date/time or "X hours ago"]
+- LSP Binary: [filename, size, date]
+
+**Package Status**:
+- VSIX File: ✅ Exists (vX.X.XXX) / ⚠️ Not created
+
+**Deployment Readiness**:
+- Status: ✅ Ready to deploy / ⚠️ Not ready / 🔴 Blocked
+- Next Step: [what needs to happen]
+
+**Recommended Action**:
+- [ ] `npm run package` to create VSIX
+- [ ] `npm run deploy` when ready
 ```
 
 ### Template 2: Command Failed - Need Help
@@ -898,6 +1073,24 @@ I read `logs/[command-name].log` which shows:
 
 ### Question
 [Specific question for human based on actual error]
+
+---
+
+## 📦 Package & Deployment Status
+
+**Command Run**: `npm run status` (from log_scout_analyzer/)
+
+**Current Versions**:
+- Extension: v0.0.XXX
+- LSP Server: v0.1.XX
+
+**Build Status**:
+- Last Build: [date/time]
+- Issue Encountered: [brief description]
+
+**Deployment Readiness**:
+- Status: 🔴 Blocked - Need help resolving [issue]
+- Next Step: Awaiting human guidance on [question]
 ```
 
 ### Template 3: Security Implementation
@@ -935,6 +1128,24 @@ npm run security:check-all
 
 ### Ready for Review
 All security tests passing. Human can verify security report.
+
+---
+
+## 📦 Package & Deployment Status
+
+**Command Run**: `npm run status` (from log_scout_analyzer/)
+
+**Current Versions**:
+- Extension: v0.0.XXX
+- LSP Server: v0.1.XX
+
+**Build Status**:
+- Last Build: [date/time]
+- Security Tests: ✅ All passing
+
+**Deployment Readiness**:
+- Status: ✅ Ready to deploy (security verified)
+- Next Step: Run `npm run package` when ready
 ```
 
 ---
@@ -1027,6 +1238,7 @@ You're being an efficient AI assistant when:
 ✅ You use templates from strategy documents
 ✅ You write tests before code (TDD)
 ✅ You verify frequently with npm commands
+✅ **You ALWAYS build from root folder using npm scripts**
 ✅ You document what you did clearly
 ✅ You ask questions when unsure
 ✅ You update strategy documents when you find gaps
@@ -1038,6 +1250,8 @@ You're being an efficient AI assistant when:
 - Inventing custom test patterns
 - Skipping tests
 - Making changes without verification
+- **Using cargo or tsc directly instead of npm scripts (CRITICAL FAILURE)**
+- **Building from subdirectories instead of root (CRITICAL FAILURE)**
 - Providing vague responses
 - Breaking APIs without asking
 - **Forgetting to update PROJECT_STATUS.md (CRITICAL FAILURE)**
@@ -1050,15 +1264,19 @@ You're being an efficient AI assistant when:
 1. Base fixes on actual data (logs)
 2. Follow established patterns (templates)
 3. Test thoroughly (TDD)
-4. Document clearly
-5. Ask before breaking things
-6. **Update PROJECT_STATUS.md every session (MANDATORY)**
+4. **Always build from root folder using npm scripts (MANDATORY)**
+5. **Report package & deployment status every session (MANDATORY)**
+6. Document clearly
+7. Ask before breaking things
+8. **Update PROJECT_STATUS.md every session (MANDATORY)**
 
 **Make the human's job easy:**
 - They just review your work
 - They don't debug your guesses
 - They don't write tests you skipped
 - They don't fix your breaking changes
+- **They don't fix build issues because you used cargo/tsc directly**
+- **They know exactly what state the project is in (because you ran npm run status)**
 - **They can pick up where you left off (because you updated PROJECT_STATUS.md)**
 
 **You have all the tools:**
@@ -1123,6 +1341,25 @@ Before finishing ANY session, verify:
 - [ ] Next actions clearly defined
 - [ ] Any blockers documented
 
+### Package & Deployment Status (MANDATORY - Always Report)
+- [ ] **Run status command**: `npm run status` (from root)
+- [ ] **Report current versions**: Extension version + LSP version
+- [ ] **Report build status**: When was last build, binary size/date
+- [ ] **Report package status**: VSIX exists? Version matches?
+- [ ] **Report deployment readiness**: Ready to deploy? Blockers?
+- [ ] **Include status in session summary** (copy output to documentation)
+
+**Status Report Template**:
+```
+📦 Package & Deployment Status:
+- Extension Version: v0.0.XXX
+- LSP Version: v0.1.XX
+- Last Build: [date/time]
+- VSIX Package: ✅ Exists / ⚠️ Not created
+- Deployment Ready: ✅ Yes / ⚠️ Needs [action]
+- Blockers: None / [list blockers]
+```
+
 ### Commit Strategy (MANDATORY - AI EXECUTES AUTOMATICALLY)
 - [ ] **AI assistant MUST commit all uncommitted work using terminal tool**
   - Execute commits directly via `git add` and `git commit`
@@ -1145,6 +1382,53 @@ Before finishing ANY session, verify:
 - [ ] **Check current token usage** (aim to checkpoint before 90k tokens)
 - [ ] **If >90k tokens**: Create checkpoint NOW
 - [ ] **If >110k tokens**: STOP new work, commit & document only
+
+---
+
+## 📊 Final Status Report Template
+
+**Copy this to the end of your response when finishing ANY session:**
+
+```markdown
+---
+
+## 📦 Package & Deployment Status
+
+**Command Run**: `npm run status` (from log_scout_analyzer/)
+
+**Current Versions**:
+- Extension: v0.0.XXX
+- LSP Server: v0.1.XX
+
+**Build Status**:
+- Last Build: [date/time or "X hours ago"]
+- LSP Binary: [filename, size, date]
+- Extension Compiled: ✅ Yes / ⚠️ Needs rebuild
+
+**Package Status**:
+- VSIX File: ✅ Exists (vX.X.XXX) / ⚠️ Not created
+- Location: [path to .vsix file] / N/A
+
+**Deployment Readiness**:
+- Status: ✅ Ready to deploy / ⚠️ Not ready / 🔴 Blocked
+- Reason: [explanation]
+- Next Step: [what needs to happen before deployment]
+
+**Blockers** (if any):
+- [List any blockers preventing deployment]
+
+**Recommended Action**:
+- [ ] Ready to package: `npm run package`
+- [ ] Ready to deploy: [deployment command]
+- [ ] Needs work: [what needs to be done]
+```
+
+**Why This Matters**:
+- Human knows exactly what state the project is in
+- Clear whether work is deployment-ready
+- Identifies blockers immediately
+- Provides next actionable steps
+- Creates deployment audit trail
 
 **Critical Rules:**
 1. ⚠️ PROJECT_STATUS.md update is MANDATORY every session

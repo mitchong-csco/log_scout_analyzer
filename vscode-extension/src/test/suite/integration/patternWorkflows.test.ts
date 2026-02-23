@@ -64,7 +64,7 @@ suite("Pattern Workflows - Integration Tests", () => {
       try {
         // Open test log file
         const document = await vscode.workspace.openTextDocument(testLogFile);
-        const editor = await vscode.window.showTextDocument(document);
+        await vscode.window.showTextDocument(document);
 
         // Wait for diagnostics to appear
         await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -398,8 +398,8 @@ suite("Pattern Workflows - Integration Tests", () => {
 
         try {
           (vscode.window as any).showWarningMessage = async (
-            message: string,
-            ...items: any[]
+            _message: string,
+            ..._items: any[]
           ) => {
             return undefined; // User cancelled
           };
@@ -456,7 +456,7 @@ suite("Pattern Workflows - Integration Tests", () => {
         const originalShowSaveDialog = vscode.window.showSaveDialog;
 
         try {
-          (vscode.window as any).showSaveDialog = async (options: any) => {
+          (vscode.window as any).showSaveDialog = async (_options: any) => {
             return vscode.Uri.file(exportPath);
           };
 
@@ -516,7 +516,7 @@ suite("Pattern Workflows - Integration Tests", () => {
         const originalShowOpenDialog = vscode.window.showOpenDialog;
 
         try {
-          (vscode.window as any).showOpenDialog = async (options: any) => {
+          (vscode.window as any).showOpenDialog = async (_options: any) => {
             return [vscode.Uri.file(importPath)];
           };
 
@@ -703,7 +703,7 @@ suite("Pattern Workflows - Integration Tests", () => {
       try {
         // Open test file
         const document = await vscode.workspace.openTextDocument(testLogFile);
-        const editor = await vscode.window.showTextDocument(document);
+        await vscode.window.showTextDocument(document);
 
         await new Promise((resolve) => setTimeout(resolve, 2000));
 

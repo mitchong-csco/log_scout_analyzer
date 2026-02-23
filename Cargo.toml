@@ -1,16 +1,41 @@
 # Log Scout Analyzer - Workspace Configuration
-# Note: Using standalone lsp-server/ directory (not modular crates/)
+#
+# PRODUCTION LSP SERVER: lsp-server/ (monolithic)
+#   Package name: log-scout-lsp-server
+#   Binary name:  log-scout-lsp-server.exe
+#   Status:       ✅ PRODUCTION - Use this one!
+#   Build:        cargo build --release --manifest-path lsp-server/Cargo.toml
+#
+# EXPERIMENTAL LSP SERVER: crates/lsp-server-PLACEHOLDER-DO-NOT-USE/ (modular)
+#   Package name: lsp-server-modular
+#   Binary name:  log-scout-lsp-server-MODULAR-EXPERIMENTAL.exe
+#   Status:       ❌ EXPERIMENTAL - DO NOT USE IN PRODUCTION
+#   Build:        cargo build --release --manifest-path crates/lsp-server-PLACEHOLDER-DO-NOT-USE/Cargo.toml
+#   Note:         Code-named binary to prevent confusion. Not added to workspace to prevent accidental builds.
+#
+# WARNING: The experimental server is intentionally:
+#   - NOT in workspace members (prevents accidental selection)
+#   - Has a long, obvious directory name
+#   - Builds a differently-named binary
+#   - Will exit immediately with warning if run
+#
+# When the modular server is ready to replace production:
+#   1. Complete the implementation
+#   2. Test thoroughly
+#   3. Update this Cargo.toml to swap them
+#   4. Archive old lsp-server/ directory
+#   5. Rename modular to production binary name
 
 [workspace]
 resolver = "2"
 members = [
-    "lsp-server",
+    "lsp-server",                    # ✅ PRODUCTION SERVER - Use this!
     "crates/core",
     "crates/pattern-engine",
     "crates/pattern-loader",
     "crates/quality-system",
     "crates/tagscout-integration",
-    "crates/lsp-server",
+    # "crates/lsp-server-PLACEHOLDER-DO-NOT-USE",  # ❌ EXPERIMENTAL - Excluded to prevent confusion
 ]
 exclude = [
     "archive",

@@ -2,7 +2,7 @@
   "name": "log-scout-analyzer",
   "displayName": "Log Scout Analyzer - DevTools Edition",
   "description": "Professional log analysis workbench with DevTools-style interface, pattern recognition, and real-time diagnostics",
-  "version": "0.0.175",
+  "version": "0.0.185",
   "publisher": "log-scout-team",
   "engines": {
     "vscode": "^1.75.0"
@@ -46,19 +46,14 @@
     "onView:scoutFilters",
     "*"
   ],
-  "main": "./out/extension.js",
+  "main": "./dist/extension.js",
   "contributes": {
     "viewsContainers": {
       "activitybar": [
         {
           "id": "scout-analyzer",
-          "title": "Scout Analyzer (v0.0.174 | LSP v0.1.22)",
+          "title": "Scout Analyzer (v0.0.185 | LSP v0.1.41)",
           "icon": "$(telescope)"
-        },
-        {
-          "id": "scout-inventor",
-          "title": "Scout Toolkit (v0.0.174 | LSP v0.1.22)",
-          "icon": "$(circuit-board)"
         }
       ]
     },
@@ -618,6 +613,76 @@
         "command": "logScoutAnalyzer.config.list",
         "title": "Scout: List My Cloud Configurations",
         "icon": "$(list-unordered)"
+      },
+      {
+        "command": "logScoutAnalyzer.showConsole",
+        "title": "Scout: Show Console/Output",
+        "icon": "$(output)"
+      },
+      {
+        "command": "logScoutAnalyzer.clearCache",
+        "title": "Scout: Clear Cache",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "logScoutAnalyzer.viewCacheMetadata",
+        "title": "Scout: View Cache Metadata",
+        "icon": "$(info)"
+      },
+      {
+        "command": "logScoutAnalyzer.downloadCase",
+        "title": "Scout: Download Case",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "logScoutAnalyzer.importCase",
+        "title": "Scout: Import Case",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "logScoutAnalyzer.refreshCases",
+        "title": "Scout: Refresh Cases",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "logScoutAnalyzer.bundle.openDashboard",
+        "title": "Scout: Open Bundle Dashboard",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "logScoutAnalyzer.showCacheData",
+        "title": "Scout: Show Cache Data",
+        "icon": "$(database)"
+      },
+      {
+        "command": "logScoutAnalyzer.openCachedFile",
+        "title": "Scout: Open Cached File",
+        "icon": "$(file)"
+      },
+      {
+        "command": "logScoutAnalyzer.openFileInEditor",
+        "title": "Scout: Open File in Editor",
+        "icon": "$(go-to-file)"
+      },
+      {
+        "command": "logScoutAnalyzer.revealInExplorer",
+        "title": "Scout: Reveal in Explorer",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "logScoutAnalyzer.removeCachedFile",
+        "title": "Scout: Remove Cached File",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "logScoutAnalyzer.openInNewWindow",
+        "title": "Scout: Open in New Window",
+        "icon": "$(empty-window)"
+      },
+      {
+        "command": "logScoutAnalyzer.patterns.createOverrideFromDiagnostic",
+        "title": "Scout: Create Override from Diagnostic",
+        "icon": "$(add)"
       }
     ],
     "menus": {
@@ -842,15 +907,20 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "echo \"Skipping build - using existing compiled code\"",
+    "vscode:prepublish": "npm run build:lsp && npm run package-extension",
     "update:versions": "node update-versions.js",
-    "build": "npm run update:versions && node generate-build-info.js && npm run compile",
-    "build:lsp": "cd ../lsp-server && cargo build --release --bin log-scout-lsp-server && if not exist ../vscode-extension/bin mkdir ../vscode-extension/bin && copy target\\release\\log-scout-lsp-server.exe ../vscode-extension/bin\\log-scout-lsp-server-win.exe",
-    "build:all": "npm run build:lsp && npm run build",
+    "build": "npm run update:versions && node generate-build-info.js && npm run package-extension",
+    "package-extension": "webpack --mode production --devtool hidden-source-map",
+    "webpack": "webpack --mode development",
+    "webpack-dev": "webpack --mode development --watch",
+    "build:lsp": "cd .. && cargo build --release --manifest-path lsp-server/Cargo.toml && node -e \"const crypto=require('crypto'),fs=require('fs'),path=require('path');const src=path.join('target','release','log-scout-lsp-server.exe');const dest=path.join('vscode-extension','bin','log-scout-lsp-server.exe');fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(src,dest);const stats=fs.statSync(dest);const hash=crypto.createHash('sha256').update(fs.readFileSync(dest)).digest('hex');const hashShort=hash.substring(0,16);if(stats.size<5000000){console.error('❌ ERROR: Binary too small ('+Math.round(stats.size/1024/1024)+'MB). Wrong package built!');process.exit(1);}console.log('✅ LSP binary copied to:',dest);console.log('   Size: '+(Math.round(stats.size/1024/1024))+'MB');console.log('   SHA256: '+hashShort+'...');\"",
+    "build:lsp:win": "cd .. && cargo build --release --target x86_64-pc-windows-msvc --manifest-path lsp-server/Cargo.toml && node -e \"const crypto=require('crypto'),fs=require('fs'),path=require('path');const src=path.join('target','x86_64-pc-windows-msvc','release','log-scout-lsp-server.exe');const dest=path.join('vscode-extension','bin','log-scout-lsp-server.exe');fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(src,dest);const stats=fs.statSync(dest);const hash=crypto.createHash('sha256').update(fs.readFileSync(dest)).digest('hex');const hashShort=hash.substring(0,16);if(stats.size<5000000){console.error('❌ ERROR: Binary too small ('+Math.round(stats.size/1024/1024)+'MB). Wrong package built!');process.exit(1);}console.log('✅ Windows LSP binary copied to:',dest);console.log('   Size: '+(Math.round(stats.size/1024/1024))+'MB');console.log('   SHA256: '+hashShort+'...');\"",
+    "build:all": "npm run version:increment && npm run build:lsp && npm run build",
     "check": "npm run check:lsp && npm run compile",
     "check:lsp": "cd ../lsp-server && cargo check",
     "check:lsp:release": "cd ../lsp-server && cargo check --release",
     "compile": "tsc -p ./ --noEmitOnError false || echo TypeScript warnings present && tsc -p tsconfig.webview.json --noEmitOnError false || echo TypeScript warnings present",
+    "compile-tests": "tsc -p ./ --noEmitOnError false",
     "preinstall": "if not exist logs mkdir logs",
     "watch": "tsc -watch -p ./",
     "watch:test": "npm run test:wiring:watch",
@@ -882,10 +952,11 @@
     "help": "node help.js",
     "status": "node show-status.js",
     "version:increment": "node increment-version.js",
-    "package": "npm run version:increment && npm run build:all && vsce package --allow-star-activation --out log-scout-analyzer.vsix",
+    "package": "npm run build:all && vsce package --allow-star-activation",
+    "package:only": "vsce package --allow-star-activation",
     "postpackage": "node copy-vsix.js",
     "vs:install": "code --install-extension log-scout-analyzer.vsix",
-    "deploy": "npm run package && npm run vs:install",
+    "deploy": "npm run package:only && npm run vs:install",
     "dev:setup": "npm install && npm run compile 2>&1 | tee logs/dev-setup.log",
     "dev:reset": "npm run maintain:clean && npm run dev:setup 2>&1 | tee logs/dev-reset.log",
     "dev:test-fast": "npm run test:wiring 2>&1 | tee logs/dev-test-fast.log",
@@ -958,10 +1029,13 @@
     "nyc": "^15.1.0",
     "retire": "^3.2.0",
     "stryker-cli": "^1.0.2",
+    "ts-loader": "^9.5.4",
     "ts-node": "^10.9.1",
     "typedoc": "^0.25.0",
     "typedoc-plugin-markdown": "^3.17.0",
-    "typescript": "^5.1.0"
+    "typescript": "^5.1.0",
+    "webpack": "^5.105.2",
+    "webpack-cli": "^6.0.1"
   },
   "dependencies": {
     "axios": "^1.13.5",

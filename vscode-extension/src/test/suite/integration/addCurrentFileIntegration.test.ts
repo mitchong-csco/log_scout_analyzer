@@ -222,8 +222,9 @@ suite("Add Current File to Bundle - Integration Tests", () => {
         // 3. Select the same bundle each time
 
         // Verify bundle structure
-        const bundlePath = path.join(testBundlesPath, bundleId, "bundle.json");
-        const bundleData = JSON.parse(fs.readFileSync(bundlePath, "utf8"));
+        // Bundle data would be verified here in full implementation
+        // const bundlePath = path.join(testBundlesPath, bundleId, "bundle.json");
+        // const bundleData = JSON.parse(fs.readFileSync(bundlePath, "utf8"));
 
         // After adding all 3 files:
         // assert.strictEqual(bundleData.logs.length, 3, "Bundle should have 3 logs");
@@ -305,19 +306,10 @@ suite("Add Current File to Bundle - Integration Tests", () => {
         // 2. Add to Bundle A
         // 3. Add to Bundle B (same file)
 
-        // Both bundles should reference the same file
-        const bundle1Path = path.join(
-          testBundlesPath,
-          bundleId1,
-          "bundle.json",
-        );
-        const bundle2Path = path.join(
-          testBundlesPath,
-          bundleId2,
-          "bundle.json",
-        );
-
-        // After adding to both:
+        // Both bundles would reference the same file
+        // In full implementation:
+        // const bundle1Path = path.join(testBundlesPath, bundleId1, "bundle.json");
+        // const bundle2Path = path.join(testBundlesPath, bundleId2, "bundle.json");
         // const bundle1Data = JSON.parse(fs.readFileSync(bundle1Path, "utf8"));
         // const bundle2Data = JSON.parse(fs.readFileSync(bundle2Path, "utf8"));
 

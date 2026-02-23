@@ -1,44 +1,5 @@
 {
   "version": "1.0",
   "overrides": {},
-  "custom": {
-    "custom-1771723388900-9t92lzplx": {
-      "name": "test",
-      "regex": "123",
-      "severity": "error",
-      "enabled": false,
-      "id": "custom-1771723388900-9t92lzplx",
-      "sourceType": "custom",
-      "createdAt": "2026-02-22T01:23:08.900Z",
-      "modifiedAt": "2026-02-22T01:25:27.198Z"
-    },
-    "custom-1771723400858-lt0gi2nk1": {
-      "name": "afsdfasf",
-      "regex": "asdf",
-      "severity": "error",
-      "enabled": true,
-      "id": "custom-1771723400858-lt0gi2nk1",
-      "sourceType": "custom",
-      "createdAt": "2026-02-22T01:23:20.858Z"
-    },
-    "custom-1771723412279-ega41wx56": {
-      "name": "asd",
-      "regex": "asd",
-      "severity": "warning",
-      "enabled": false,
-      "id": "custom-1771723412279-ega41wx56",
-      "sourceType": "custom",
-      "createdAt": "2026-02-22T01:23:32.279Z",
-      "modifiedAt": "2026-02-22T01:25:22.819Z"
-    },
-    "custom-1771723554092-99lup1e5g": {
-      "name": "ERROE",
-      "regex": "ERROR",
-      "severity": "error",
-      "enabled": true,
-      "id": "custom-1771723554092-99lup1e5g",
-      "sourceType": "custom",
-      "createdAt": "2026-02-22T01:25:54.092Z"
-    }
-  }
+  "custom": {}
 }

@@ -284,10 +284,10 @@ suite("Pattern Override Management - Unit Tests", () => {
   suite("4. Pattern Priority", () => {
     test("Should sort patterns by priority", () => {
       const patterns = [
-        { id: "1", priority: 50 },
-        { id: "2", priority: 10 },
-        { id: "3", priority: 100 },
-        { id: "4", priority: 25 },
+        { id: "1", name: "pattern1", regex: "", severity: "warning" as const, priority: 50 },
+        { id: "2", name: "pattern2", regex: "", severity: "warning" as const, priority: 10 },
+        { id: "3", name: "pattern3", regex: "", severity: "warning" as const, priority: 100 },
+        { id: "4", name: "pattern4", regex: "", severity: "warning" as const, priority: 25 },
       ];
 
       const sorted = sortPatternsByPriority(patterns);
@@ -300,9 +300,9 @@ suite("Pattern Override Management - Unit Tests", () => {
 
     test("Should handle equal priorities", () => {
       const patterns = [
-        { id: "1", priority: 50, createdAt: "2024-01-01" },
-        { id: "2", priority: 50, createdAt: "2024-01-02" },
-        { id: "3", priority: 50, createdAt: "2024-01-03" },
+        { id: "1", name: "pattern1", regex: "", severity: "warning" as const, priority: 50, createdAt: "2024-01-01" },
+        { id: "2", name: "pattern2", regex: "", severity: "warning" as const, priority: 50, createdAt: "2024-01-02" },
+        { id: "3", name: "pattern3", regex: "", severity: "warning" as const, priority: 50, createdAt: "2024-01-03" },
       ];
 
       const sorted = sortPatternsByPriority(patterns);
@@ -314,9 +314,9 @@ suite("Pattern Override Management - Unit Tests", () => {
 
     test("Should find first matching pattern by priority", () => {
       const patterns = [
-        { id: "low", regex: "ERROR", priority: 10 },
-        { id: "high", regex: "ERROR", priority: 100 },
-        { id: "medium", regex: "ERROR", priority: 50 },
+        { id: "low", name: "low", regex: "ERROR", severity: "warning" as const, priority: 10 },
+        { id: "high", name: "high", regex: "ERROR", severity: "error" as const, priority: 100 },
+        { id: "medium", name: "medium", regex: "ERROR", severity: "warning" as const, priority: 50 },
       ];
 
       const line = "ERROR: Test message";
@@ -327,8 +327,8 @@ suite("Pattern Override Management - Unit Tests", () => {
 
     test("Should skip disabled patterns", () => {
       const patterns = [
-        { id: "high", regex: "ERROR", priority: 100, enabled: false },
-        { id: "medium", regex: "ERROR", priority: 50, enabled: true },
+        { id: "high", name: "high", regex: "ERROR", severity: "error" as const, priority: 100, enabled: false },
+        { id: "medium", name: "medium", regex: "ERROR", severity: "warning" as const, priority: 50, enabled: true },
       ];
 
       const line = "ERROR: Test message";
@@ -402,11 +402,11 @@ suite("Pattern Override Management - Unit Tests", () => {
 
     test("Should handle import conflicts", () => {
       const existingPatterns = [
-        { id: "1", name: "Existing", regex: "TEST" },
+        { id: "1", name: "Existing", regex: "TEST", severity: "warning" as const },
       ];
 
       const newPatterns = [
-        { id: "1", name: "New", regex: "TEST" }, // Same ID
+        { id: "1", name: "New", regex: "TEST", severity: "warning" as const }, // Same ID
       ];
 
       const merged = mergePatterns(existingPatterns, newPatterns, "skip");

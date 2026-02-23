@@ -80,15 +80,25 @@ Write-Host ""
 # Step 4: Package the extension
 Write-Host "[STEP 4/4] Packaging VS Code extension..." -ForegroundColor Cyan
 try {
-    npm run package
+    # First run build:all (which includes version increment and builds everything)
+    npm run build:all
     if ($LASTEXITCODE -ne 0) {
         Write-Host ""
-        Write-Host "ERROR: npm package failed!" -ForegroundColor Red
+        Write-Host "ERROR: npm build:all failed!" -ForegroundColor Red
+        Read-Host "Press Enter to exit"
+        exit 1
+    }
+
+    # Then package the built artifacts (no version increment, just packaging)
+    npm run package:only
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host ""
+        Write-Host "ERROR: npm package:only failed!" -ForegroundColor Red
         Read-Host "Press Enter to exit"
         exit 1
     }
 } catch {
-    Write-Host "ERROR: npm package exception" -ForegroundColor Red
+    Write-Host "ERROR: npm build/package exception" -ForegroundColor Red
     Write-Host $_.Exception.Message
     Read-Host "Press Enter to exit"
     exit 1
