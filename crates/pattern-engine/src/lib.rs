@@ -3,6 +3,7 @@
 //! This crate provides the pattern matching engine for log analysis.
 //! It includes pattern matching, parameter extraction, and severity evaluation.
 
+pub mod cause_codes;
 pub mod engine;
 pub mod learning;
 pub mod matcher;
@@ -12,6 +13,7 @@ pub mod processing_context;
 pub mod types;
 pub mod vendor_detection;
 
+pub use cause_codes::{CauseCodeRegistry, Vendor};
 pub use engine::PatternEngine;
 pub use learning::{
     LearningConfig, LearningEngine, LearningSummary, NormalizationRecommendation, PatternHint,
