@@ -27,6 +27,7 @@ exports.BundleItem = exports.BundleTreeProvider = void 0;
 const vscode = __importStar(require("vscode"));
 const lspClient_1 = require("./lspClient");
 const path = __importStar(require("path"));
+const icons_1 = require("./icons");
 /**
  * Bundle tree provider for VS Code sidebar
  * Shows all bundles and their logs
@@ -420,7 +421,7 @@ class BundleItem extends vscode.TreeItem {
         this.uri = uri;
         if (type === "bundle") {
             this.contextValue = "bundle";
-            this.iconPath = new vscode.ThemeIcon("archive");
+            this.iconPath = icons_1.Icons.codicon("bundle");
             this.description = `${logCount} logs`;
             this.tooltip =
                 description ||
@@ -434,7 +435,8 @@ class BundleItem extends vscode.TreeItem {
         }
         else if (type === "log") {
             this.contextValue = "bundleLog";
-            this.iconPath = new vscode.ThemeIcon("file");
+            // Detect file type from label/uri and show appropriate icon
+            this.iconPath = this.getFileIcon(label);
             this.description = `${description || "Unknown"} • ${this.formatSize(sizeBytes)}`;
             this.tooltip = `${label}\nService: ${description}\nSize: ${this.formatSize(sizeBytes)}`;
             if (uri) {
@@ -448,10 +450,69 @@ class BundleItem extends vscode.TreeItem {
         else {
             // info type - used for messages/placeholders
             this.contextValue = "info";
-            this.iconPath = new vscode.ThemeIcon("info");
+            this.iconPath = icons_1.Icons.codicon("info");
             this.description = description;
             this.tooltip = description;
         }
+    }
+    /**
+     * Get appropriate icon based on file type
+     * Handles both traditional extensions and Cisco log naming patterns
+     */
+    getFileIcon(fileName) {
+        const lowerFileName = fileName.toLowerCase();
+        const ext = fileName.split('.').pop()?.toLowerCase() || '';
+        // Archive files (by extension)
+        if (['zip', 'tar', 'gz', 'rar', '7z', 'tgz', 'bz2', 'gzip'].includes(ext)) {
+            return icons_1.Icons.codicon('fileZip');
+        }
+        // Check if it's a compressed log (e.g., ccm.gz, sdl.tar.gz)
+        if (lowerFileName.includes('.gz') || lowerFileName.includes('.tar') || lowerFileName.includes('.zip')) {
+            return icons_1.Icons.codicon('fileZip');
+        }
+        // Known Cisco log services (no extension needed)
+        const ciscoLogPatterns = [
+            'ccm', 'sdl', 'sdli', 'tomcat', 'catalina', 'ris', 'soap', 'syslog',
+            'rtmt', 'dbl', 'audit', 'trace', 'debug', 'core', 'alertmgr',
+            'cdp', 'tftp', 'iis', 'ctios', 'jtapi', 'tapi', 'cdragent',
+            'messenger', 'dhcp', 'platform', 'install', 'upgrade', 'migration',
+            'activemq', 'changenotify', 'crssnapshot', 'drf', 'epas', 'snmp'
+        ];
+        // Check if filename starts with or contains known Cisco service names
+        for (const pattern of ciscoLogPatterns) {
+            if (lowerFileName.startsWith(pattern) ||
+                lowerFileName.includes(`/${pattern}`) ||
+                lowerFileName.includes(`\\${pattern}`)) {
+                return icons_1.Icons.codicon('log');
+            }
+        }
+        // Log files by extension
+        if (['log', 'txt', 'out'].includes(ext)) {
+            return icons_1.Icons.codicon('log');
+        }
+        // Files with log-like patterns (e.g., file.log.1, file.log.2024-02-23)
+        if (lowerFileName.includes('.log') || lowerFileName.includes('_log')) {
+            return icons_1.Icons.codicon('log');
+        }
+        // Code/Config files
+        if (['js', 'ts', 'json', 'xml', 'html', 'css', 'yaml', 'yml', 'conf', 'cfg', 'ini', 'properties'].includes(ext)) {
+            return icons_1.Icons.codicon('fileCode');
+        }
+        // Config-like files (no extension)
+        if (lowerFileName.includes('config') || lowerFileName.includes('settings') ||
+            lowerFileName.includes('.conf') || lowerFileName.includes('.cfg')) {
+            return icons_1.Icons.codicon('fileCode');
+        }
+        // If it looks like a text file (common suffixes)
+        if (lowerFileName.match(/\.(1|2|3|\d+)$/) || // Rotated logs: file.log.1
+            lowerFileName.match(/\d{4}-\d{2}-\d{2}/) || // Date pattern
+            lowerFileName.match(/\d{8}/) || // Date pattern: 20240223
+            lowerFileName.includes('stdout') ||
+            lowerFileName.includes('stderr')) {
+            return icons_1.Icons.codicon('log');
+        }
+        // Default to generic file icon
+        return icons_1.Icons.codicon('file');
     }
     formatSize(bytes) {
         if (bytes < 1024)

@@ -2091,24 +2091,7 @@ function activate(context) {
     }));
     // Import Package Command
     context.subscriptions.push(vscode.commands.registerCommand("logScoutAnalyzer.bundle.importPackage", async (uri) => {
-        // Prompt for Case ID first (REQUIRED)
-        const caseId = await vscode.window.showInputBox({
-            prompt: "Enter Case ID (required)",
-            placeHolder: "e.g., 700356763",
-            validateInput: (value) => {
-                if (!value || value.trim().length === 0) {
-                    return "Case ID is required";
-                }
-                if (!/^\d+$/.test(value.trim())) {
-                    return "Case ID must contain only numbers";
-                }
-                return null;
-            },
-        });
-        if (!caseId) {
-            outputChannel?.appendLine("✗ Import cancelled: Case ID is required");
-            return;
-        }
+        // Step 1: Select file first
         let packagePath;
         if (uri) {
             packagePath = uri.fsPath;
@@ -2131,6 +2114,45 @@ function activate(context) {
             return;
         }
         const filename = packagePath.split(/[\\/]/).pop() || packagePath;
+        // Step 2: Try to extract case ID from filename
+        let extractedCaseId;
+        // QCSONE format: 700440257_qcsone_download_selected.zip
+        if (filename.includes("_qcsone_")) {
+            const parts = filename.split("_");
+            if (parts.length > 0 && /^\d+$/.test(parts[0])) {
+                extractedCaseId = parts[0];
+                outputChannel?.appendLine(`✓ Detected case ID from filename: ${extractedCaseId}`);
+            }
+        }
+        // Step 3: Use extracted case ID or prompt if not found
+        let caseId;
+        if (extractedCaseId) {
+            // Use extracted value directly, no prompt needed
+            caseId = extractedCaseId;
+            outputChannel?.appendLine(`✓ Using auto-detected case ID: ${caseId}`);
+        }
+        else {
+            // No extraction successful, prompt user (required)
+            caseId = await vscode.window.showInputBox({
+                prompt: "Enter Case ID (required)",
+                placeHolder: "e.g., 700356763",
+                validateInput: (value) => {
+                    if (!value || value.trim().length === 0) {
+                        return "Case ID is required";
+                    }
+                    if (!/^\d+$/.test(value.trim())) {
+                        return "Case ID must contain only numbers";
+                    }
+                    return null;
+                },
+            });
+            if (!caseId) {
+                outputChannel?.appendLine("✗ Import cancelled: Case ID is required");
+                return;
+            }
+        }
+        // TODO: Add optional prompts for log product type and log service
+        // TODO: Discussion needed on bundle service discovery mechanism
         await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
             title: `Importing ${filename}`,
@@ -2346,25 +2368,7 @@ function activate(context) {
             vscode.window.showErrorMessage("Bundle tree provider not initialized");
             return;
         }
-        // Prompt for Case ID first (REQUIRED)
-        const caseId = await vscode.window.showInputBox({
-            prompt: "Enter Case ID (required)",
-            placeHolder: "e.g., 700356763",
-            validateInput: (value) => {
-                if (!value || value.trim().length === 0) {
-                    return "Case ID is required";
-                }
-                if (!/^\d+$/.test(value.trim())) {
-                    return "Case ID must contain only numbers";
-                }
-                return null;
-            },
-        });
-        if (!caseId) {
-            outputChannel?.appendLine("✗ Import cancelled: Case ID is required");
-            return;
-        }
-        // Show file picker
+        // Step 1: Show file picker first
         const result = await vscode.window.showOpenDialog({
             canSelectFiles: true,
             canSelectFolders: false,
@@ -2374,16 +2378,57 @@ function activate(context) {
             },
             title: "Select Log Archive to Import",
         });
-        if (result && result.length > 0) {
-            const archivePath = result[0].fsPath;
-            outputChannel?.appendLine(`Importing archive: ${archivePath} (Case: ${caseId})`);
-            try {
-                await bundleTreeProvider.importPackage(archivePath, undefined, caseId.trim());
-                outputChannel?.appendLine("✓ Import completed successfully");
+        if (!result || result.length === 0) {
+            return;
+        }
+        const archivePath = result[0].fsPath;
+        const filename = archivePath.split(/[\\/]/).pop() || archivePath;
+        // Step 2: Try to extract case ID from filename
+        let extractedCaseId;
+        // QCSONE format: 700440257_qcsone_download_selected.zip
+        if (filename.includes("_qcsone_")) {
+            const parts = filename.split("_");
+            if (parts.length > 0 && /^\d+$/.test(parts[0])) {
+                extractedCaseId = parts[0];
+                outputChannel?.appendLine(`✓ Detected case ID from filename: ${extractedCaseId}`);
             }
-            catch (error) {
-                outputChannel?.appendLine(`✗ Import failed: ${error}`);
+        }
+        // Step 3: Use extracted case ID or prompt if not found
+        let caseId;
+        if (extractedCaseId) {
+            // Use extracted value directly, no prompt needed
+            caseId = extractedCaseId;
+            outputChannel?.appendLine(`✓ Using auto-detected case ID: ${caseId}`);
+        }
+        else {
+            // No extraction successful, prompt user (required)
+            caseId = await vscode.window.showInputBox({
+                prompt: "Enter Case ID (required)",
+                placeHolder: "e.g., 700356763",
+                validateInput: (value) => {
+                    if (!value || value.trim().length === 0) {
+                        return "Case ID is required";
+                    }
+                    if (!/^\d+$/.test(value.trim())) {
+                        return "Case ID must contain only numbers";
+                    }
+                    return null;
+                },
+            });
+            if (!caseId) {
+                outputChannel?.appendLine("✗ Import cancelled: Case ID is required");
+                return;
             }
+        }
+        outputChannel?.appendLine(`Importing archive: ${archivePath} (Case: ${caseId})`);
+        // TODO: Add optional prompts for log product type and log service
+        // TODO: Discussion needed on bundle service discovery mechanism
+        try {
+            await bundleTreeProvider.importPackage(archivePath, undefined, caseId.trim());
+            outputChannel?.appendLine("✓ Import completed successfully");
+        }
+        catch (error) {
+            outputChannel?.appendLine(`✗ Import failed: ${error}`);
         }
     }));
     // Analyze Bundle Command

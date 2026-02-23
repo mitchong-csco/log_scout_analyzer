@@ -849,8 +849,16 @@ impl BundleManager {
                 .and_then(|s| Self::parse_case_number(s))
         });
 
-        // Generate bundle name if not provided
-        let final_bundle_name = bundle_name.unwrap_or_else(|| {
+        // Create bundle metadata
+        let mut metadata = BundleMetadata::default();
+        metadata.case_id = detected_case_id.clone();
+        metadata.tags.push("imported".to_string());
+        if detected_case_id.is_some() {
+            metadata.tags.push("source:QCSONE".to_string());
+        }
+
+        // Use temporary name for initial creation
+        let temp_bundle_name = bundle_name.clone().unwrap_or_else(|| {
             if let Some(case_id) = &detected_case_id {
                 format!("Case {}", case_id)
             } else {
@@ -864,16 +872,31 @@ impl BundleManager {
             }
         });
 
-        // Create bundle metadata
-        let mut metadata = BundleMetadata::default();
-        metadata.case_id = detected_case_id.clone();
-        metadata.tags.push("imported".to_string());
-        if detected_case_id.is_some() {
-            metadata.tags.push("source:QCSONE".to_string());
-        }
-
         // Create the bundle
-        let bundle_id = self.create_bundle(final_bundle_name.clone(), None, Some(metadata))?;
+        let bundle_id = self.create_bundle(temp_bundle_name, None, Some(metadata))?;
+
+        // Now update the bundle name to include bundle_id in format "case_id bundle_id"
+        let final_bundle_name = if bundle_name.is_none() {
+            if let Some(case_id) = &detected_case_id {
+                format!("{} {}", case_id, bundle_id)
+            } else {
+                format!(
+                    "Import {} {}",
+                    package_path
+                        .file_stem()
+                        .and_then(|s| s.to_str())
+                        .unwrap_or("Unknown"),
+                    bundle_id
+                )
+            }
+        } else {
+            bundle_name.unwrap()
+        };
+
+        // Update the bundle with the final name
+        if let Some(bundle) = self.bundles.get_mut(&bundle_id) {
+            bundle.name = final_bundle_name.clone();
+        }
 
         tracing::info!("Created bundle {} for import", bundle_id);
 
@@ -1010,7 +1033,16 @@ impl BundleManager {
 
         progress("Creating bundle...", 52);
 
-        let final_bundle_name = bundle_name.unwrap_or_else(|| {
+        // Create bundle first to get bundle_id, then update name with format "case_id bundle_id"
+        let mut metadata = BundleMetadata::default();
+        metadata.case_id = detected_case_id.clone();
+        metadata.tags.push("imported".to_string());
+        if detected_case_id.is_some() {
+            metadata.tags.push("source:QCSONE".to_string());
+        }
+
+        // Use temporary name for initial creation
+        let temp_bundle_name = bundle_name.clone().unwrap_or_else(|| {
             if let Some(case_id) = &detected_case_id {
                 format!("Case {}", case_id)
             } else {
@@ -1024,14 +1056,30 @@ impl BundleManager {
             }
         });
 
-        let mut metadata = BundleMetadata::default();
-        metadata.case_id = detected_case_id.clone();
-        metadata.tags.push("imported".to_string());
-        if detected_case_id.is_some() {
-            metadata.tags.push("source:QCSONE".to_string());
-        }
+        let bundle_id = self.create_bundle(temp_bundle_name, None, Some(metadata))?;
 
-        let bundle_id = self.create_bundle(final_bundle_name.clone(), None, Some(metadata))?;
+        // Now update the bundle name to include bundle_id in format "case_id bundle_id"
+        let final_bundle_name = if bundle_name.is_none() {
+            if let Some(case_id) = &detected_case_id {
+                format!("{} {}", case_id, bundle_id)
+            } else {
+                format!(
+                    "Import {} {}",
+                    package_path
+                        .file_stem()
+                        .and_then(|s| s.to_str())
+                        .unwrap_or("Unknown"),
+                    bundle_id
+                )
+            }
+        } else {
+            bundle_name.unwrap()
+        };
+
+        // Update the bundle with the final name
+        if let Some(bundle) = self.bundles.get_mut(&bundle_id) {
+            bundle.name = final_bundle_name.clone();
+        }
 
         tracing::info!("Created bundle {} for import", bundle_id);
         progress(&format!("Bundle created: {}", bundle_id), 55);
@@ -1429,7 +1477,8 @@ mod tests {
 
         // Verify case number was detected
         assert_eq!(result.case_id, Some("700440257".to_string()));
-        assert_eq!(result.bundle_name, "Case 700440257");
+        // Bundle name should now be in format "case_id bundle_id"
+        assert!(result.bundle_name.starts_with("700440257 bundle_"));
 
         // Verify logs were imported
         assert_eq!(result.summary.total_files, 2);
