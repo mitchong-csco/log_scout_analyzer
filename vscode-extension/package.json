@@ -2,7 +2,7 @@
   "name": "log-scout-analyzer",
   "displayName": "Log Scout Analyzer - DevTools Edition",
   "description": "Professional log analysis workbench with DevTools-style interface, pattern recognition, and real-time diagnostics",
-  "version": "0.0.185",
+  "version": "0.0.189",
   "publisher": "log-scout-team",
   "engines": {
     "vscode": "^1.75.0"
@@ -52,7 +52,7 @@
       "activitybar": [
         {
           "id": "scout-analyzer",
-          "title": "Scout Analyzer (v0.0.185 | LSP v0.1.41)",
+          "title": "Scout Analyzer (v0.0.189 | LSP v0.1.41)",
           "icon": "$(telescope)"
         }
       ]
@@ -389,8 +389,8 @@
       },
       {
         "command": "logScoutAnalyzer.bundle.importPackage",
-        "title": "Scout: Create Bundle from Archive",
-        "icon": "$(file-zip)"
+        "title": "Scout: Import Package",
+        "icon": "$(archive)"
       },
       {
         "command": "logScoutAnalyzer.bundle.addCurrentFile",
@@ -776,6 +776,16 @@
           "command": "logScoutAnalyzer.refreshCases",
           "when": "view == scoutCases",
           "group": "navigation@3"
+        },
+        {
+          "command": "logScoutAnalyzer.bundle.create",
+          "when": "view == scoutBundles",
+          "group": "navigation@1"
+        },
+        {
+          "command": "logScoutAnalyzer.bundle.importPackage",
+          "when": "view == scoutBundles",
+          "group": "navigation@2"
         }
       ],
       "view/item/context": [
@@ -1050,6 +1060,7 @@
   "dependencies": {
     "axios": "^1.13.5",
     "js-yaml": "^4.1.0",
+    "lucide-static": "^0.575.0",
     "vscode-languageclient": "^9.0.1"
   },
   "repository": {

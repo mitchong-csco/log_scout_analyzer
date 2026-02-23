@@ -189,8 +189,11 @@ export async function startLSPClient(
       outputChannel.appendLine(`📝 LSP server log: ${logger.getLSPLogPath()}`);
     }
 
-    // Set up diagnostic handler to process LSP diagnostics
-    setupDiagnosticHandlers(client, outputChannel);
+    // Note: LSP client automatically handles diagnostics via the Language Server Protocol.
+    // The Problems panel behavior is controlled by VS Code's "problems.autoReveal" setting.
+    // To suppress automatic Problems panel opening:
+    //   File > Preferences > Settings > Search "problems.autoReveal"
+    //   Set to "never" to prevent automatic opening
 
     return client;
   } catch (error: any) {
@@ -241,36 +244,4 @@ export function getLSPServerName(): string | undefined {
     return undefined;
   }
   return client.initializeResult.serverInfo?.name;
-}
-
-/**
- * Set up handlers for LSP diagnostics
- * This allows the extension to process diagnostics from the LSP server
- */
-function setupDiagnosticHandlers(
-  lspClient: LanguageClient,
-  outputChannel: vscode.OutputChannel,
-): void {
-  // Handler for when LSP server publishes diagnostics
-  lspClient.onNotification("textDocument/publishDiagnostics", (params: any) => {
-    const uri = vscode.Uri.parse(params.uri);
-    const diagnostics = params.diagnostics as vscode.Diagnostic[];
-
-    // Log diagnostic information
-    outputChannel.appendLine(
-      `📊 Received ${diagnostics.length} diagnostics from LSP server for ${uri.fsPath}`,
-    );
-    logger?.logLSPDiagnostics(uri.fsPath, diagnostics.length);
-
-    // Publish diagnostics through VS Code's diagnostic collection
-    const diagnosticCollection =
-      vscode.languages.createDiagnosticCollection("log-scout-lsp");
-    diagnosticCollection.set(uri, diagnostics);
-
-    // Note: The extension can also listen to vscode.languages.onDidChangeDiagnostics
-    // to react to these diagnostics in its UI components
-  });
-
-  outputChannel.appendLine("✅ LSP diagnostic handlers configured");
-  logger?.logLSP("LSP diagnostic handlers configured", "info");
 }
