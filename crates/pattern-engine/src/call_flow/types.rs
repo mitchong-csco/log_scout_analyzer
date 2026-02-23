@@ -127,6 +127,9 @@ impl CallSession {
         if self.messages.len() == 1 {
             self.update_endpoints_from_first_message();
         }
+
+        // Calculate timings
+        self.calculate_timings();
     }
 
     /// Update endpoints from first INVITE message

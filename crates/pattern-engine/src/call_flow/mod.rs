@@ -50,6 +50,7 @@
 
 pub mod correlator;
 pub mod state_machine;
+pub mod timing_analyzer;
 pub mod types;
 
 // Re-export main types for convenience
