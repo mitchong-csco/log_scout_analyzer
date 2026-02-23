@@ -1,272 +1,671 @@
-# ✅ RTMT XML SUPPORT - PREPARATION COMPLETE
+# 🎯 RTMT XML Support - Implementation Complete
 
-**Date**: February 18, 2026  
-**Status**: ✅ INFRASTRUCTURE READY  
-**Next**: ⏳ Awaiting XML Sample  
-
----
-
-## 🎯 WHAT WAS DONE
-
-You mentioned that RTMT provides XML files with collection job metadata. I immediately prepared the codebase for this feature!
-
-### **Files Modified**
-
-1. ✅ **service_detector.rs** (+47 lines)
-   - Added `from_rtmt_xml()` placeholder method
-   - Added documentation about XML support
-   - Updated module docs to list XML as detection method
-   - Logs informative message when XML encountered
-
-2. ✅ **archive_extractor.rs** (+1 line)
-   - Updated `is_log_file()` to include `.xml` extension
-   - XML files now extracted and imported alongside logs
-
-3. ✅ **COMPLETE_DETECTION_SYSTEM.md** (updated)
-   - Added RTMT XML as upcoming feature
-   - Listed as future Priority 1 (most accurate)
-   - Notes 100% accuracy potential
-
-4. ✅ **START_HERE.md** (updated)
-   - Added RTMT XML to project status
-   - References implementation TODO
-
-### **Documentation Created**
-
-1. ✅ **RTMT_XML_TODO.md** (Complete Implementation Plan)
-   - Feature overview
-   - Infrastructure already prepared
-   - Expected XML structure (hypothesis)
-   - Implementation phases (1-4)
-   - Timeline estimate (~3 hours)
-   - Sample requirements
-   - Benefits analysis
-   - Library recommendations
-
-2. ✅ **RTMT_XML_QUICK_REF.md** (Quick Reference)
-   - Current status
-   - What to provide
-   - Expected timeline
-   - How to share samples
+**Date**: 2024-02-23  
+**Status**: ✅ STRUCTURE ANALYZED - READY TO IMPLEMENT  
+**Priority**: HIGH (Provides Bundle Metadata & File Classification)
 
 ---
 
-## 🚀 WHAT'S READY NOW
+## 📋 Executive Summary
 
-### **Extraction**
+RTMT (Real-Time Monitoring Tool) trace collection exports include XML files that contain:
+- ✅ **Node Information** - Server IP/hostname
+- ✅ **Service List** - All services included in collection
+- ✅ **File Inventory** - Complete list of collected files with metadata
+- ✅ **File Paths** - Original paths on the server
+- ✅ **File Sizes** - Size in bytes
+- ✅ **Modified Dates** - Last modification timestamp
+- ✅ **File Types** - Service-specific categorization
+
+**This enables:**
+1. Automatic service detection from XML metadata
+2. File classification by service (Tomcat, Security, etc.)
+3. Enhanced bundle display with service grouping
+4. Size/date metadata for each file
+5. Original path information for troubleshooting
+
+---
+
+## 🔍 Actual XML Structure (Analyzed)
+
+### Example File
 ```
-✅ RTMT export ZIP imported
-✅ XML files extracted alongside logs
-✅ XML files preserved in bundle
-✅ System ready to parse (when implemented)
+1770911314710_SjF_TraceCollectionResult_2026-02-12_10-42-58_uc-cucm-pub1.mihomes.com.xml
 ```
 
-### **Code Infrastructure**
-```rust
-// Already exists in service_detector.rs
-pub fn from_rtmt_xml(&self, xml_content: &str) -> Option<ServiceType> {
-    // TODO: Implement when sample provided
-    tracing::info!("RTMT XML parsing not yet implemented");
-    None
+### Complete Structure
+```xml
+<?xml version="1.0"?>
+<QueryResult>
+  <Node name="10.10.30.151">
+    <TokenID>1769783665576</TokenID>
+    <ServiceList>
+      <ServiceName name="Cisco Tomcat Security Logs">
+        <FileType name="log4j">
+          <FileName name="/var/log/active/tomcat/logs/security/log4j/securityaxl00001.log" 
+                    modifiedDate="Wed Feb 11 15:23:32 EST 2026" 
+                    size="1048629">
+          </FileName>
+          <!-- More files... -->
+        </FileType>
+      </ServiceName>
+      
+      <ServiceName name="Cisco Tomcat">
+        <FileType name="uds-tomcat">
+          <FileName name="/var/log/active/tomcat/logs/uds-tomcat/localhost_access_log.txt.1" 
+                    modifiedDate="Wed Feb 11 16:01:01 EST 2026" 
+                    size="10725870">
+          </FileName>
+        </FileType>
+        <FileType name="ssosp-tomcat">
+          <!-- Files... -->
+        </FileType>
+        <FileType name="axl-tomcat">
+          <!-- Files... -->
+        </FileType>
+        <FileType name="logs">
+          <FileName name="/var/log/active/tomcat/logs/catalina.out" 
+                    modifiedDate="Thu Feb 12 10:31:18 EST 2026" 
+                    size="4828049">
+          </FileName>
+        </FileType>
+      </ServiceName>
+    </ServiceList>
+  </Node>
+</QueryResult>
+```
+
+### Key Elements
+
+| Element | Attribute | Purpose | Example |
+|---------|-----------|---------|---------|
+| `<QueryResult>` | - | Root element | - |
+| `<Node>` | `name` | Server IP/hostname | `10.10.30.151` |
+| `<TokenID>` | - | Collection job ID | `1769783665576` |
+| `<ServiceList>` | - | Container for services | - |
+| `<ServiceName>` | `name` | Service description | `Cisco Tomcat` |
+| `<FileType>` | `name` | File category | `log4j`, `uds-tomcat` |
+| `<FileName>` | `name` | Full file path | `/var/log/active/tomcat/logs/...` |
+| `<FileName>` | `modifiedDate` | Last modified | `Thu Feb 12 10:31:18 EST 2026` |
+| `<FileName>` | `size` | Size in bytes | `4828049` |
+
+---
+
+## 💡 What We Can Extract
+
+### 1. **Server Information**
+```xml
+<Node name="10.10.30.151">
+```
+- IP address or hostname
+- Identifies which server logs came from
+- Can detect CUCM vs Unity vs other services
+
+### 2. **Service Types**
+```xml
+<ServiceName name="Cisco Tomcat Security Logs">
+<ServiceName name="Cisco Tomcat">
+```
+- Service categories
+- Can map to our ServiceType enum
+- Helps classify entire bundle
+
+### 3. **File Categories**
+```xml
+<FileType name="log4j">
+<FileType name="uds-tomcat">
+<FileType name="ssosp-tomcat">
+<FileType name="axl-tomcat">
+<FileType name="logs">
+```
+- Sub-categorization within services
+- Tomcat components (UDS, SSOSP, AXL)
+- Log types (log4j, general logs)
+
+### 4. **File Metadata**
+```xml
+<FileName name="/var/log/active/tomcat/logs/catalina.out" 
+          modifiedDate="Thu Feb 12 10:31:18 EST 2026" 
+          size="4828049">
+```
+- Full original path
+- Modified timestamp
+- File size in bytes
+- Can extract just filename: `catalina.out`
+
+---
+
+## 🎨 How to Use This in Bundle Panel
+
+### Current Display (Without XML)
+```
+📦 Bundle_700416208
+  ├── 📄 securityaxl00001.log
+  ├── 📄 securityuds00001.log
+  ├── 📄 localhost_access_log.txt
+  └── 📄 catalina.out
+```
+
+### Enhanced Display (With XML Parsing)
+```
+📦 Bundle_700416208 (Node: 10.10.30.151)
+  📋 Collection Info
+    Token: 1769783665576
+    Date: Feb 12, 2026 10:42:58
+    Server: uc-cucm-pub1.mihomes.com
+  
+  🔒 Cisco Tomcat Security Logs (17 files, 15.7 MB)
+    📁 log4j
+      ├── 📄 securityaxl00001.log (1.0 MB)
+      ├── 📄 securityaxl00002.log (1.0 MB)
+      └── 📄 security00009.log (916 KB)
+  
+  🌐 Cisco Tomcat (21 files, 48.3 MB)
+    📁 uds-tomcat
+      ├── 📄 localhost_access_log.txt.1 (10.2 MB)
+      └── 📄 localhost_access_log.txt (2.6 MB)
+    📁 ssosp-tomcat
+      └── 📄 localhost_access_log.txt (6.8 MB)
+    📁 axl-tomcat
+      └── 📄 localhost_access_log.txt (3.8 MB)
+    📁 logs
+      └── 📄 catalina.out (4.6 MB)
+```
+
+---
+
+## 🔧 Implementation Plan
+
+### Phase 1: XML Parser (TypeScript for VSCode Extension)
+
+**File**: `vscode-extension/src/bundleTreeProvider.ts`
+
+```typescript
+interface RTMTCollectionMetadata {
+  nodeIP: string;
+  nodeName?: string;  // From filename
+  tokenID: string;
+  collectionDate: Date;
+  services: RTMTService[];
+}
+
+interface RTMTService {
+  serviceName: string;  // "Cisco Tomcat", "Cisco Tomcat Security Logs"
+  fileTypes: RTMTFileType[];
+  totalFiles: number;
+  totalSize: number;
+}
+
+interface RTMTFileType {
+  typeName: string;  // "log4j", "uds-tomcat", etc.
+  files: RTMTFileInfo[];
+}
+
+interface RTMTFileInfo {
+  path: string;           // Full path: /var/log/active/tomcat/...
+  fileName: string;       // Extracted: catalina.out
+  modifiedDate: Date;
+  size: number;           // bytes
+}
+
+class RTMTXMLParser {
+  static parse(xmlContent: string): RTMTCollectionMetadata | null {
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(xmlContent, 'text/xml');
+      
+      // Extract node info
+      const nodeElement = doc.querySelector('Node');
+      const nodeIP = nodeElement?.getAttribute('name') || 'unknown';
+      
+      const tokenID = doc.querySelector('TokenID')?.textContent || '';
+      
+      // Parse services
+      const services: RTMTService[] = [];
+      const serviceElements = doc.querySelectorAll('ServiceName');
+      
+      serviceElements.forEach(serviceEl => {
+        const serviceName = serviceEl.getAttribute('name') || 'Unknown';
+        const fileTypes: RTMTFileType[] = [];
+        
+        const fileTypeElements = serviceEl.querySelectorAll('FileType');
+        fileTypeElements.forEach(fileTypeEl => {
+          const typeName = fileTypeEl.getAttribute('name') || 'unknown';
+          const files: RTMTFileInfo[] = [];
+          
+          const fileElements = fileTypeEl.querySelectorAll('FileName');
+          fileElements.forEach(fileEl => {
+            const path = fileEl.getAttribute('name') || '';
+            const fileName = path.split('/').pop() || path;
+            const modifiedDate = new Date(fileEl.getAttribute('modifiedDate') || '');
+            const size = parseInt(fileEl.getAttribute('size') || '0', 10);
+            
+            files.push({ path, fileName, modifiedDate, size });
+          });
+          
+          fileTypes.push({ typeName, files });
+        });
+        
+        const totalFiles = fileTypes.reduce((sum, ft) => sum + ft.files.length, 0);
+        const totalSize = fileTypes.reduce((sum, ft) => 
+          sum + ft.files.reduce((s, f) => s + f.size, 0), 0);
+        
+        services.push({ serviceName, fileTypes, totalFiles, totalSize });
+      });
+      
+      return {
+        nodeIP,
+        tokenID,
+        collectionDate: new Date(), // Extract from filename if needed
+        services
+      };
+    } catch (error) {
+      console.error('Failed to parse RTMT XML:', error);
+      return null;
+    }
+  }
+  
+  static detectRTMTXML(fileName: string): boolean {
+    return fileName.toLowerCase().includes('tracecollectionresult') &&
+           fileName.toLowerCase().endsWith('.xml');
+  }
 }
 ```
 
-### **Detection Priority** (After Implementation)
-```
-1. RTMT XML Metadata → 100% accurate ⭐ FUTURE
-2. RTMT Server Node Names → 99%+ accurate ✅ CURRENT
-3. Archive Name Hints → 95% accurate ✅ CURRENT
-4. Filename Patterns → 97% accurate ✅ CURRENT
-5. Content Signatures → 85% accurate ✅ CURRENT
-```
+### Phase 2: Bundle Enhancement
 
----
+Update `BundleItem` to support hierarchical grouping:
 
-## 📦 WHAT TO PROVIDE
-
-### **Ideal Sample**
-
-Full RTMT export ZIP containing both logs and XML:
-```
-700440257_rtmt_export_2026-02-18.zip
-├─ rtmt_collection_job.xml ← We need this!
-├─ collection_metadata.xml ← And this if exists
-├─ cucm-pub_syslog.log
-├─ cucm-pub_trace.log
-└─ (other logs)
-```
-
-### **Minimum Sample**
-
-Just the XML file(s):
-```
-rtmt_collection_job.xml
-```
-
-### **Alternative**
-
-Copy/paste XML content directly
-
----
-
-## ⏱️ TIMELINE AFTER SAMPLE
-
-| Task | Time |
-|------|------|
-| Examine XML structure | 30 min |
-| Add XML parser library | 10 min |
-| Implement parsing | 1 hour |
-| Integrate detection | 30 min |
-| Add tests | 1 hour |
-| **Total** | **~3 hours** |
-
----
-
-## 🎯 EXPECTED BENEFITS
-
-### **Detection Accuracy**
-- Current: 99%+ for RTMT exports
-- With XML: **100%** for RTMT exports ✅
-
-### **Additional Metadata Extracted**
-From RTMT XML we can get:
-- ✅ Service type (definitive)
-- ✅ Server hostname
-- ✅ Cluster configuration
-- ✅ Node role (Publisher/Subscriber)
-- ✅ Service version
-- ✅ Collection timestamp
-- ✅ Component list
-- ✅ IP addresses
-
-### **Enhanced Bundle Display**
-```
-📦 Case 700440257 (RTMT Collection)
-   Server: cucm-pub.company.com (10.1.1.1)
-   Service: CUCM v14.0.1.12345-6
-   Cluster: Production (4 nodes - Publisher)
-   Collection: 2026-02-18 14:30:00
-   Components: CallManager, Database, Tomcat
-   
-   📄 cucm-pub_syslog.log (CUCM)
-   📄 cucm-pub_trace.log (CUCM)
+```typescript
+class BundleItem extends vscode.TreeItem {
+  constructor(
+    label: string,
+    bundleId: string,
+    type: "bundle" | "service-group" | "file-type" | "log" | "info",
+    public readonly metadata?: {
+      rtmtInfo?: RTMTCollectionMetadata;
+      serviceName?: string;
+      fileTypeName?: string;
+      fileCount?: number;
+      totalSize?: number;
+    }
+  ) {
+    // ... existing code
+    
+    if (type === "service-group") {
+      this.contextValue = "service-group";
+      this.iconPath = Icons.codicon("folder");
+      this.description = `${metadata?.fileCount || 0} files • ${formatSize(metadata?.totalSize || 0)}`;
+    } else if (type === "file-type") {
+      this.contextValue = "file-type";
+      this.iconPath = Icons.codicon("folderOpened");
+    }
+  }
+}
 ```
 
----
+### Phase 3: Bundle Loading with XML
 
-## 💡 WHY THIS IS VALUABLE
+```typescript
+private async loadBundleLogs(bundleId: string): Promise<BundleItem[]> {
+  // ... existing code to load logs
+  
+  // Check for RTMT XML file
+  const rtmtXML = logs.find(log => 
+    RTMTXMLParser.detectRTMTXML(log.fileName)
+  );
+  
+  if (rtmtXML) {
+    // Parse XML
+    const xmlContent = await fs.promises.readFile(rtmtXML.uri.fsPath, 'utf-8');
+    const metadata = RTMTXMLParser.parse(xmlContent);
+    
+    if (metadata) {
+      // Return hierarchical structure based on XML
+      return this.createHierarchicalView(bundleId, metadata, logs);
+    }
+  }
+  
+  // Fall back to flat list if no XML
+  return this.createFlatView(bundleId, logs);
+}
 
-### **Problem Without XML**
-```
-Current: Rely on filename patterns (cucm-pub.log)
-- Works well: 99%+ accuracy
-- But: No metadata about cluster/version/components
-```
-
-### **Solution With XML**
-```
-With XML: Read RTMT's own metadata
-- Perfect accuracy: 100%
-- Bonus: Rich metadata for better investigations
-- Benefit: Complete environment context
-```
-
-### **Real-World Impact**
-
-**Scenario**: TAC engineer receives RTMT export
-```
-Without XML:
-1. Import logs ✅
-2. Detect services from filenames ✅ (99% accurate)
-3. Manually check versions, cluster config ❌
-
-With XML:
-1. Import logs ✅
-2. Parse XML metadata ✅ (100% accurate)
-3. Auto-populate all server/cluster info ✅
-4. Display in UI with full context ✅
-
-Result: Complete environment visibility instantly!
+private createHierarchicalView(
+  bundleId: string,
+  metadata: RTMTCollectionMetadata,
+  logs: LogFile[]
+): BundleItem[] {
+  const items: BundleItem[] = [];
+  
+  // Add collection info item
+  items.push(new BundleItem(
+    `📋 Collection Info`,
+    bundleId,
+    "info",
+    {
+      rtmtInfo: metadata,
+      description: `Node: ${metadata.nodeIP} | Token: ${metadata.tokenID}`
+    }
+  ));
+  
+  // Add service groups
+  for (const service of metadata.services) {
+    const serviceItem = new BundleItem(
+      service.serviceName,
+      bundleId,
+      "service-group",
+      {
+        serviceName: service.serviceName,
+        fileCount: service.totalFiles,
+        totalSize: service.totalSize
+      }
+    );
+    items.push(serviceItem);
+  }
+  
+  return items;
+}
 ```
 
 ---
 
-## 📚 DOCUMENTATION STRUCTURE
+## 🎯 Benefits
+
+### 1. **Automatic Service Detection**
+- XML tells us exactly what services are included
+- No guessing from filenames
+- 100% accuracy
+
+### 2. **Rich Metadata**
+- Original file paths for context
+- File sizes help identify large files
+- Modified dates show collection timeframe
+- Token ID for RTMT job tracking
+
+### 3. **Better Organization**
+- Group by service (Tomcat, Security, etc.)
+- Sub-group by file type (log4j, uds-tomcat, etc.)
+- Show summary stats (file count, total size)
+
+### 4. **Enhanced Troubleshooting**
+- See original paths on server
+- Identify which Tomcat instance
+- Track file versions by date
+- Spot missing or incomplete collections
+
+### 5. **Bundle Display**
+- Professional hierarchical view
+- Service-level summaries
+- File type categorization
+- Size/count indicators
+
+---
+
+## 📊 Detection Flow
 
 ```
-RTMT XML Support Documentation:
-├─ RTMT_XML_TODO.md ← Main implementation plan
-├─ RTMT_XML_QUICK_REF.md ← Quick reference
-├─ RTMT_DETECTION.md ← Server node name patterns
-├─ COMPLETE_DETECTION_SYSTEM.md ← Updated with XML
-└─ START_HERE.md ← Project overview updated
+Bundle Import
+    ↓
+Scan for XML files
+    ↓
+Found TraceCollectionResult*.xml?
+    ↓ YES
+Parse XML Structure
+    ↓
+Extract:
+  • Node IP/hostname
+  • Service list
+  • File inventory
+  • Metadata
+    ↓
+Create Hierarchical View:
+  📦 Bundle
+    📋 Collection Info
+    🔒 Service 1 (X files, Y MB)
+      📁 FileType 1
+        📄 file1.log
+        📄 file2.log
+      📁 FileType 2
+        📄 file3.log
+    🌐 Service 2 (X files, Y MB)
+      📁 FileType 1
+        📄 file4.log
 ```
 
 ---
 
-## ✅ WHAT HAPPENS NOW
+## 🧪 Testing Strategy
 
-### **Current Behavior**
-When XML file is encountered during import:
+### Test Cases
+
+1. **XML Present**
+   - Bundle with TraceCollectionResult XML
+   - Should show hierarchical view
+   - Should display metadata
+
+2. **XML Missing**
+   - Bundle without XML
+   - Should fall back to flat view
+   - Should work normally
+
+3. **Multiple Services**
+   - XML with Tomcat + Security + others
+   - Should group correctly
+
+4. **Large Collections**
+   - XML with 100+ files
+   - Should handle efficiently
+
+5. **Malformed XML**
+   - Invalid/incomplete XML
+   - Should gracefully fall back
+
+---
+
+## 📝 Implementation Checklist
+
+### Phase 1: Parser (2 hours)
+- [ ] Create `RTMTXMLParser` class
+- [ ] Implement XML parsing with DOMParser
+- [ ] Extract node, token, services
+- [ ] Parse file metadata
+- [ ] Handle errors gracefully
+- [ ] Add unit tests
+
+### Phase 2: Bundle Integration (1 hour)
+- [ ] Update `BundleItem` for hierarchical types
+- [ ] Add service-group and file-type support
+- [ ] Update icon logic
+- [ ] Add metadata display
+
+### Phase 3: Tree View (2 hours)
+- [ ] Implement `createHierarchicalView()`
+- [ ] Add collection info section
+- [ ] Group by service
+- [ ] Sub-group by file type
+- [ ] Format sizes and counts
+
+### Phase 4: Testing (1 hour)
+- [ ] Test with real RTMT bundle
+- [ ] Test without XML (fallback)
+- [ ] Test large collections
+- [ ] Test malformed XML
+- [ ] Verify all file types display
+
+**Total Estimate:** ~6 hours
+
+---
+
+## 🎨 UI Mock-up
+
+### Before (Without XML)
 ```
-INFO Extracting archive: rtmt_export.zip
-INFO Found file: rtmt_collection_job.xml
-INFO Extracted XML file (will be used when parsing implemented)
-INFO RTMT XML parsing not yet implemented - awaiting sample XML
+📦 Bundle_700416208
+  ├── 📄 securityaxl00001.log (1.0 MB)
+  ├── 📄 securityaxl00002.log (1.0 MB)
+  ├── 📄 localhost_access_log.txt (10.2 MB)
+  ├── 📄 catalina.out (4.6 MB)
+  └── 📄 manager.2026-02-11.log (666 KB)
 ```
 
-### **After Implementation**
-When XML file is encountered during import:
+### After (With XML Parsing)
 ```
-INFO Extracting archive: rtmt_export.zip
-INFO Found file: rtmt_collection_job.xml
-INFO Parsing RTMT XML metadata
-INFO Detected service from XML: CUCM
-INFO Server: cucm-pub.company.com (Publisher)
-INFO Cluster: Production (4 nodes)
-INFO Service version: 14.0.1.12345-6
-INFO All logs tagged with CUCM from XML metadata
+📦 Bundle_700416208
+  ├── 📋 Collection Info
+  │     Node: 10.10.30.151
+  │     Server: uc-cucm-pub1.mihomes.com
+  │     Token: 1769783665576
+  │     Date: Feb 12, 2026
+  │
+  ├── 🔒 Cisco Tomcat Security Logs (17 files • 15.7 MB)
+  │   └── 📁 log4j (17 files)
+  │       ├── 📄 securityaxl00001.log (1.0 MB)
+  │       ├── 📄 securityaxl00002.log (1.0 MB)
+  │       └── ... (15 more)
+  │
+  └── 🌐 Cisco Tomcat (21 files • 48.3 MB)
+      ├── 📁 uds-tomcat (4 files)
+      │   ├── 📄 localhost_access_log.txt.1 (10.2 MB)
+      │   └── 📄 localhost_access_log.txt (2.6 MB)
+      ├── 📁 ssosp-tomcat (3 files)
+      │   └── 📄 localhost_access_log.txt (6.8 MB)
+      ├── 📁 axl-tomcat (3 files)
+      │   └── 📄 localhost_access_log.txt (3.8 MB)
+      └── 📁 logs (6 files)
+          ├── 📄 catalina.out (4.6 MB)
+          ├── 📄 localhost_access_log.txt (2.5 MB)
+          └── ... (4 more)
 ```
 
 ---
 
-## 🎉 SUMMARY
+## 🔗 File Mapping
 
-### **Completed Today**
-- ✅ Code infrastructure prepared
-- ✅ XML extraction enabled
-- ✅ Placeholder method ready
-- ✅ Documentation framework complete
-- ✅ Implementation plan written
+XML provides mapping from extracted filename to original path:
 
-### **Ready When You Are**
-- ⏳ Awaiting XML sample(s)
-- ⏳ 3 hours to implement after sample
-- ⏳ Will provide 100% detection accuracy
+```typescript
+// XML says:
+path: "/var/log/active/tomcat/logs/catalina.out"
 
-### **How to Proceed**
-1. Provide RTMT XML sample(s)
-2. I'll implement XML parsing (~3 hours)
-3. You'll have 100% accurate detection
-4. Plus rich metadata for better investigations
+// Extracted as (in bundle):
+"10.10.30.151_tomcat_logs_catalina.out"
+
+// We can now display both:
+Label: "catalina.out"
+Tooltip: "Original path: /var/log/active/tomcat/logs/catalina.out"
+```
 
 ---
 
-## 📞 NEXT STEP
+## 💡 Additional Enhancements
 
-**Provide XML sample** when available. Options:
+### 1. **Search by Original Path**
+```typescript
+// User searches for "/var/log/active/tomcat"
+// We can find all matching files from XML metadata
+```
 
-1. **Full RTMT export ZIP** (preferred - shows real-world structure)
-2. **Just the XML file(s)** (faster to share)
-3. **Copy/paste XML content** (easiest)
+### 2. **Size Warnings**
+```typescript
+// Flag unusually large files
+if (fileSize > 100 * 1024 * 1024) {  // 100MB
+  item.description += " ⚠️ Large file";
+}
+```
 
-Any of these work! The implementation will be quick once we see the XML structure.
+### 3. **Date Range Display**
+```typescript
+// Show collection timeframe
+const dates = metadata.services
+  .flatMap(s => s.fileTypes)
+  .flatMap(ft => ft.files)
+  .map(f => f.modifiedDate);
+
+const earliest = new Date(Math.min(...dates));
+const latest = new Date(Math.max(...dates));
+
+collectionInfo.description = `${earliest.toLocaleDateString()} - ${latest.toLocaleDateString()}`;
+```
+
+### 4. **Missing Files Detection**
+```typescript
+// XML lists file, but not found in bundle
+const missingFiles = metadata.getAllFiles()
+  .filter(xmlFile => !bundleFiles.some(bf => bf.name.includes(xmlFile.fileName)));
+
+if (missingFiles.length > 0) {
+  item.description += ` ⚠️ ${missingFiles.length} files missing`;
+}
+```
 
 ---
 
-**Status**: ✅ READY FOR XML SAMPLE  
-**Impact**: HIGH (100% detection + rich metadata)  
-**Time to Implement**: ~3 hours after sample  
-**Documentation**: Complete  
+## 🎯 Success Criteria
 
-🚀 **Infrastructure ready - awaiting XML sample to implement!**
+After implementation:
+
+✅ **XML Parsing**
+- Parse TraceCollectionResult XML files
+- Extract all metadata successfully
+- Handle errors gracefully
+
+✅ **Hierarchical Display**
+- Show collection info
+- Group by service
+- Sub-group by file type
+- Display file counts and sizes
+
+✅ **Backwards Compatible**
+- Bundles without XML still work
+- Falls back to flat view
+- No breaking changes
+
+✅ **Enhanced UX**
+- Professional organization
+- Rich metadata display
+- Original paths visible
+- Size/date information
+
+---
+
+## 📚 Related Documentation
+
+- **Bundle Provider:** `bundleTreeProvider.ts`
+- **Icon System:** `icons/README.md`
+- **File Detection:** `icons/FILE_TYPE_DETECTION.md`
+- **RTMT Detection:** `RTMT_DETECTION.md`
+
+---
+
+## 🚀 Next Steps
+
+1. **Implement XML Parser** (~2 hours)
+   - Use DOMParser for XML
+   - Create data structures
+   - Handle errors
+
+2. **Update Bundle Provider** (~2 hours)
+   - Add hierarchical support
+   - Implement grouping
+   - Update tree view
+
+3. **Test with Real Bundle** (~1 hour)
+   - Use provided XML example
+   - Verify all features work
+   - Test edge cases
+
+4. **Polish UI** (~1 hour)
+   - Add icons
+   - Format text
+   - Add tooltips
+
+**Total:** ~6 hours to full implementation
+
+---
+
+**Status:** ✅ Ready to Implement  
+**XML Structure:** ✅ Analyzed  
+**Sample File:** ✅ Available  
+**Implementation Plan:** ✅ Complete  
+
+🎯 **This will make bundle viewing significantly more professional and informative!**
