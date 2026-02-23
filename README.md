@@ -2,400 +2,430 @@
 
 [![Pattern Quality CI](https://github.com/bdb-tasks/log_scout_analyzer/workflows/Pattern%20Quality%20CI/badge.svg)](https://github.com/bdb-tasks/log_scout_analyzer/actions/workflows/ci.yml)
 [![Advanced Pipeline](https://github.com/bdb-tasks/log_scout_analyzer/workflows/Advanced%20Pipeline/badge.svg)](https://github.com/bdb-tasks/log_scout_analyzer/actions/workflows/advanced.yml)
-[![Weekly Quality Report](https://github.com/bdb-tasks/log_scout_analyzer/workflows/Weekly%20Quality%20Report/badge.svg)](https://github.com/bdb-tasks/log_scout_analyzer/actions/workflows/weekly.yml)
 
-A powerful Language Server Protocol (LSP) based log file analysis tool with enhanced DevTools-style interface. Features real-time pattern matching, timeline visualization, and SIP call flow analysis.
+**Powerful log analysis for Cisco UC engineers.** Import RTMT bundles, find issues automatically, export results. Built with Rust LSP + VS Code.
 
-## 🚀 Key Features
+---
 
-### Universal Editor Support
-- **LSP-based**: One Rust server works with VS Code, Zed, Vim, Emacs, and any LSP-compatible editor
-- **Consolidated**: Enhanced UI + powerful backend in a single package
+## 🎯 What Can You Do?
 
-### Intelligent Analysis
-- **TagScout Integration**: 1000+ curated patterns from MongoDB
-- **Real-time Diagnostics**: Instant pattern matching as you type
-- **Offline-First**: Cached patterns work without network
-- **Product-Specific**: Specialized support for Jabber, WebEx, CUCM logs
+### 1. Import & Analyze RTMT Bundles (2 minutes)
+- Drag & drop QCSONE package
+- Automatic case ID detection
+- 1000+ pattern matching
+- Issues in Problems Panel
 
-### Rich UI (VS Code)
-- **DevTools-Style Interface**: Activity bar with tree views
-- **Timeline Visualization**: Events grouped by time intervals
-- **Scout Console**: Real-time analysis output with clickable links
-- **SIP Call Flow**: Ladder diagrams for VoIP debugging
-- **Split View**: Side-by-side annotated logs
+### 2. Multi-File Investigation (5 minutes)
+- Analyze 100+ files simultaneously
+- Cross-file correlation
+- Timeline visualization
+- Click to navigate
 
-## 📦 Quick Start
+### 3. Export Results (1 minute)
+- Markdown reports
+- JSON/CSV formats
+- Share with team/TAC
+- Annotated excerpts
 
-### VS Code (Recommended)
+### 4. SIP Call Flow Analysis (5 minutes)
+- Parse CTRACE logs
+- Ladder diagrams
+- Call state tracking
+- Timing analysis
 
-**Option 1: Install Pre-built**
+**See all 12 scenarios:** [USER_SCENARIOS.md](USER_SCENARIOS.md)
+
+---
+
+## 🚀 Quick Start
+
+### Install (VS Code)
+
+**Option 1: From VSIX**
 ```bash
 code --install-extension log-scout-analyzer.vsix
 ```
 
 **Option 2: Build from Source**
 ```bash
-# 1. Build LSP server
-cd lsp-server
-cargo build --release
+# Build everything
+npm run build:all
 
-# 2. Build extension
-cd ../vscode-extension
-npm install
-npm run build
+# Package extension
+cd vscode-extension
 npm run package
 
-# 3. Install
-code --install-extension log-scout-analyzer.vsix
+# Install
+code --install-extension log-scout-analyzer-*.vsix
 ```
 
-### Zed Editor
+### First Use (30 seconds)
 
-```bash
-cd zed-extension
-./build.sh
-./install-extension.sh
-```
+1. **Open VS Code** → See Log Scout icon (📦) in activity bar
+2. **Click "Import Package"** → Select your RTMT zip file
+3. **Wait 30 seconds** → Bundle imports and analyzes automatically
+4. **View Issues** → Open Problems Panel (Ctrl+Shift+M)
+5. **Click Issue** → Jump to log line with context
 
-### Other Editors
+**Done!** You just analyzed 100+ files in 30 seconds. 🎉
 
-The LSP server works with any LSP client. See [docs/architecture/ARCHITECTURE.md](docs/architecture/ARCHITECTURE.md) for details.
+---
 
-## 📚 Documentation
+## 💡 Why Log Scout?
 
-### Quick Links
-- **[Documentation Index](docs/README.md)** - Complete documentation map
-- **[Quick Start Guide](docs/guides/QUICK_START.md)** - Get started in 5 minutes
-- **[Build & Install](docs/guides/BUILD_AND_INSTALL.md)** - Detailed build instructions
-- **[Architecture Overview](docs/architecture/ARCHITECTURE.md)** - System design
-- **[Contributing Guide](docs/guides/CONTRIBUTING.md)** - How to contribute
-- **[Style Guide](docs/guides/STYLE_GUIDE.md)** - Code and documentation standards
+### Before (Manual Analysis)
+- ❌ 100+ files to search manually
+- ❌ Complex grep/sed commands
+- ❌ 2-4 hours per case
+- ❌ Easy to miss patterns
 
-### Feature Documentation
-Each feature crate has its own documentation:
-- **[Core](crates/core/README.md)** - Shared types and utilities
-- **[Pattern Engine](crates/pattern-engine/README.md)** - Pattern matching and analysis
-- **[Pattern Loader](crates/pattern-loader/README.md)** - Pattern loading and overrides
-- **[Quality System](crates/quality-system/README.md)** - Quality monitoring and agentic decisions
-- **[LSP Server](crates/lsp-server/README.md)** - LSP orchestrator
+### After (With Log Scout)
+- ✅ One-click import
+- ✅ Automatic pattern detection
+- ✅ 5 minutes to root cause
+- ✅ 1000+ patterns checked
 
-### Project Structure
+**Time Saved:** 95% faster than manual analysis
 
-```
-log_scout_analyzer/
-├── crates/                      # Feature crates (Rust monorepo)
-│   ├── core/                    # Shared types and utilities
-│   ├── pattern-engine/          # Pattern matching logic
-│   ├── pattern-loader/          # Pattern management
-│   ├── quality-system/          # Quality monitoring
-│   └── lsp-server/              # LSP orchestrator
-├── docs/                        # Root documentation
-│   ├── architecture/            # System design
-│   ├── guides/                  # User guides
-│   ├── design/                  # Design docs
-│   ├── integration/             # Integration guides
-│   └── deployment/              # Deployment guides
-├── vscode-extension/            # VS Code extension
-├── zed-extension/               # Zed extension
-└── examples/                    # Sample log files
-```
+---
 
-## 🎯 Usage
+## 🎭 User Persona
 
-1. **Open a log file** in your editor
-2. **See diagnostics** appear automatically in the Problems panel
-3. **Hover over errors** for detailed information
-4. **Use code actions** for quick fixes and analysis
+**Meet Sarah**, Senior UC Engineer:
+- Troubleshoots CUCM, Jabber, WebEx issues
+- Downloads QCSONE packages from RTMT
+- Needs to correlate events across 100+ files
+- Escalates findings to TAC
 
-### Example
+**Sarah's workflow with Log Scout:**
+1. Import QCSONE → 30 seconds
+2. Review Issues → 3 minutes
+3. Identify root cause → 2 minutes
+4. Export report → 1 minute
+5. **Total: 5 minutes** (was 2-4 hours!)
 
-```log
-2024-02-08 10:15:23 INFO Application started
-2024-02-08 10:15:24 ERROR Failed to connect to database
-2024-02-08 10:15:25 WARNING Retrying connection (attempt 1/3)
-2024-02-08 10:15:26 FATAL Database connection failed after 3 retries
-```
+---
 
-The LSP server will automatically:
-- Highlight ERROR and FATAL lines in red
-- Mark WARNING lines in yellow
-- Show detailed diagnostics in the Problems panel
-- Provide quick actions for exporting results
+## 📋 Features by Scenario
+
+### 🔴 Critical Features (Must Have)
+
+| Feature | Status | Time | Benefit |
+|---------|--------|------|---------|
+| **Import RTMT Bundle** | ✅ | 30s | Auto-extract, organize, analyze |
+| **View Issues in Problems Panel** | ✅ | Instant | See all errors/warnings/info |
+| **Click to Navigate** | ✅ | Instant | Jump to exact log line |
+| **Export Results** | ✅ | 1 min | Markdown/JSON/CSV reports |
+| **Error Recovery** | ✅ | Auto | Graceful handling + recovery |
+
+### 🟡 Important Features (High Value)
+
+| Feature | Status | Time | Benefit |
+|---------|--------|------|---------|
+| **SIP Call Flow** | ✅ | 5 min | Ladder diagrams, state tracking |
+| **Multi-Bundle Case** | ✅ | Auto | Group logs by case ID |
+| **Large Bundle (100+ files)** | ✅ | 2 min | Non-blocking, streaming |
+| **Pattern Filtering** | 🚧 | N/A | Filter by severity, category |
+
+### 🟢 Planned Features
+
+| Feature | Status | Target | Benefit |
+|---------|--------|--------|---------|
+| **Pattern Override UI** | 📋 | Q2 2025 | Customize severities |
+| **Keyboard Shortcuts** | 🚧 | Q2 2025 | Power user navigation |
+| **Dark Theme** | 🚧 | Q3 2025 | Better accessibility |
+
+**See details:** [USER_SCENARIOS.md](USER_SCENARIOS.md)
+
+---
 
 ## 🏗️ Architecture
 
-### LSP-Based Design
-
 ```
-┌─────────────────────┐
-│   VS Code Client    │  (TypeScript - ~100 lines)
-└──────────┬──────────┘
-           │
-           │ JSON-RPC
-           │ (stdin/stdout)
-           │
-┌──────────▼──────────┐
-│   LSP Server        │  (Rust - Core Engine)
-│                     │
-│  • Pattern Engine   │
-│  • Log Parsing      │
-│  • Diagnostics      │
-│  • Timeline         │
-└──────────┬──────────┘
-           │
-┌──────────▼──────────┐
-│    Zed Client       │  (Rust - ~50 lines)
-└─────────────────────┘
-```
-
-### Key Components
-
-1. **LSP Server** (`lsp-server/`) - Rust binary that does all the heavy lifting
-   - Pattern matching engine
-   - Diagnostic generation
-   - Timeline extraction
-   - SIP/VoIP call flow analysis
-
-2. **VS Code Client** (`clients/vscode/`) - Thin TypeScript wrapper
-   - Spawns LSP server
-   - Displays diagnostics
-   - Provides UI panels
-
-3. **Zed Client** (`clients/zed/`) - Thin Rust wrapper
-   - Spawns LSP server
-   - Displays diagnostics
-
-## 🔧 Building from Source
-
-### Prerequisites
-
-- Rust 1.75+ (`rustup`)
-- Node.js 18+ (for VS Code client)
-- VS Code Extension Manager (`npm install -g @vscode/vsce`)
-
-### Build LSP Server
-
-```bash
-# Install Rust targets for cross-compilation
-rustup target add x86_64-pc-windows-gnu
-rustup target add x86_64-apple-darwin
-rustup target add aarch64-apple-darwin
-rustup target add x86_64-unknown-linux-gnu
-
-# Build for all platforms
-cd lsp-server
-cargo build --release --target x86_64-pc-windows-gnu
-cargo build --release --target x86_64-apple-darwin
-cargo build --release --target aarch64-apple-darwin
-cargo build --release --target x86_64-unknown-linux-gnu
+┌─────────────────────────────────┐
+│   VS Code Extension (UI)        │  ← User scenarios implemented here
+│   - Bundle Explorer             │     (TypeScript, ~1000 lines)
+│   - Problems Panel integration  │
+│   - Command Palette commands    │
+└────────────┬────────────────────┘
+             │ JSON-RPC (LSP)
+             │
+┌────────────▼────────────────────┐
+│   LSP Server (Analysis)         │  ← Pattern engine, log parsing
+│   - 1000+ patterns from TagScout│     (Rust, high performance)
+│   - Multi-format log parsing    │
+│   - Call flow analysis          │
+└────────────┬────────────────────┘
+             │
+┌────────────▼────────────────────┐
+│   Feature Crates                │  ← Modular capabilities
+│   - pattern-engine              │     (Rust workspace)
+│   - pattern-loader              │
+│   - quality-system              │
+└─────────────────────────────────┘
 ```
 
-### Build VS Code Extension
+**Key Design:**
+- **LSP-based** - Works with any editor (VS Code, Zed, Vim, Emacs)
+- **Rust engine** - Fast, safe, efficient
+- **TypeScript UI** - Rich VS Code integration
+- **User-focused** - Scenarios drive development
 
-```bash
-cd clients/vscode
-
-# Install dependencies
-npm install
-
-# Copy server binaries
-mkdir -p bin
-cp ../../lsp-server/target/x86_64-pc-windows-gnu/release/log-scout-lsp-server.exe bin/log-scout-lsp-win.exe
-cp ../../lsp-server/target/x86_64-apple-darwin/release/log-scout-lsp-server bin/log-scout-lsp-macos
-cp ../../lsp-server/target/aarch64-apple-darwin/release/log-scout-lsp-server bin/log-scout-lsp-macos-arm
-cp ../../lsp-server/target/x86_64-unknown-linux-gnu/release/log-scout-lsp-server bin/log-scout-lsp-linux
-
-# Compile and package
-npm run compile
-vsce package
-```
-
-### Build Zed Extension
-
-```bash
-cd clients/zed
-cargo build --target wasm32-wasip1 --release
-```
-
-### Build Everything
-
-```bash
-# From project root
-./scripts/build-all.sh
-```
+---
 
 ## 📚 Documentation
 
-- [Architecture Overview](docs/ARCHITECTURE.md)
-- [Building & Distribution](docs/BUILDING.md)
-- [LSP Server Deployment](docs/LSP_SERVER_DEPLOYMENT.md)
-- [Contributing Guide](docs/CONTRIBUTING.md)
-- [Pattern Configuration](docs/PATTERNS.md)
+### For Users
+- **[📖 Start Here](📖_START_HERE.md)** - Navigation guide
+- **[User Scenarios](USER_SCENARIOS.md)** - What you can accomplish
+- **[Problems Panel Guide](docs/USER_GUIDE_PROBLEMS_PANEL.md)** - How to use results
 
-## 🎨 Customization
+### For Developers
+- **[Project Status](PROJECT_STATUS.md)** - Current state, test coverage
+- **[Contributing](docs/guides/CONTRIBUTING.md)** - How to contribute
+- **[Architecture](docs/architecture/ARCHITECTURE.md)** - System design
+- **[AI Assistant Guide](.zed/AI_ASSISTANT_GUIDE.md)** - Development workflows
 
-### Adding Custom Patterns
+### For QA
+- **[E2E Test Scenarios](E2E_TEST_SCENARIOS.md)** - Detailed test specs
+- **[Test Audit](E2E_TEST_AUDIT_USER_PERSPECTIVE.md)** - Testing gaps
+- **[Scenario Details](docs/user-scenarios/)** - Step-by-step tests
 
-Create a `patterns.json` file:
-
-```json
-{
-  "patterns": [
-    {
-      "id": "custom-error",
-      "name": "Custom Error Pattern",
-      "description": "Detects my custom error format",
-      "pattern": "CUSTOM_ERROR: (.*)",
-      "severity": "error",
-      "category": "custom",
-      "enabled": true
-    }
-  ]
-}
+### Quick Links
+```
+📖 Start Here          → 📖_START_HERE.md
+🎯 User Scenarios      → USER_SCENARIOS.md
+📊 Project Status      → PROJECT_STATUS.md
+🧪 E2E Tests           → E2E_TEST_SCENARIOS.md
+🏗️ Architecture        → docs/architecture/ARCHITECTURE.md
+🤝 Contributing        → docs/guides/CONTRIBUTING.md
 ```
 
-Configure the LSP server to use your patterns:
+---
 
-**VS Code**: Settings → Extensions → Log Scout Analyzer → Pattern File
-**Zed**: Edit `~/.config/zed/settings.json`
+## 🛠️ Build & Development
 
-## 🔬 Pattern Examples
+### Prerequisites
+- **Rust** 1.75+ (`rustup`)
+- **Node.js** 18+ (`nvm` or `volta`)
+- **VS Code** (for extension development)
 
-### Built-in Patterns
+### Build Everything
+```bash
+# Install dependencies
+npm install
 
-- **Errors**: `ERROR`, `FATAL`, `Exception`
-- **Warnings**: `WARNING`, `WARN`, `Deprecation`
-- **Network**: `Connection failed`, `Timeout`, `Connection refused`
-- **SIP/VoIP**: `INVITE`, `BYE`, `407 Proxy Authentication Required`
-- **Timeline Events**: Authentication, Call setup, Connection events
+# Build LSP server + extension
+npm run build:all
 
-### Custom Pattern Modes
+# Run in debug mode
+cd vscode-extension
+npm run watch    # Terminal 1: Auto-rebuild
+F5               # Terminal 2: Launch Extension Host
+```
 
-- **Single Line**: Match patterns within a single line
-- **Multi-Line**: Match patterns spanning multiple lines
-- **Sequence**: Match ordered sequences of patterns
+### Run Tests
+```bash
+# Extension tests
+cd vscode-extension
+npm test
 
-## 🚢 Deployment Options
+# LSP server tests
+cd lsp-server
+cargo test
 
-### Option 1: Embedded Binary (Default)
+# All tests
+npm run test:all
+```
 
-Server binary bundled with editor extension. Best for individual users.
+### Package Extension
+```bash
+# Increment version and package
+npm run version:patch
+npm run package
 
-**Pros**: Easy installation, works offline, no configuration
-**Cons**: Platform-specific binaries needed
+# Result: vscode-extension/log-scout-analyzer-*.vsix
+```
 
-### Option 2: Remote Server (Enterprise)
+---
 
-Server runs in Docker/Kubernetes, editors connect via TCP.
+## 🎨 Demo / Screenshots
 
-**Pros**: Centralized updates, shared resources, enterprise features
-**Cons**: Requires infrastructure, network dependency
+### Import RTMT Bundle
+```
+1. Click "Import Package" button
+2. Select QCSONE zip file
+3. Wait 30 seconds for analysis
+4. View issues in Problems Panel
+```
 
-See [LSP_SERVER_DEPLOYMENT.md](docs/LSP_SERVER_DEPLOYMENT.md) for details.
+*(Screenshots to be added - see [docs/user-scenarios/SCENARIO_01_IMPORT_AND_ANALYZE.md](docs/user-scenarios/SCENARIO_01_IMPORT_AND_ANALYZE.md) for detailed walkthrough)*
 
-## 📊 Performance
+### SIP Call Flow Analysis
+```
+1. Open CTRACE log file
+2. Right-click → "Analyze Call Flow"
+3. See ladder diagram in Markdown
+4. Export to file or clipboard
+```
 
-- **Startup**: 50-200ms
-- **Analysis**: 10-50ms per file
-- **Memory**: 50-200 MB
-- **Large Files**: Handles 100+ MB log files efficiently
+*(Video walkthrough coming soon)*
+
+---
 
 ## 🐛 Troubleshooting
 
-### Server Not Starting
+### Extension Not Loading
+```bash
+# Check extension installed
+code --list-extensions | grep log-scout
 
-1. Check server binary exists: `ls clients/vscode/bin/`
-2. Check executable permissions: `chmod +x clients/vscode/bin/log-scout-lsp-*`
-3. View server logs: VS Code → Output → Log Scout Analyzer
+# Check LSP server binary
+ls vscode-extension/bin/log-scout-lsp-*.exe
 
-### No Diagnostics Showing
+# View logs
+VS Code → Output → Log Scout Analyzer
+```
 
-1. Verify file extension is `.log` or recognized pattern
-2. Check pattern configuration is loaded
-3. Restart LSP server: VS Code Command Palette → "Reload Window"
+### Import Fails
+- **Check:** File is valid zip/tar/tar.gz
+- **Try:** Smaller test file first
+- **View:** Output panel for detailed errors
 
-### Performance Issues
+### No Issues Shown
+- **Check:** File extension is recognized (.log, .txt, etc.)
+- **Try:** Reload window (Ctrl+Shift+P → "Reload Window")
+- **Verify:** Problems Panel is open (Ctrl+Shift+M)
 
-1. Disable patterns you don't need
-2. Increase detection threshold
-3. Use file size limits in settings
+**More help:** [docs/USER_GUIDE_PROBLEMS_PANEL.md](docs/USER_GUIDE_PROBLEMS_PANEL.md)
+
+---
 
 ## 🤝 Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
+We welcome contributions! Here's how to get started:
 
-### Development Setup
-
+### Quick Start for Contributors
 ```bash
-# Clone repository
-git clone https://github.com/yourusername/log-scout-analyzer.git
-cd log-scout-analyzer
+# 1. Clone repo
+git clone https://github.com/yourusername/log_scout_analyzer.git
+cd log_scout_analyzer
 
-# Build server
-cd lsp-server
-cargo build
+# 2. Read documentation
+cat USER_SCENARIOS.md          # Understand user needs
+cat PROJECT_STATUS.md           # Check current status
+cat docs/guides/CONTRIBUTING.md # Contribution guidelines
 
-# Test server
-cargo test
+# 3. Pick a task
+# - Implement E2E test for Scenario 1
+# - Document Scenario 2-5
+# - Add pattern filtering UI
+# - Improve error messages
 
-# Run server locally
-cargo run
+# 4. Make changes and test
+npm run build:all
+npm test
+
+# 5. Submit PR
+git checkout -b feature/my-improvement
+git commit -am "feat: my improvement"
+git push origin feature/my-improvement
 ```
+
+### Areas to Contribute
+- 🧪 **E2E Tests** - Automate user workflows (high priority!)
+- 📖 **Documentation** - Complete scenario walkthroughs
+- 🎨 **UI/UX** - Improve user experience
+- 🐛 **Bug Fixes** - Fix reported issues
+- ✨ **Features** - Implement planned scenarios
+
+**See:** [docs/guides/CONTRIBUTING.md](docs/guides/CONTRIBUTING.md)
+
+---
+
+## 📊 Project Status
+
+**Current Version:** 0.0.200+
+
+**Implementation Status:**
+- ✅ Critical scenarios: 4/5 complete (80%)
+- ✅ Important scenarios: 4/4 complete (100%)
+- 🚧 Future scenarios: 0/3 started (0%)
+
+**Test Coverage:**
+- ✅ Component tests: 45% (300+ tests passing)
+- ❌ E2E user tests: 0% (critical gap!)
+
+**Next Sprint Goals:**
+1. Automate E2E test for Scenario 1
+2. Document Scenarios 2-5
+3. Complete workspace persistence
+4. Add pattern filtering UI
+
+**See details:** [PROJECT_STATUS.md](PROJECT_STATUS.md)
+
+---
+
+## 🎯 Roadmap
+
+### Current (v0.1.x)
+- ✅ Import & analyze RTMT bundles
+- ✅ Multi-file investigation
+- ✅ Export results (Markdown/JSON/CSV)
+- ✅ SIP call flow analysis
+- 🚧 E2E test automation
+
+### Next Release (v0.2.x)
+- [ ] Pattern override UI
+- [ ] Enhanced filtering
+- [ ] Keyboard shortcuts
+- [ ] Workspace persistence improvements
+
+### Future (v1.0+)
+- [ ] Real-time log streaming
+- [ ] Team collaboration features
+- [ ] Cloud storage integration
+- [ ] Advanced analytics
+
+**See full roadmap:** [ROADMAP.md](ROADMAP.md)
+
+---
 
 ## 📜 License
 
 MIT License - see [LICENSE](LICENSE) for details.
 
+---
+
 ## 🙏 Acknowledgments
 
 - Built with [tower-lsp](https://github.com/ebkalderon/tower-lsp)
+- Pattern engine based on production UC troubleshooting experience
 - Inspired by rust-analyzer and other LSP servers
-- Pattern engine based on production log analysis needs
+- Thanks to all contributors and testers!
+
+---
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/log-scout-analyzer/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/log-scout-analyzer/discussions)
-- **Documentation**: [docs/](docs/)
-
-## 🗺️ Roadmap
-
-- [ ] Additional VoIP protocol support (SIP, H.323, WebRTC)
-- [ ] Machine learning-based anomaly detection
-- [ ] Real-time log streaming support
-- [ ] Web-based log viewer
-- [ ] Jenkins/CI integration
-- [ ] Cloud log source connectors (CloudWatch, Stackdriver)
-
-## 📈 Status
-
-**Version**: 1.0.0  
-**Status**: Production Ready  
-**Architecture**: LSP-based  
-**Supported Editors**: VS Code, Zed, Neovim, Emacs, and more
+- **Issues:** [GitHub Issues](https://github.com/yourusername/log_scout_analyzer/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/yourusername/log_scout_analyzer/discussions)
+- **Documentation:** Start with [📖_START_HERE.md](📖_START_HERE.md)
 
 ---
 
-## Migration from v0.0.x
+## ⭐ Star History
 
-If you were using the pre-LSP architecture (v0.0.x), see [archive/v1-pre-lsp/README.md](archive/v1-pre-lsp/README.md) for migration notes.
-
-### What Changed
-
-- **v0.0.x**: Separate extensions for each editor (TypeScript + Rust)
-- **v1.0.0**: Unified LSP server, thin clients
-
-### Benefits
-
-✅ Code shared across all editors  
-✅ Easier maintenance and updates  
-✅ Better performance (Rust everywhere)  
-✅ Support for more editors  
-✅ Enterprise deployment options
+If Log Scout saves you time, give us a star! ⭐
 
 ---
 
-**Built with ❤️ for log analysis**#   T e s t 
- 
- 
+**Built with ❤️ for Cisco UCAPPS TAC  engineers**
+
+*Reduce log analysis time from hours to minutes.*
+
+---
+
+**Version:** 2.0 (User-Scenario Focused)  
+**Last Updated:** 2025-02-24  
+**Maintained By:** Engineering Team

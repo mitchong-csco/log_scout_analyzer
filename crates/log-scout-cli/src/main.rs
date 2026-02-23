@@ -4,6 +4,8 @@ use colored::*;
 use pattern_engine::cause_codes::CauseCodeRegistry;
 use std::process;
 
+mod call_flow;
+
 /// Log Scout Analyzer - Command Line Interface
 ///
 /// Tools for analyzing Cisco UC logs, translating cause codes, and more.
@@ -49,6 +51,106 @@ enum Commands {
         #[arg(short = 'e', long)]
         extended: bool,
     },
+
+    /// Analyze SIP call flows from CTRACE logs
+    ///
+    /// Parse Cisco UCM Call Trace (CTRACE) logs and visualize call flows
+    /// as ASCII ladder diagrams with timing information.
+    ///
+    /// Examples:
+    ///   log-scout call-flow list bundle.zip
+    ///   log-scout call-flow show 001a2f8d-f17f0004 --bundle bundle.zip
+    ///   log-scout call-flow analyze bundle.zip
+    ///   log-scout call-flow export 001a2f8d-f17f0004 --output flow.md
+    #[command(subcommand)]
+    CallFlow(CallFlowCommands),
+}
+
+#[derive(Subcommand)]
+enum CallFlowCommands {
+    /// List all call sessions in a bundle or directory
+    ///
+    /// Scans CTRACE logs and displays a summary of all detected call sessions
+    /// with their Call-IDs, message counts, states, and durations.
+    ///
+    /// Example:
+    ///   log-scout call-flow list bundle.zip
+    ///   log-scout call-flow list /path/to/logs/
+    List {
+        /// Path to bundle file (.zip) or directory containing CTRACE logs
+        #[arg(value_name = "PATH")]
+        path: std::path::PathBuf,
+    },
+
+    /// Show a specific call flow diagram
+    ///
+    /// Displays an ASCII ladder diagram for a specific call session.
+    /// The diagram shows the SIP message exchange between endpoints
+    /// with timestamps and state information.
+    ///
+    /// Example:
+    ///   log-scout call-flow show 001a2f8d-f17f0004 --bundle bundle.zip
+    ///   log-scout call-flow show 001a2f8d-f17f0004 --format plain
+    Show {
+        /// Call-ID (GUID) of the call session to display
+        #[arg(value_name = "CALL_ID")]
+        call_id: String,
+
+        /// Path to bundle file or directory containing CTRACE logs
+        #[arg(short, long, value_name = "PATH")]
+        bundle: Option<std::path::PathBuf>,
+
+        /// Output format: markdown (default) or plain
+        #[arg(short, long, value_name = "FORMAT", default_value = "markdown")]
+        format: String,
+    },
+
+    /// Analyze all call flows in a bundle
+    ///
+    /// Processes all CTRACE logs in a bundle and displays diagrams
+    /// for all detected call sessions.
+    ///
+    /// Example:
+    ///   log-scout call-flow analyze bundle.zip
+    ///   log-scout call-flow analyze /path/to/logs/ --format plain
+    Analyze {
+        /// Path to bundle file (.zip) or directory containing CTRACE logs
+        #[arg(value_name = "PATH")]
+        path: std::path::PathBuf,
+
+        /// Output format: markdown (default) or plain
+        #[arg(short, long, value_name = "FORMAT", default_value = "markdown")]
+        format: String,
+
+        /// Maximum number of call flows to display
+        #[arg(short = 'n', long, value_name = "COUNT")]
+        limit: Option<usize>,
+    },
+
+    /// Export a call flow diagram to a file
+    ///
+    /// Exports a specific call flow diagram to a Markdown or plain text file.
+    ///
+    /// Example:
+    ///   log-scout call-flow export 001a2f8d-f17f0004 --output flow.md
+    ///   log-scout call-flow export 001a2f8d-f17f0004 -o flow.txt --format plain
+    Export {
+        /// Call-ID (GUID) of the call session to export
+        #[arg(value_name = "CALL_ID")]
+        call_id: String,
+
+        /// Output file path
+        #[arg(short, long, value_name = "FILE")]
+        output: std::path::PathBuf,
+
+        /// Path to bundle file or directory containing CTRACE logs
+        #[arg(short, long, value_name = "PATH")]
+        bundle: Option<std::path::PathBuf>,
+
+        /// Output format: markdown (default) or plain
+        #[arg(short, long, value_name = "FORMAT", default_value = "markdown")]
+        format: String,
+    },
 }
 
 fn main() {
@@ -62,6 +164,7 @@ fn main() {
             list,
             extended,
         } => handle_cause_code(&vendor, code, search, list, extended),
+        Commands::CallFlow(cmd) => handle_call_flow(cmd),
     };
 
     if let Err(e) = result {
@@ -270,4 +373,59 @@ mod tests {
         use clap::CommandFactory;
         Cli::command().debug_assert();
     }
+}
+
+// ============================================================================
+// Call Flow Command Handlers
+// ============================================================================
+
+fn handle_call_flow(cmd: CallFlowCommands) -> Result<()> {
+    match cmd {
+        CallFlowCommands::List { path } => handle_call_flow_list(path),
+        CallFlowCommands::Show {
+            call_id,
+            bundle,
+            format,
+        } => handle_call_flow_show(&call_id, bundle, &format),
+        CallFlowCommands::Analyze {
+            path,
+            format,
+            limit,
+        } => handle_call_flow_analyze(path, &format, limit),
+        CallFlowCommands::Export {
+            call_id,
+            output,
+            bundle,
+            format,
+        } => handle_call_flow_export(&call_id, output, bundle, &format),
+    }
+}
+
+fn handle_call_flow_list(path: std::path::PathBuf) -> Result<()> {
+    call_flow::list_call_flows(path)
+}
+
+fn handle_call_flow_show(
+    call_id: &str,
+    bundle: Option<std::path::PathBuf>,
+    format: &str,
+) -> Result<()> {
+    call_flow::show_call_flow(call_id, bundle, format)
+}
+
+fn handle_call_flow_analyze(
+    path: std::path::PathBuf,
+    format: &str,
+    limit: Option<usize>,
+) -> Result<()> {
+    call_flow::analyze_call_flows(path, format, limit)
+}
+
+fn handle_call_flow_export(
+    call_id: &str,
+    output: std::path::PathBuf,
+    bundle: Option<std::path::PathBuf>,
+    format: &str,
+) -> Result<()> {
+    call_flow::export_call_flow(call_id, output, bundle, format)
 }

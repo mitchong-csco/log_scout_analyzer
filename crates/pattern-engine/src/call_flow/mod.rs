@@ -12,11 +12,13 @@
 //! 3. Build `CallSession` objects with chronological message ordering
 //! 4. Track call state transitions
 //! 5. Calculate timing metrics (ring duration, setup time, etc.)
+//! 6. Generate ASCII ladder diagrams with `DiagramRenderer`
 //!
 //! # Example
 //!
 //! ```rust
 //! use pattern_engine::call_flow::{CallCorrelator, CtraceEntry, Direction, Transport};
+//! use pattern_engine::call_flow::{DiagramRenderer, DiagramFormat};
 //! use chrono::Utc;
 //!
 //! let mut correlator = CallCorrelator::new();
@@ -45,14 +47,21 @@
 //! let sessions = correlator.get_sessions();
 //! for session in sessions {
 //!     println!("Call: {} with {} messages", session.call_id, session.message_count());
+//!
+//!     // Render as ASCII diagram
+//!     let renderer = DiagramRenderer::new();
+//!     let diagram = renderer.render(&session, DiagramFormat::Markdown);
+//!     println!("{}", diagram);
 //! }
 //! ```
 
 pub mod correlator;
+pub mod diagram_renderer;
 pub mod state_machine;
 pub mod timing_analyzer;
 pub mod types;
 
 // Re-export main types for convenience
 pub use correlator::CallCorrelator;
+pub use diagram_renderer::{DiagramConfig, DiagramFormat, DiagramRenderer};
 pub use types::{CallSession, CallState, CallTimings, CtraceEntry, Direction, Endpoint, Transport};

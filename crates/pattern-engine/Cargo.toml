@@ -19,3 +19,7 @@ chrono = { workspace = true }
 [dev-dependencies]
 tokio-test = { workspace = true }
 tempfile = "3.8"
+
+[[example]]
+name = "diagram_renderer_demo"
+path = "../../examples/diagram_renderer_demo.rs"
