@@ -1360,17 +1360,96 @@ Before finishing ANY session, verify:
 - Blockers: None / [list blockers]
 ```
 
-### Commit Strategy (MANDATORY - AI EXECUTES AUTOMATICALLY)
-- [ ] **AI assistant MUST commit all uncommitted work using terminal tool**
-  - Execute commits directly via `git add` and `git commit`
-  - Create logical commits by category (core system, docs, config, etc.)
-  - Use descriptive commit messages
-  - AI has terminal access - DO NOT ask user to run scripts manually
-- [ ] **AI verifies commits**: `git log --oneline -5`
-- [ ] **AI checks nothing left uncommitted**: `git status --short`
-- [ ] **AI asks user permission before push**: `git push` (if stable)
+### Git Commit Strategy (MANDATORY - AI EXECUTES AUTOMATICALLY)
 
-**AI MUST execute commits, not instruct user to run scripts!**
+**AI MUST commit all work at end of session - this is REQUIRED, not optional!**
+
+#### Commit Protocol (AI Executes Directly)
+
+1. **Check Status**:
+   ```bash
+   git status --short
+   ```
+
+2. **Stage All Changes**:
+   ```bash
+   git add -A
+   ```
+
+3. **Commit with Descriptive Message**:
+   ```bash
+   git commit -m "feat: [Brief title]
+   
+   - [Change 1]
+   - [Change 2]
+   - [Change 3]
+   - [Test results]
+   - [Documentation updates]
+   
+   [Optional: Closes/Fixes/Relates to issue]"
+   ```
+
+4. **Verify Commit**:
+   ```bash
+   git log --oneline -1
+   ```
+
+5. **Confirm Clean State**:
+   ```bash
+   git status --short  # Should show nothing or just untracked files
+   ```
+
+#### Commit Message Format
+
+Use conventional commit format:
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation only
+- `refactor:` - Code restructuring
+- `test:` - Test additions/changes
+- `chore:` - Maintenance tasks
+
+#### Example Good Commit Message
+
+```
+feat: Complete bundle import with 4 major enhancements
+
+- Fix LSP command routing (scout/bundle/* format support)
+- Implement file persistence (copy to bundle dir, preserve all files)
+- Add workspace integration (auto-add bundle folder to Explorer)
+- Add QCSOne integration (case ID required, simplified naming, right-click link)
+- All 83 tests passing, 2 tests updated for new behavior
+- Comprehensive documentation added (4 docs, 1500+ lines)
+
+Closes: Bundle import now production ready with enhanced UX
+```
+
+#### When to Commit
+
+- ✅ End of every session (MANDATORY)
+- ✅ After completing a logical feature/fix
+- ✅ After tests pass
+- ✅ After documentation updates
+- ✅ Before creating checkpoints (>90k tokens)
+
+#### What AI MUST Do
+
+- ✅ Execute `git add` and `git commit` directly via terminal
+- ✅ Create one or more logical commits (group related changes)
+- ✅ Write clear, descriptive commit messages
+- ✅ Verify commits succeeded
+- ✅ Check for any remaining uncommitted changes
+- ❌ DO NOT ask user to run git commands
+- ❌ DO NOT skip commits due to "too many files"
+- ❌ DO NOT assume user will commit later
+
+#### Push Strategy
+
+- ⚠️ **AI asks user permission before pushing**
+- Only push if work is stable and tested
+- Command: `git push` (only after user approval)
+
+**REMEMBER: Commits preserve work history and enable recovery. Always commit at session end!**
 
 ### Session Checkpoint (if >90k tokens)
 - [ ] **Create checkpoint document** (see `.zed/SESSION_CHECKPOINT_PROTOCOL.md`)
