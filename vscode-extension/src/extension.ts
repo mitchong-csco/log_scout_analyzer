@@ -3007,6 +3007,26 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(
       "logScoutAnalyzer.bundle.importPackage",
       async (uri?: vscode.Uri) => {
+        // Prompt for Case ID first (REQUIRED)
+        const caseId = await vscode.window.showInputBox({
+          prompt: "Enter Case ID (required)",
+          placeHolder: "e.g., 700356763",
+          validateInput: (value) => {
+            if (!value || value.trim().length === 0) {
+              return "Case ID is required";
+            }
+            if (!/^\d+$/.test(value.trim())) {
+              return "Case ID must contain only numbers";
+            }
+            return null;
+          },
+        });
+
+        if (!caseId) {
+          outputChannel?.appendLine("✗ Import cancelled: Case ID is required");
+          return;
+        }
+
         let packagePath: string | undefined;
 
         if (uri) {
@@ -3049,6 +3069,8 @@ export function activate(context: vscode.ExtensionContext) {
               if (bundleTreeProvider) {
                 const result = await bundleTreeProvider.importPackage(
                   packagePath!,
+                  undefined,
+                  caseId.trim(),
                 );
 
                 if (result) {
@@ -3308,6 +3330,46 @@ export function activate(context: vscode.ExtensionContext) {
     }),
   );
 
+  // Open Bundle Case in QCSOne
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "logScoutAnalyzer.bundle.openInQCSOne",
+      async (bundleItem: any) => {
+        if (!bundleItem || !vscode.workspace.workspaceFolders) {
+          return;
+        }
+
+        const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
+        const bundlePath = `${workspaceRoot}/.log-scout/bundles/${bundleItem.bundleId}/bundle.json`;
+
+        try {
+          // Read bundle.json to get case URL
+          const bundleUri = vscode.Uri.file(bundlePath);
+          const bundleData = await vscode.workspace.fs.readFile(bundleUri);
+          const bundle = JSON.parse(Buffer.from(bundleData).toString("utf8"));
+
+          const caseUrl = bundle.metadata?.case_url;
+          if (caseUrl) {
+            await vscode.env.openExternal(vscode.Uri.parse(caseUrl));
+            outputChannel?.appendLine(`✓ Opened case in QCSOne: ${caseUrl}`);
+          } else {
+            vscode.window.showWarningMessage(
+              "No case URL available for this bundle",
+            );
+            outputChannel?.appendLine(
+              "✗ No case URL found in bundle metadata",
+            );
+          }
+        } catch (error) {
+          vscode.window.showErrorMessage(
+            `Failed to open case in QCSOne: ${error}`,
+          );
+          outputChannel?.appendLine(`✗ Failed to open case URL: ${error}`);
+        }
+      },
+    ),
+  );
+
   // Import Log Archive Command
   context.subscriptions.push(
     vscode.commands.registerCommand(
@@ -3317,6 +3379,26 @@ export function activate(context: vscode.ExtensionContext) {
           vscode.window.showErrorMessage(
             "Bundle tree provider not initialized",
           );
+          return;
+        }
+
+        // Prompt for Case ID first (REQUIRED)
+        const caseId = await vscode.window.showInputBox({
+          prompt: "Enter Case ID (required)",
+          placeHolder: "e.g., 700356763",
+          validateInput: (value) => {
+            if (!value || value.trim().length === 0) {
+              return "Case ID is required";
+            }
+            if (!/^\d+$/.test(value.trim())) {
+              return "Case ID must contain only numbers";
+            }
+            return null;
+          },
+        });
+
+        if (!caseId) {
+          outputChannel?.appendLine("✗ Import cancelled: Case ID is required");
           return;
         }
 
@@ -3333,10 +3415,10 @@ export function activate(context: vscode.ExtensionContext) {
 
         if (result && result.length > 0) {
           const archivePath = result[0].fsPath;
-          outputChannel?.appendLine(`Importing archive: ${archivePath}`);
+          outputChannel?.appendLine(`Importing archive: ${archivePath} (Case: ${caseId})`);
 
           try {
-            await bundleTreeProvider.importPackage(archivePath);
+            await bundleTreeProvider.importPackage(archivePath, undefined, caseId.trim());
             outputChannel?.appendLine("✓ Import completed successfully");
           } catch (error) {
             outputChannel?.appendLine(`✗ Import failed: ${error}`);

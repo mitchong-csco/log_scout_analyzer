@@ -1220,8 +1220,14 @@ impl LanguageServer for LogScoutServer {
         let cmd = params.command.as_str();
 
         // Route bundle commands to handler
-        if cmd.starts_with("logScout.bundle.") {
-            let method = cmd.replace("logScout.bundle.", "scout/bundle/");
+        // Support both formats: "logScout.bundle.X" and "scout/bundle/X"
+        if cmd.starts_with("logScout.bundle.") || cmd.starts_with("scout/bundle/") {
+            let method = if cmd.starts_with("logScout.bundle.") {
+                cmd.replace("logScout.bundle.", "scout/bundle/")
+            } else {
+                cmd.to_string()
+            };
+
             let args = params
                 .arguments
                 .get(0)

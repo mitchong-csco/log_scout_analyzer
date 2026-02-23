@@ -126,6 +126,9 @@ pub struct BundleMetadata {
     /// Case/Incident ID
     pub case_id: Option<String>,
 
+    /// URL to case management system (e.g., QCSOne)
+    pub case_url: Option<String>,
+
     /// Severity level
     pub severity: Option<String>,
 

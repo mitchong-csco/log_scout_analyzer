@@ -8,7 +8,147 @@
 
 ---
 
-## 🚨 LATEST SESSION (Current): View Registration Bug Fix + UI Test ✅ 🐛
+## 🚨 LATEST SESSION (Current): Bundle Import Complete - 4 Major Enhancements ✅ 🎉
+
+**Date**: February 23, 2026  
+**Status**: ✅ COMPLETE - Bundle import fully functional with UX enhancements  
+**Severity**: HIGH (fixes) + MEDIUM (enhancements)  
+
+### Issue #1: LSP Command Routing ✅ FIXED
+
+**Problem**: 
+- Bundle import appeared to work (no errors shown) but had **no response from LSP** and **no UI update**
+- LSP server logs showed: `Unknown command: scout/bundle/importPackage`
+- Command was being received but immediately rejected
+
+**Root Cause**:
+- **Command Routing Mismatch**: LSP server's `execute_command` handler only routed commands starting with `"logScout.bundle.*"`
+- VS Code extension was sending commands in format `"scout/bundle/importPackage"`
+- Server received command but didn't match routing condition → fell through to "Unknown command"
+
+**Fix #1**:
+- Modified `lsp-server/src/server.rs:1220-1230`
+- Added support for both command formats: `"logScout.bundle.*"` AND `"scout/bundle/*"`
+- Now accepts commands already in `scout/bundle/*` format (pass-through)
+- Maintains backward compatibility with `logScout.bundle.*` format
+
+### Issue #2: File Persistence ✅ FIXED
+
+**Problem** (discovered after fixing routing):
+- Bundle import executed successfully but **files weren't copied to bundle directory**
+- Files added with URIs pointing to temp directories that were deleted after import
+- Bundle `logs/` directory was empty
+- Clicking on logs in UI showed "file not found" errors
+
+**Root Cause**:
+- `import_log_package` function called `add_log_to_bundle` with temp directory paths
+- Then immediately deleted the temp directory
+- No copy operation existed - files were referenced but not preserved
+
+**Fix #2**:
+- Modified `lsp-server/src/bundle/manager.rs` (lines 410-450, 574-620)
+- Create `bundle/logs/` directory before import
+- Copy files from temp directory to bundle directory, **preserving relative path structure**
+- Add copied files (with bundle paths) to bundle metadata
+- Then cleanup temp directory
+
+**Important Decision - Preserve ALL Files** (not just logs):
+- **Changed**: No longer filter to only .log/.txt files
+- **Rationale**: Config files, network diagrams, PDFs provide critical context for troubleshooting
+- **Benefit**: Maintains log integrity, enables future correlation analysis
+- **Implementation**: All files from archive preserved with original structure
+
+### Enhancement #3: Workspace Integration ✅ ADDED
+
+**Feature**: Bundle folder automatically added to VS Code workspace after import
+
+**Benefits**:
+- Immediate access to all files in Explorer view
+- Browse folder structure naturally
+- All VS Code features work (search, open, edit)
+
+**Implementation**:
+- `addBundleToWorkspace()` method in `bundleTreeProvider.ts`
+- Folder appears with 📦 icon
+- Named: "📦 Bundle {id}"
+
+### Enhancement #4: QCSOne Integration + Simplified Naming ✅ ADDED
+
+**Changes**:
+1. **Bundle Name Simplified**: Just case ID (e.g., "700356763" instead of "Case 700356763")
+2. **QCSOne URL**: Automatically generated and stored in bundle metadata
+3. **Right-Click Menu**: "Open Case in QCSOne" command opens browser to case
+
+**URL Format**: `https://scripts.cisco.com/app/quicker_csone/?sr={case_id}`
+
+**Implementation**:
+- `lsp-server/src/bundle/models.rs` - Added `case_url` field
+- `lsp-server/src/bundle/manager.rs` - Generate URL during import
+- `vscode-extension/src/extension.ts` - Command handler
+- `vscode-extension/package.json` - Command registration
+
+**Files Modified**:
+1. `lsp-server/src/server.rs` - Command routing logic (lines 1220-1230)
+2. `lsp-server/src/bundle/manager.rs` - File copying, preservation, name simplification, URL generation
+3. `lsp-server/src/bundle/models.rs` - Added `case_url` field to BundleMetadata
+4. `vscode-extension/src/bundleTreeProvider.ts` - Workspace integration
+5. `vscode-extension/src/extension.ts` - QCSOne command handler
+6. `vscode-extension/package.json` - QCSOne command and menu
+
+**Files Created**:
+1. `docs/ai-session-logs/BUNDLE_IMPORT_LSP_ROUTING_BUG_FIX.md` (400+ lines) - Complete analysis and fix documentation
+2. `docs/features/BUNDLE_WORKSPACE_INTEGRATION.md` (385 lines) - Workspace integration feature docs
+3. `VERIFY_BUNDLE_IMPORT_FIX.md` - Quick verification guide
+
+**Version**: v0.0.185 (Extension) / v0.1.41 (LSP Server)  
+**VSIX**: `vscode-extension/log-scout-analyzer-0.0.185.vsix`
+
+**Result**: ✅ Bundle import now works completely with enhanced UX
+- Extension sends command → LSP receives and routes ✅
+- Bundle imports → Files copied to bundle directory ✅
+- **All files preserved (logs, configs, PDFs, diagrams)** ✅
+- **Bundle folder automatically added to VS Code workspace Explorer** 📂 ✅
+- **Bundle name simplified to just case ID** ✅
+- **QCSOne URL generated and accessible via right-click** 🔗 ✅
+- Progress updates → UI refreshes → Success! ✅
+
+**To Apply Fix**:
+```bash
+code --install-extension vscode-extension/log-scout-analyzer-0.0.185.vsix
+# Reload VS Code window (Ctrl+Shift+P → "Reload Window")
+```
+
+**Manual Verification Steps**:
+1. Reload VS Code window
+2. Open Log Scout Bundles panel
+3. Click "Import Package" or use Command Palette
+4. Select a .zip or .tar file with logs (e.g., QCSOne case archive)
+5. Verify progress bar appears and updates
+6. **Confirm bundle name is just the case ID** (e.g., "700356763" not "Case 700356763") ⭐
+7. Confirm bundle appears in sidebar after import
+8. **Check `.log-scout/bundles/bundle_*/logs/` directory contains actual files** ⭐
+9. **Verify bundle folder appears in VS Code Explorer with 📦 icon** ⭐
+10. **Right-click bundle → "Open Case in QCSOne" → Verify browser opens to case** 🔗 ⭐
+11. Verify files are accessible (click on log in UI - should open, not error)
+12. Browse files directly in Explorer tree view
+13. Verify all file types preserved (logs, configs, PDFs, etc.)
+
+**Test Results**:
+- ✅ All 83 Rust tests passing
+- ✅ Updated 2 tests for new "preserve all files" behavior
+- ✅ Bundle import tests: 8/8 passing
+
+**Related Previous Issue** (Feb 21, 2026):
+- First fix: Changed extension command name from `logScout.bundle.importPackage` to `scout/bundle/importPackage`
+- This session: 
+  - Made LSP server accept the corrected command format ✅
+  - Persist files properly to bundle directory ✅
+  - Add workspace integration ✅
+  - Simplify naming + add QCSOne integration ✅
+
+---
+
+## 🚨 PREVIOUS SESSION: View Registration Bug Fix + UI Test ✅ 🐛
 
 **What Was Done**:
 - ✅ Fixed "There is no data provider registered" error on startup

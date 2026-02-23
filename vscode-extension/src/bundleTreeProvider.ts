@@ -403,10 +403,15 @@ export class BundleTreeProvider implements vscode.TreeDataProvider<BundleItem> {
       // Refresh to show real bundle
       this.refresh();
 
+      // Add bundle folder to workspace
+      if (result && result.bundleId) {
+        await this.addBundleToWorkspace(result.bundleId);
+      }
+
       // Show success notification
       if (result && result.importedCount !== undefined) {
         vscode.window.showInformationMessage(
-          `✅ Successfully imported ${result.importedCount} log files to ${result.bundleName}`,
+          `✅ Successfully imported ${result.importedCount} files to ${result.bundleName}`,
         );
       } else {
         vscode.window.showInformationMessage(`✅ Package import completed`);
@@ -478,6 +483,58 @@ export class BundleTreeProvider implements vscode.TreeDataProvider<BundleItem> {
     });
     console.log(`Bundle analysis completed for: ${bundleId}`);
     return result;
+  }
+
+  /**
+   * Add bundle folder to workspace for easy file access
+   */
+  private async addBundleToWorkspace(bundleId: string): Promise<void> {
+    if (
+      !vscode.workspace.workspaceFolders ||
+      vscode.workspace.workspaceFolders.length === 0
+    ) {
+      return;
+    }
+
+    const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
+    const bundlePath = `${workspaceRoot}/.log-scout/bundles/${bundleId}/logs`;
+
+    try {
+      // Check if the logs directory exists
+      const bundleUri = vscode.Uri.file(bundlePath);
+      const stat = await vscode.workspace.fs.stat(bundleUri);
+
+      if (stat.type === vscode.FileType.Directory) {
+        // Check if this folder is already in the workspace
+        const existingFolder = vscode.workspace.workspaceFolders.find(
+          (folder) => folder.uri.fsPath === bundlePath,
+        );
+
+        if (!existingFolder) {
+          // Add to workspace with a friendly name
+          const bundleName = bundleId.replace("bundle_", "Bundle ");
+          const success = vscode.workspace.updateWorkspaceFolders(
+            vscode.workspace.workspaceFolders.length, // Add at the end
+            0, // Don't remove any
+            {
+              uri: bundleUri,
+              name: `📦 ${bundleName}`,
+            },
+          );
+
+          if (success) {
+            console.log(`Added bundle folder to workspace: ${bundlePath}`);
+          } else {
+            console.warn(`Failed to add bundle folder to workspace`);
+          }
+        } else {
+          console.log(`Bundle folder already in workspace: ${bundlePath}`);
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to add bundle to workspace:`, error);
+      // Don't throw - this is a nice-to-have feature
+    }
   }
 }
 

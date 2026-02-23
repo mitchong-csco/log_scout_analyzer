@@ -423,6 +423,11 @@
         "icon": "$(refresh)"
       },
       {
+        "command": "logScoutAnalyzer.bundle.openInQCSOne",
+        "title": "Scout: Open Case in QCSOne",
+        "icon": "$(link-external)"
+      },
+      {
         "command": "logScoutAnalyzer.importArchive",
         "title": "Scout: Import Log Archive",
         "icon": "$(cloud-upload)"
@@ -818,6 +823,11 @@
           "command": "logScoutAnalyzer.bundle.addLog",
           "when": "view == scoutBundles && viewItem == bundle",
           "group": "1_modify@1"
+        },
+        {
+          "command": "logScoutAnalyzer.bundle.openInQCSOne",
+          "when": "view == scoutBundles && viewItem == bundle",
+          "group": "1_modify@2"
         },
         {
           "command": "logScoutAnalyzer.bundle.delete",
