@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<MessageType name="UCM_CTRACE" group="Cisco UCM">
+	<TimestampFormat>yyyy/MM/dd HH:mm:ss:SSS</TimestampFormat>
+	<RequiredFields>
+		<Field key="true" search="true">GUID</Field>
+		<Field key="true" search="true">CORRELATIONID</Field> 
+  		<Field key="true" search="true">MSGTAG</Field>
+	</RequiredFields>
+	
+	<DefineLines>
+		<Line name="starter">
+			<Literal>SIP{%IGNORE%}</Literal>
+			<PXML>{% TIMESTAMP %}|SIP{%IGNORE%}|</PXML>
+		</Line>
+	</DefineLines>
+	<OptionalFields> 
+	  <Field>MAC_ADDRESS</Field> 
+  	</OptionalFields>
+	<FirstLines>
+		<Line name="IN">
+			<Literal>IN</Literal>
+			<!-- [1] 2009/12/17 10:45:00.949|SIPL|0|TCP|IN|5.5.5.45|58096|SEP00000000111G|5.5.5.240|5060|correlation id|MessageTag1|001a2f8d-f17f0004-280e0e49-7d091010@5.5.5.240|INVITE-->
+			<PXML>{% $starter %}{%IGNORE%}IN|{%RECEIVER%}|{%IGNORE%}|{%MAC_ADDRESS%}|{%SENDER%}|{%IGNORE%}|{%CORRELATIONID%}|{%MSGTAG%}|{%GUID%}|{%MSG_LABEL%}</PXML>
+		</Line>	
+		<Line name="OUT">
+			<Literal>OUT</Literal>
+			<!-- [2] 2009/12/17 10:45:01.949|SIPT|0|TCP|OUT|5.5.5.45|58096|SEP00000000111G|5.5.5.240|5060|correlation id|MessageTag2|001a2f8d-f17f0004-280e0e49-7d091010@5.5.5.240 |100 Trying-->
+			<PXML>{% $starter %}{%IGNORE%}OUT|{%SENDER%}|{%IGNORE%}|{%MAC_ADDRESS%}|{%RECEIVER%}|{%IGNORE%}|{%CORRELATIONID%}|{%MSGTAG%}|{%GUID%}|{%MSG_LABEL%}</PXML>
+		</Line>				
+	</FirstLines>
+	<LineAction name="setSenderRecv" for="IN">
+	  <Set>{% SENDER %} = [{%MAC_ADDRESS%}] {% SENDER %}</Set> 
+	</LineAction>
+	
+	<LineAction name="setReceiverSend" for="OUT">
+	  <Set>{% RECEIVER %} = [{%MAC_ADDRESS%}] {% RECEIVER %}</Set> 
+  	</LineAction>
+		
+</MessageType>

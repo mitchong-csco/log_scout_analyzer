@@ -1,0 +1,136 @@
+<SupportedTraceInfo>
+	<Trace>
+		<ParserClass>SDIParser</ParserClass>
+		<Identifier>
+			<FileStartWith>sdi</FileStartWith>
+		</Identifier>
+		<Delimiter>PIPE</Delimiter>
+		<SupportedFields>
+			<FieldName>TimeStamp</FieldName>
+			<FieldName>Trace Name</FieldName>
+			<FieldName>Message</FieldName>
+			<FieldName>ClusterId</FieldName>
+			<FieldName>NodeId</FieldName>
+			<FieldName>Correlation Tag</FieldName>
+			<FieldName>Trace Level</FieldName>
+			<FieldName>Mask</FieldName>
+			<FieldName>Ip</FieldName>
+			<FieldName>Device</FieldName>
+		</SupportedFields>
+	</Trace>
+	<Trace>
+		<ParserClass>SDLParser</ParserClass>
+		<Identifier>
+			<FileStartWith>sdl</FileStartWith>
+		</Identifier>
+		<Delimiter>PIPE</Delimiter>
+		<SupportedFields>
+			<FieldName>Seq. Id</FieldName>
+			<FieldName>TimeStamp</FieldName>
+			<FieldName>NodeId</FieldName>
+			<FieldName>Log Entry Type</FieldName>
+			<FieldName>Signal Name</FieldName>
+			<FieldName>Signal Description</FieldName>
+			<FieldName>Destination Process</FieldName>
+			<FieldName>Source Process</FieldName>
+			<FieldName>User Info</FieldName>
+			<FieldName>Info Line</FieldName>
+		</SupportedFields>
+	</Trace>
+	<Trace>
+		<ParserClass>LogParser</ParserClass>
+		<Identifier>
+			<FileStartWith>syslog</FileStartWith>
+		</Identifier>
+		<Delimiter>PIPE</Delimiter>
+		<SupportedFields>
+			<FieldName>Date</FieldName>
+			<FieldName>Time</FieldName>
+			<FieldName>Machine Name</FieldName>
+			<FieldName>Severity</FieldName>
+			<FieldName>Process</FieldName>
+			<FieldName>Message</FieldName>
+		</SupportedFields>
+	</Trace>
+
+	<Trace>                                                                     
+		<ParserClass>LogParser</ParserClass>
+		<Identifier>
+			<FileStartWith>syslog</FileStartWith>
+		</Identifier>
+		<Delimiter>PIPE</Delimiter>
+		<SupportedFields>
+			<FieldName>Date</FieldName>
+			<FieldName>Time</FieldName>
+			<FieldName>UserId</FieldName>
+                        <FieldName>ClientAddress</FieldName>
+			<FieldName>Severity</FieldName>
+                        <FieldName>EventType</FieldName>
+                        <FieldName>ResourceAccessed</FieldName>
+			<FieldName>EventStatus</FieldName>
+                        <FileName>CompulsoryEvent</FileName>
+                        <FileName>AuditCategory</FileName>
+                        <FileName>ComponentID</FileName>
+			<FieldName>AuditDetails</FieldName>
+                        <FileName>AppID</FileName>
+                        <FileName>ClusterID</FileName>
+                        <FileName>NodeID</FileName>
+                        
+		</SupportedFields>
+	</Trace>
+
+<Trace>
+                <ParserClass>LogParser</ParserClass>
+                <Identifier>
+                        <FileStartWith>syslog</FileStartWith>
+                </Identifier>
+                <Delimiter>PIPE</Delimiter>
+                <SupportedFields>
+                        <FieldName>Type</FieldName>
+                        <FieldName>Address</FieldName>
+                        <FieldName>Terminal</FieldName>
+                        <FieldName>Message</FieldName>
+                         <FieldName>Severity</FieldName>
+                        <FieldName>EventType</FieldName>
+                        <FieldName>ResourceAccessed</FieldName>
+                        <FieldName>EventStatus</FieldName>
+                        <FileName>CompulsoryEvent</FileName>
+                        <FileName>AuditCategory</FileName>
+                        <FileName>ComponentID</FileName>
+                        <FieldName>AuditDetails</FieldName>
+                        <FileName>AppID</FileName>
+                        <FileName>ClusterID</FileName>
+                        <FileName>NodeID</FileName>
+
+                </SupportedFields>
+        </Trace>
+
+
+
+
+
+
+	<Trace>
+		<ParserClass>Log4jParser</ParserClass>
+		<Identifier>
+			<FileStartWith>log4j</FileStartWith>
+		</Identifier>
+		<Delimiter>PIPE</Delimiter>
+		<SupportedFields>
+			<FieldName>Date</FieldName>
+			<FieldName>Trace Level</FieldName>
+			<FieldName>Thread</FieldName>
+			<FieldName>Class Name</FieldName>
+			<FieldName>Message</FieldName>
+		</SupportedFields>
+	</Trace>
+	<Trace>
+		<ParserClass>CSVParser</ParserClass>
+		<Identifier>
+			<FileStartWith>csv</FileStartWith>
+		</Identifier>
+		<Delimiter>PIPE</Delimiter>
+		<SupportedFields>
+		</SupportedFields>
+	</Trace>
+</SupportedTraceInfo>
