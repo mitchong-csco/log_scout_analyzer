@@ -114,6 +114,9 @@ impl CallSession {
             self.correlation_id = entry.correlation_id.clone();
         }
 
+        // Update state machine
+        self.update_state(&entry);
+
         // Add message
         self.messages.push(entry);
 

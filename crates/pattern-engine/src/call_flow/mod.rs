@@ -49,6 +49,7 @@
 //! ```
 
 pub mod correlator;
+pub mod state_machine;
 pub mod types;
 
 // Re-export main types for convenience
