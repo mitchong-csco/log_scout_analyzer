@@ -28,11 +28,13 @@
 use log_scout_core::normalized_event::NormalizedEvent;
 use std::collections::HashMap;
 
+pub mod ctrace_normalizer;
 pub mod cube_normalizer;
 pub mod cuc_normalizer;
 pub mod cucm_normalizer;
 pub mod jabber_normalizer;
 
+pub use ctrace_normalizer::CtraceNormalizer;
 pub use cube_normalizer::CubeNormalizer;
 pub use cuc_normalizer::CucNormalizer;
 pub use cucm_normalizer::CucmNormalizer;
@@ -46,6 +48,9 @@ pub enum NormalizationError {
 
     #[error("Unsupported log format: {0}")]
     UnsupportedFormat(String),
+
+    #[error("Invalid format: {0}")]
+    InvalidFormat(String),
 
     #[error("Missing required field: {0}")]
     MissingField(String),
@@ -311,6 +316,7 @@ impl NormalizerRegistry {
         // Register default normalizers
         registry.register(Box::new(CubeNormalizer::new()));
         registry.register(Box::new(CucmNormalizer::new()));
+        registry.register(Box::new(CtraceNormalizer::new()));
         registry.register(Box::new(JabberNormalizer::new()));
         registry.register(Box::new(CucNormalizer::new()));
 
