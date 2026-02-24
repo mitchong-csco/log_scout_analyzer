@@ -1,0 +1,23 @@
+[
+  {
+    "label": "npm:deploy",
+    "command": "cd vscode-extension && npm run deploy",
+    "reveal": "always",
+    "hide": "never",
+    "tags": ["npm", "deploy", "default"],
+  },
+  {
+    "label": "npm:lsp",
+    "command": "cd vscode-extension && npm run build:lsp",
+    "reveal": "always",
+    "hide": "never",
+    "tags": ["npm", "lsp", "rust"],
+  },
+  {
+    "label": "npm:ext",
+    "command": "cd vscode-extension && npm run build",
+    "reveal": "always",
+    "hide": "never",
+    "tags": ["npm", "extension"],
+  },
+]

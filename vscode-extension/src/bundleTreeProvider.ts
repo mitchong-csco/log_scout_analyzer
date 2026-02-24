@@ -312,15 +312,36 @@ export class BundleTreeProvider implements vscode.TreeDataProvider<BundleItem> {
   }
 
   async deleteBundle(bundleId: string): Promise<boolean> {
-    const client = getLSPClient();
-    if (!client) {
+    if (
+      !vscode.workspace.workspaceFolders ||
+      vscode.workspace.workspaceFolders.length === 0
+    ) {
+      vscode.window.showErrorMessage("No workspace folder open");
       return false;
     }
 
+    const workspaceRoot = vscode.workspace.workspaceFolders[0].uri.fsPath;
+    const bundlesPath = `${workspaceRoot}/.log-scout/bundles`;
+
     try {
-      await client.sendRequest("scout/bundle/delete", {
-        bundleId: bundleId,
-      });
+      // Delete the bundle directory
+      const bundleDir = vscode.Uri.file(`${bundlesPath}/${bundleId}`);
+      await vscode.workspace.fs.delete(bundleDir, { recursive: true });
+
+      // Update index.json
+      const indexPath = vscode.Uri.file(`${bundlesPath}/index.json`);
+      const indexData = await vscode.workspace.fs.readFile(indexPath);
+      const index = JSON.parse(Buffer.from(indexData).toString("utf8"));
+
+      if (index.bundles) {
+        index.bundles = index.bundles.filter((b: any) => b.id !== bundleId);
+        index.lastModified = new Date().toISOString();
+
+        await vscode.workspace.fs.writeFile(
+          indexPath,
+          Buffer.from(JSON.stringify(index, null, 2), "utf8")
+        );
+      }
 
       this.refresh();
       return true;

@@ -55,7 +55,7 @@ This document describes **what users can do** with Log Scout Analyzer. Each scen
 1. Sarah opens VS Code
 2. Opens Command Palette (`Ctrl+Shift+P`)
 3. Types "Log Scout: Import Bundle"
-4. Selects her RTMT zip file: `700440257_qcsone_download.zip`
+4. Selects her logs zip file: `700440257_qcsone_download.zip`
 5. Extension extracts and organizes the files
 6. Bundle appears in Bundle Explorer with case ID
 7. Sarah right-clicks bundle → "Analyze Bundle"

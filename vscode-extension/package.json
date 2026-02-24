@@ -402,11 +402,7 @@
         "title": "Scout: Add to Bundle",
         "icon": "$(add)"
       },
-      {
-        "command": "logScoutAnalyzer.bundle.addLog",
-        "title": "Scout: Add Log File to Bundle",
-        "icon": "$(file-add)"
-      },
+
       {
         "command": "logScoutAnalyzer.bundle.analyze",
         "title": "Scout: Analyze Bundle",
@@ -558,10 +554,7 @@
         "command": "logScoutAnalyzer.patterns.togglePattern",
         "title": "Scout: Enable/Disable Pattern"
       },
-      {
-        "command": "logScoutAnalyzer.patterns.showManager",
-        "title": "Scout: Open Pattern Overrides File"
-      },
+
       {
         "command": "logScoutAnalyzer.patterns.importOverrides",
         "title": "Scout: Import Pattern Overrides"
@@ -574,51 +567,7 @@
         "command": "logScoutAnalyzer.patterns.reloadPatterns",
         "title": "Scout: Reload Patterns from LSP"
       },
-      {
-        "command": "logScoutAnalyzer.extraction.addFileType",
-        "title": "Scout: Add File Type to Extraction Policy",
-        "icon": "$(add)"
-      },
-      {
-        "command": "logScoutAnalyzer.extraction.addCurrentFileType",
-        "title": "Scout: Add Current File Type to Extraction Policy",
-        "icon": "$(add)"
-      },
-      {
-        "command": "logScoutAnalyzer.extraction.showStats",
-        "title": "Scout: Show Extraction Statistics",
-        "icon": "$(graph)"
-      },
-      {
-        "command": "logScoutAnalyzer.extraction.editPolicy",
-        "title": "Scout: Edit Extraction Policy",
-        "icon": "$(edit)"
-      },
-      {
-        "command": "logScoutAnalyzer.config.backup",
-        "title": "Scout: Backup Configuration to Cloud",
-        "icon": "$(cloud-upload)"
-      },
-      {
-        "command": "logScoutAnalyzer.config.restore",
-        "title": "Scout: Restore Configuration from Cloud",
-        "icon": "$(cloud-download)"
-      },
-      {
-        "command": "logScoutAnalyzer.config.export",
-        "title": "Scout: Export Configuration to File",
-        "icon": "$(save)"
-      },
-      {
-        "command": "logScoutAnalyzer.config.import",
-        "title": "Scout: Import Configuration from File",
-        "icon": "$(folder-opened)"
-      },
-      {
-        "command": "logScoutAnalyzer.config.list",
-        "title": "Scout: List My Cloud Configurations",
-        "icon": "$(list-unordered)"
-      },
+
       {
         "command": "logScoutAnalyzer.showConsole",
         "title": "Scout: Show Console/Output",
@@ -635,24 +584,24 @@
         "icon": "$(info)"
       },
       {
-        "command": "logScoutAnalyzer.downloadCase",
-        "title": "Scout: Download Case",
-        "icon": "$(cloud-download)"
+        "command": "logScoutAnalyzer.dumpDiagnostics",
+        "title": "Scout: Dump Diagnostics (Debug)",
+        "icon": "$(bug)"
       },
       {
-        "command": "logScoutAnalyzer.importCase",
-        "title": "Scout: Import Case",
-        "icon": "$(cloud-upload)"
+        "command": "logScoutAnalyzer.openExtensionLog",
+        "title": "Scout: Open Extension Log",
+        "icon": "$(file-text)"
       },
       {
-        "command": "logScoutAnalyzer.refreshCases",
-        "title": "Scout: Refresh Cases",
-        "icon": "$(refresh)"
+        "command": "logScoutAnalyzer.openLSPLog",
+        "title": "Scout: Open LSP Server Log",
+        "icon": "$(file-text)"
       },
       {
-        "command": "logScoutAnalyzer.bundle.openDashboard",
-        "title": "Scout: Open Bundle Dashboard",
-        "icon": "$(dashboard)"
+        "command": "logScoutAnalyzer.showLogPaths",
+        "title": "Scout: Show Log Paths",
+        "icon": "$(folder-opened)"
       },
       {
         "command": "logScoutAnalyzer.showCacheData",
@@ -691,6 +640,88 @@
       }
     ],
     "menus": {
+      "commandPalette": [
+        {
+          "command": "logScoutAnalyzer.patterns.showStats",
+          "when": "false"
+        },
+        {
+          "command": "logScoutAnalyzer.analyzeFile",
+          "when": "false"
+        },
+        {
+          "command": "logScoutAnalyzer.clearDiagnostics",
+          "when": "false"
+        },
+        {
+          "command": "logScoutAnalyzer.clearResults",
+          "when": "false"
+        },
+        {
+          "command": "logScoutAnalyzer.showCacheStats",
+          "when": "false"
+        },
+        {
+          "command": "logScoutAnalyzer.showPatterns",
+          "when": "false"
+        },
+        {
+          "command": "logScoutAnalyzer.openSplitView",
+          "when": "false"
+        },
+        {
+          "command": "logScoutAnalyzer.closeSplitView",
+          "when": "false"
+        },
+        {
+          "command": "logScoutAnalyzer.clearConsole",
+          "when": "false"
+        },
+        {
+          "command": "logScoutAnalyzer.showLadderDiagram",
+          "when": "false"
+        },
+        {
+          "command": "logScoutAnalyzer.analyzeDirectory",
+          "when": "false"
+        },
+        {
+          "command": "logScoutAnalyzer.analyzeAllBelow",
+          "when": "false"
+        },
+        {
+          "command": "logScoutAnalyzer.openAnalyzerPanel",
+          "when": "false"
+        },
+        {
+          "command": "logScoutAnalyzer.openAnnotationDashboard",
+          "when": "false"
+        },
+        {
+          "command": "logScoutAnalyzer.toggleConsoleLocation",
+          "when": "false"
+        },
+        {
+          "command": "logScoutAnalyzer.setTimeframe",
+          "when": "false"
+        },
+        {
+          "command": "logScoutAnalyzer.toggleFilter",
+          "when": "false"
+        },
+        {
+          "command": "logScoutAnalyzer.extractSipMessages",
+          "when": "false"
+        },
+        {
+          "command": "logScoutAnalyzer.copyDiagnosticAtCursor",
+          "when": "false"
+        },
+        {
+          "command": "logScoutAnalyzer.showPatternById",
+          "when": "false"
+        }
+      ],
       "view/title": [
         {
           "command": "logScoutAnalyzer.refreshResults",
@@ -762,21 +793,7 @@
           "when": "view == scoutCachedFiles",
           "group": "1_metadata@1"
         },
-        {
-          "command": "logScoutAnalyzer.downloadCase",
-          "when": "view == scoutCases",
-          "group": "navigation@1"
-        },
-        {
-          "command": "logScoutAnalyzer.importCase",
-          "when": "view == scoutCases",
-          "group": "navigation@2"
-        },
-        {
-          "command": "logScoutAnalyzer.refreshCases",
-          "when": "view == scoutCases",
-          "group": "navigation@3"
-        },
+
         {
           "command": "logScoutAnalyzer.bundle.create",
           "when": "view == scoutBundles",
@@ -824,16 +841,7 @@
           "when": "view == scoutBundles && viewItem == bundle",
           "group": "inline@1"
         },
-        {
-          "command": "logScoutAnalyzer.bundle.openDashboard",
-          "when": "view == scoutBundles && viewItem == bundle",
-          "group": "inline@2"
-        },
-        {
-          "command": "logScoutAnalyzer.bundle.addLog",
-          "when": "view == scoutBundles && viewItem == bundle",
-          "group": "1_modify@1"
-        },
+
         {
           "command": "logScoutAnalyzer.bundle.openInQCSOne",
           "when": "view == scoutBundles && viewItem == bundle",

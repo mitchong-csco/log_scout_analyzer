@@ -1,4 +1,25 @@
+# =============================================================================
+# AI-Generated Documentation Prevention
+# =============================================================================
+# Prevent AI assistants from committing session/status documentation clutter
+SESSION_*.md
+TODAY_*.md
+SCENARIO_*_READY.md
+*_COMPLETE.md
+*_SUMMARY.md
+*_INDEX.md
+*_AUDIT.md
+EXECUTE_*.md
+*START_HERE*.md
+*NEW_SESSION*.md
+*CLEANUP*.md
+📖_*.md
+🚀_*.md
+✅_*.md
+
+# =============================================================================
 # Rust
+# =============================================================================
 /target/
 **/*.rs.bk
 *.pdb
@@ -83,6 +104,10 @@ Desktop.ini
 
 # Build logs
 build_logs/
+
+# AI session logs (if they sneak back in)
+docs/ai-session-logs/
+docs/archive/
 
 # Extension development
 *.wasm.map

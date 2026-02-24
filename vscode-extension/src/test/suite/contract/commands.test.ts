@@ -345,4 +345,316 @@ suite("Command Contract Tests", () => {
       );
     });
   });
+
+  suite("7. CRITICAL - All package.json Commands Are Registered", () => {
+    test("Every package.json command has a handler in extension.ts", () => {
+      const packagePath = path.join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "..",
+        "package.json"
+      );
+      const extensionPath = path.join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "extension.ts"
+      );
+
+      const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+      const extensionContent = fs.readFileSync(extensionPath, "utf8");
+
+      const commands = packageJson.contributes.commands as Array<{ command: string; title: string }>;
+      const commandIds = commands.map((c) => c.command);
+
+      console.log(`\nVerifying ${commandIds.length} commands from package.json...`);
+
+      const orphanedCommands: string[] = [];
+      const registeredCommands: string[] = [];
+
+      commandIds.forEach((cmdId) => {
+        // Check if command is registered via registerCommand
+        const registrationPattern = new RegExp(
+          `registerCommand\\s*\\(\\s*["'\`]${cmdId.replace(/\./g, "\\.")}["'\`]`,
+          "g"
+        );
+
+        if (registrationPattern.test(extensionContent)) {
+          registeredCommands.push(cmdId);
+          console.log(`  ✓ ${cmdId}`);
+        } else {
+          orphanedCommands.push(cmdId);
+          console.log(`  ✗ ${cmdId} - NO HANDLER FOUND`);
+        }
+      });
+
+      console.log(`\nRegistered: ${registeredCommands.length}/${commandIds.length}`);
+
+      if (orphanedCommands.length > 0) {
+        console.log("\n❌ ORPHANED COMMANDS (defined in package.json but not registered):");
+        orphanedCommands.forEach((cmd) => console.log(`   - ${cmd}`));
+
+        assert.fail(
+          `${orphanedCommands.length} command(s) are orphaned!\n` +
+          `These commands are defined in package.json but have no handler in extension.ts:\n` +
+          orphanedCommands.map(c => `  - ${c}`).join("\n") + "\n\n" +
+          `Every command MUST be registered with vscode.commands.registerCommand()`
+        );
+      }
+
+      console.log("\n✅ All package.json commands are properly registered");
+    });
+
+    test("No commands are registered that aren't in package.json", () => {
+      const packagePath = path.join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "..",
+        "package.json"
+      );
+      const extensionPath = path.join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "extension.ts"
+      );
+
+      const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+      const extensionContent = fs.readFileSync(extensionPath, "utf8");
+
+      const commands = packageJson.contributes.commands as Array<{ command: string }>;
+      const declaredCommandIds = new Set(commands.map((c) => c.command));
+
+      // Find all registerCommand calls in extension.ts
+      const registerPattern = /registerCommand\s*\(\s*["']([^"']+)["']/g;
+      const matches = [...extensionContent.matchAll(registerPattern)];
+      const registeredCommands = matches.map((m) => m[1]);
+
+      const extraCommands = registeredCommands.filter(
+        (cmd) => cmd.startsWith("logScoutAnalyzer.") && !declaredCommandIds.has(cmd)
+      );
+
+      if (extraCommands.length > 0) {
+        console.log("\n⚠️  Commands registered but not in package.json:");
+        extraCommands.forEach((cmd) => console.log(`   - ${cmd}`));
+        console.log("\n   These should either be added to package.json or removed from extension.ts");
+
+        assert.fail(
+          `${extraCommands.length} command(s) are registered but not declared in package.json:\n` +
+          extraCommands.map(c => `  - ${c}`).join("\n")
+        );
+      }
+
+      console.log("\n✅ No extra commands found");
+    });
+
+    test("Bundle commands that call LSP are properly wired", () => {
+      const bundleProviderPath = path.join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "bundleTreeProvider.ts"
+      );
+      const extensionPath = path.join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "extension.ts"
+      );
+
+      const bundleContent = fs.readFileSync(bundleProviderPath, "utf8");
+      const extensionContent = fs.readFileSync(extensionPath, "utf8");
+
+      // Bundle commands that should call bundleTreeProvider methods
+      const bundleCommands = [
+        { command: "logScoutAnalyzer.bundle.create", method: "createBundle" },
+        { command: "logScoutAnalyzer.bundle.delete", method: "deleteBundle" },
+        { command: "logScoutAnalyzer.bundle.analyze", method: "analyzeBundle" },
+        { command: "logScoutAnalyzer.bundle.importPackage", method: "importPackage" },
+        { command: "logScoutAnalyzer.bundle.addLog", method: "addLogToBundle" },
+      ];
+
+      console.log("\nVerifying bundle command wiring...");
+
+      bundleCommands.forEach(({ command, method }) => {
+        // Check if command handler exists in extension.ts
+        const handlerPattern = new RegExp(
+          `registerCommand\\s*\\(\\s*["']${command.replace(/\./g, "\\.")}["']`,
+          "g"
+        );
+
+        const hasHandler = handlerPattern.test(extensionContent);
+        assert.ok(hasHandler, `Command ${command} should have a handler in extension.ts`);
+
+        // Check if bundleTreeProvider has the method
+        const methodPattern = new RegExp(`async ${method}\\s*\\(`);
+        const hasMethod = methodPattern.test(bundleContent);
+
+        assert.ok(
+          hasMethod,
+          `bundleTreeProvider should have method ${method}() for command ${command}`
+        );
+
+        if (command !== "logScoutAnalyzer.bundle.delete") {
+          // Skip LSP check for delete since we fixed it to work locally
+          console.log(`  ✓ ${command} → bundleTreeProvider.${method}()`);
+        } else {
+          console.log(`  ✓ ${command} → bundleTreeProvider.${method}() [local filesystem]`);
+        }
+      });
+
+      console.log("\n✅ All bundle commands are properly wired");
+    });
+
+    test("Pattern commands call the right pattern manager methods", () => {
+      const extensionPath = path.join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "extension.ts"
+      );
+      const uiPath = path.join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "patternOverrideUI.ts"
+      );
+
+      const extensionContent = fs.readFileSync(extensionPath, "utf8");
+      const uiContent = fs.readFileSync(uiPath, "utf8");
+
+      // Pattern commands that should call pattern manager
+      const patternCommands = [
+        { command: "logScoutAnalyzer.patterns.createOverride", uiFunction: "createOverrideQuickInput" },
+        { command: "logScoutAnalyzer.patterns.createCustom", uiFunction: "createCustomPatternWizard" },
+        { command: "logScoutAnalyzer.patterns.editOverride", uiFunction: "editPatternQuickInput" },
+        { command: "logScoutAnalyzer.patterns.deleteOverride", uiFunction: "deletePatternQuickPick" },
+        { command: "logScoutAnalyzer.patterns.togglePattern", uiFunction: "togglePatternQuickPick" },
+      ];
+
+      console.log("\nVerifying pattern command wiring...");
+
+      patternCommands.forEach(({ command, uiFunction }) => {
+        // Check if command handler exists in extension.ts
+        const handlerPattern = new RegExp(
+          `registerCommand\\s*\\(\\s*["']${command.replace(/\./g, "\\.")}["']`,
+          "g"
+        );
+        const hasHandler = handlerPattern.test(extensionContent);
+        assert.ok(hasHandler, `Command ${command} should have a handler in extension.ts`);
+
+        // Check if the UI function exists in patternOverrideUI.ts
+        const uiFunctionPattern = new RegExp(`(export\\s+)?async\\s+function\\s+${uiFunction}\\s*\\(`);
+        const hasUIFunction = uiFunctionPattern.test(uiContent);
+        assert.ok(
+          hasUIFunction,
+          `patternOverrideUI should have function ${uiFunction}() for command ${command}`
+        );
+
+        console.log(`  ✓ ${command} → ${uiFunction}()`);
+      });
+
+      console.log("\n✅ All pattern commands are properly wired");
+    });
+
+    test("Tree view commands exist and have proper context", () => {
+      const packagePath = path.join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "..",
+        "package.json"
+      );
+      const extensionPath = path.join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "extension.ts"
+      );
+
+      const packageJson = JSON.parse(fs.readFileSync(packagePath, "utf8"));
+      const extensionContent = fs.readFileSync(extensionPath, "utf8");
+
+      // Get all view/item/context menu commands
+      const contextMenus = packageJson.contributes.menus["view/item/context"] || [];
+      const contextCommands = contextMenus.map((m: any) => m.command);
+
+      console.log(`\nVerifying ${contextCommands.length} context menu commands...`);
+
+      const missingHandlers: string[] = [];
+
+      contextCommands.forEach((cmdId: string) => {
+        const registrationPattern = new RegExp(
+          `registerCommand\\s*\\(\\s*["'\`]${cmdId.replace(/\./g, "\\.")}["'\`]`,
+          "g"
+        );
+
+        if (registrationPattern.test(extensionContent)) {
+          console.log(`  ✓ ${cmdId}`);
+        } else {
+          console.log(`  ✗ ${cmdId} - NO HANDLER`);
+          missingHandlers.push(cmdId);
+        }
+      });
+
+      if (missingHandlers.length > 0) {
+        assert.fail(
+          `${missingHandlers.length} context menu command(s) have no handler:\n` +
+          missingHandlers.map(c => `  - ${c}`).join("\n")
+        );
+      }
+
+      console.log("\n✅ All context menu commands have handlers");
+    });
+
+    test("All tree providers are properly initialized", () => {
+      const extensionPath = path.join(
+        __dirname,
+        "..",
+        "..",
+        "..",
+        "extension.ts"
+      );
+
+      const extensionContent = fs.readFileSync(extensionPath, "utf8");
+
+      const treeProviders = [
+        { variable: "resultsTreeProvider", class: "ResultsTreeProvider" },
+        { variable: "bundleTreeProvider", class: "BundleTreeProvider" },
+        { variable: "filterTreeProvider", class: "FilterTreeProvider" },
+        { variable: "categoriesTreeProvider", class: "CategoriesTreeProvider" },
+        { variable: "patternOverrideTreeProvider", class: "PatternOverrideTreeProvider" },
+      ];
+
+      console.log("\nVerifying tree provider initialization...");
+
+      treeProviders.forEach(({ variable, class: className }) => {
+        // Check if provider is declared
+        const declPattern = new RegExp(`let\\s+${variable}\\s*:`);
+        const isDeclared = declPattern.test(extensionContent);
+        assert.ok(isDeclared, `${variable} should be declared in extension.ts`);
+
+        // Check if provider is instantiated
+        const instantiatePattern = new RegExp(`new\\s+${className}\\s*\\(`);
+        const isInstantiated = instantiatePattern.test(extensionContent);
+        assert.ok(isInstantiated, `${variable} should be instantiated with new ${className}()`);
+
+        console.log(`  ✓ ${variable} (${className})`);
+      });
+
+      console.log("\n✅ All tree providers are properly initialized");
+    });
+  });
 });

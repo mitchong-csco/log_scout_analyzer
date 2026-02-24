@@ -859,6 +859,7 @@ export function activate(context: vscode.ExtensionContext) {
         }
       },
     ),
+    // @deprecated - TODO: Remove this command (not in package.json)
     vscode.commands.registerCommand(
       "logScoutAnalyzer.patterns.showStats",
       async () => {
@@ -1204,6 +1205,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
+  // @deprecated - TODO: Remove this command (not in package.json)
   // Register commands
   const analyzeCommand = vscode.commands.registerCommand(
     "logScoutAnalyzer.analyzeFile",
@@ -1222,6 +1224,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
+  // @deprecated - TODO: Remove this command (not in package.json)
   const clearCommand = vscode.commands.registerCommand(
     "logScoutAnalyzer.clearDiagnostics",
     () => {
@@ -1246,6 +1249,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
+  // @deprecated - TODO: Remove this command (not in package.json)
   // Alias for clearDiagnostics (used by tree view)
   const clearResultsCommand = vscode.commands.registerCommand(
     "logScoutAnalyzer.clearResults",
@@ -1499,6 +1503,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
+  // @deprecated - TODO: Remove this command (not in package.json)
   const showCacheStatsCommand = vscode.commands.registerCommand(
     "logScoutAnalyzer.showCacheStats",
     () => {
@@ -1542,6 +1547,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
+  // @deprecated - TODO: Remove this command (not in package.json)
   const showPatternsCommand = vscode.commands.registerCommand(
     "logScoutAnalyzer.showPatterns",
     async () => {
@@ -1789,6 +1795,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
+  // @deprecated - TODO: Remove this command (not in package.json)
   // Open Split View command
   const openSplitViewCommand = vscode.commands.registerCommand(
     "logScoutAnalyzer.openSplitView",
@@ -1838,6 +1845,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
+  // @deprecated - TODO: Remove this command (not in package.json)
   // Close Split View command
   const closeSplitViewCommand = vscode.commands.registerCommand(
     "logScoutAnalyzer.closeSplitView",
@@ -1876,6 +1884,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
+  // @deprecated - TODO: Remove this command (not in package.json)
   // Clear console command (deprecated - does nothing now)
   const clearConsoleCommand = vscode.commands.registerCommand(
     "logScoutAnalyzer.clearConsole",
@@ -1886,7 +1895,8 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
-  // Show SIP Ladder Diagram command
+  // @deprecated - TODO: Remove this command (not in package.json)
+  // Show ladder diagram command
   const showLadderDiagramCommand = vscode.commands.registerCommand(
     "logScoutAnalyzer.showLadderDiagram",
     async () => {
@@ -2064,6 +2074,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
+  // @deprecated - TODO: Remove this command (not in package.json)
   // Analyze Directory command
   const analyzeDirectoryCommand = vscode.commands.registerCommand(
     "logScoutAnalyzer.analyzeDirectory",
@@ -2114,6 +2125,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
+  // @deprecated - TODO: Remove this command (not in package.json)
   // Analyze All Below command (recursive)
   const analyzeAllBelowCommand = vscode.commands.registerCommand(
     "logScoutAnalyzer.analyzeAllBelow",
@@ -2164,6 +2176,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
+  // @deprecated - TODO: Remove this command (not in package.json)
   // Open Scout Analyzer Panel command (deprecated but kept for backward compatibility)
   const openAnalyzerPanelCommand = vscode.commands.registerCommand(
     "logScoutAnalyzer.openAnalyzerPanel",
@@ -2204,6 +2217,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
+  // @deprecated - TODO: Remove this command (not in package.json)
   // Open Annotation Dashboard command
   const openAnnotationDashboardCommand = vscode.commands.registerCommand(
     "logScoutAnalyzer.openAnnotationDashboard",
@@ -2212,6 +2226,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
+  // @deprecated - TODO: Remove this command (not in package.json)
   // Toggle Console Location command (deprecated - does nothing now)
   const toggleConsoleLocationCommand = vscode.commands.registerCommand(
     "logScoutAnalyzer.toggleConsoleLocation",
@@ -2222,6 +2237,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
+  // @deprecated - TODO: Remove this command (not in package.json)
   // Set Timeframe Filter command
   const setTimeframeCommand = vscode.commands.registerCommand(
     "logScoutAnalyzer.setTimeframe",
@@ -2342,6 +2358,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
+  // @deprecated - TODO: Remove this command (not in package.json)
   // Toggle Filter command (unified - handles categories, files, etc.)
   const toggleFilterCommand = vscode.commands.registerCommand(
     "logScoutAnalyzer.toggleFilter",
@@ -2406,6 +2423,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
+  // @deprecated - TODO: Remove this command (not in package.json)
   // Extract SIP Messages command
   const extractSipMessagesCommand = vscode.commands.registerCommand(
     "logScoutAnalyzer.extractSipMessages",
@@ -2528,6 +2546,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
+  // @deprecated - TODO: Remove this command (not in package.json)
   const copyDiagnosticAtCursorCommand = vscode.commands.registerCommand(
     "logScoutAnalyzer.copyDiagnosticAtCursor",
     async () => {
@@ -2722,6 +2741,7 @@ export function activate(context: vscode.ExtensionContext) {
     },
   );
 
+  // @deprecated - TODO: Remove this command (not in package.json)
   const showPatternByIdCommand = vscode.commands.registerCommand(
     "logScoutAnalyzer.showPatternById",
     async (patternId: string) => {
