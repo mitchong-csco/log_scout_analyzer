@@ -365,8 +365,9 @@ class BundleTreeProvider {
             throw new Error(errorMsg);
         }
         console.log(`Analyzing bundle: ${bundleId}`);
-        const result = await client.sendRequest("scout/bundle/analyze", {
-            bundleId: bundleId,
+        const result = await client.sendRequest("workspace/executeCommand", {
+            command: "scout/bundle/analyze",
+            arguments: [{ bundleId: bundleId }],
         });
         console.log(`Bundle analysis completed for: ${bundleId}`);
         return result;

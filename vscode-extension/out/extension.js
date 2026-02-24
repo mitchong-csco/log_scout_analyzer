@@ -928,8 +928,9 @@ function activate(context) {
         }
         try {
             // List existing bundles
-            const response = await client.sendRequest("scout/bundle/list", {
-                logs: [filePath],
+            const response = await client.sendRequest("workspace/executeCommand", {
+                command: "scout/bundle/list",
+                arguments: [{ logs: [filePath] }],
             });
             if (!response || !response.bundles || response.bundles.length === 0) {
                 // No bundles exist, offer to create one
@@ -966,9 +967,9 @@ function activate(context) {
                 return;
             }
             // Add file to selected bundle
-            await client.sendRequest("scout/bundle/addLog", {
-                bundleId: selected.id,
-                logPath: filePath,
+            await client.sendRequest("workspace/executeCommand", {
+                command: "scout/bundle/addLog",
+                arguments: [{ bundleId: selected.id, logPath: filePath }],
             });
             vscode.window.showInformationMessage(`✅ Added "${fileName}" to bundle "${selected.label}"`);
             outputChannel?.appendLine(`✓ Added log to bundle: ${fileName} → ${selected.label}`);

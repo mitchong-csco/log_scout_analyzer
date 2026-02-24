@@ -1315,8 +1315,9 @@ export function activate(context: vscode.ExtensionContext) {
 
         try {
           // List existing bundles
-          const response: any = await client.sendRequest("scout/bundle/list", {
-            logs: [filePath],
+          const response: any = await client.sendRequest("workspace/executeCommand", {
+            command: "scout/bundle/list",
+            arguments: [{logs: [filePath]}],
           });
 
           if (!response || !response.bundles || response.bundles.length === 0) {
@@ -1369,9 +1370,9 @@ export function activate(context: vscode.ExtensionContext) {
           }
 
           // Add file to selected bundle
-          await client.sendRequest("scout/bundle/addLog", {
-            bundleId: (selected as any).id,
-            logPath: filePath,
+          await client.sendRequest("workspace/executeCommand", {
+            command: "scout/bundle/addLog",
+            arguments: [{bundleId: (selected as any).id, logPath: filePath}],
           });
 
           vscode.window.showInformationMessage(

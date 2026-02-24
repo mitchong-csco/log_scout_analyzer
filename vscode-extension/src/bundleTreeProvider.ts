@@ -500,8 +500,9 @@ export class BundleTreeProvider implements vscode.TreeDataProvider<BundleItem> {
     }
 
     console.log(`Analyzing bundle: ${bundleId}`);
-    const result = await client.sendRequest("scout/bundle/analyze", {
-      bundleId: bundleId,
+    const result = await client.sendRequest("workspace/executeCommand", {
+      command: "scout/bundle/analyze",
+      arguments: [{bundleId: bundleId}],
     });
     console.log(`Bundle analysis completed for: ${bundleId}`);
     return result;
