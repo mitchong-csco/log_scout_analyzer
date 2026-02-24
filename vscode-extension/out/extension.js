@@ -640,7 +640,9 @@ function activate(context) {
         catch (error) {
             vscode.window.showErrorMessage(`Failed to reload patterns: ${error}`);
         }
-    }), vscode.commands.registerCommand("logScoutAnalyzer.patterns.showStats", async () => {
+    }), 
+    // @deprecated - TODO: Remove this command (not in package.json)
+    vscode.commands.registerCommand("logScoutAnalyzer.patterns.showStats", async () => {
         const manager = ensurePatternManager();
         if (!manager) {
             return;
@@ -885,6 +887,7 @@ function activate(context) {
         outputChannel.appendLine("END DIAGNOSTIC DATA DUMP");
         outputChannel.appendLine("=".repeat(80));
     });
+    // @deprecated - TODO: Remove this command (not in package.json)
     // Register commands
     const analyzeCommand = vscode.commands.registerCommand("logScoutAnalyzer.analyzeFile", async () => {
         const editor = vscode.window.activeTextEditor;
@@ -897,6 +900,7 @@ function activate(context) {
             vscode.window.showWarningMessage("No active editor or diagnostics provider not initialized");
         }
     });
+    // @deprecated - TODO: Remove this command (not in package.json)
     const clearCommand = vscode.commands.registerCommand("logScoutAnalyzer.clearDiagnostics", () => {
         // Clear tree views (LSP manages diagnostics)
         resultsTreeProvider?.clear();
@@ -912,6 +916,7 @@ function activate(context) {
         vscode.window.showInformationMessage("Diagnostics cleared!");
         updateStatusBar();
     });
+    // @deprecated - TODO: Remove this command (not in package.json)
     // Alias for clearDiagnostics (used by tree view)
     const clearResultsCommand = vscode.commands.registerCommand("logScoutAnalyzer.clearResults", () => {
         // Clear tree views (LSP manages diagnostics)
@@ -1082,6 +1087,7 @@ function activate(context) {
             vscode.window.showErrorMessage(`Failed to open cache metadata: ${err.message}`);
         }
     });
+    // @deprecated - TODO: Remove this command (not in package.json)
     const showCacheStatsCommand = vscode.commands.registerCommand("logScoutAnalyzer.showCacheStats", () => {
         if (analysisCache.size === 0) {
             vscode.window.showInformationMessage("No cached analysis results");
@@ -1112,6 +1118,7 @@ function activate(context) {
             });
         }
     });
+    // @deprecated - TODO: Remove this command (not in package.json)
     const showPatternsCommand = vscode.commands.registerCommand("logScoutAnalyzer.showPatterns", async () => {
         if (outputChannel) {
             outputChannel.appendLine(`[${new Date().toISOString()}] Fetching patterns from LSP server...`);
@@ -1280,6 +1287,7 @@ function activate(context) {
             }
         });
     });
+    // @deprecated - TODO: Remove this command (not in package.json)
     // Open Split View command
     const openSplitViewCommand = vscode.commands.registerCommand("logScoutAnalyzer.openSplitView", async () => {
         const editor = vscode.window.activeTextEditor;
@@ -1315,6 +1323,7 @@ function activate(context) {
         await splitViewProvider?.openSplitView(editor, annotations);
         vscode.window.showInformationMessage("Split view opened! Use settings to configure sync features.");
     });
+    // @deprecated - TODO: Remove this command (not in package.json)
     // Close Split View command
     const closeSplitViewCommand = vscode.commands.registerCommand("logScoutAnalyzer.closeSplitView", () => {
         const editor = vscode.window.activeTextEditor;
@@ -1338,11 +1347,13 @@ function activate(context) {
             vscode.window.showInformationMessage("Scout Output Channel opened (for debugging).");
         }
     });
+    // @deprecated - TODO: Remove this command (not in package.json)
     // Clear console command (deprecated - does nothing now)
     const clearConsoleCommand = vscode.commands.registerCommand("logScoutAnalyzer.clearConsole", () => {
         vscode.window.showInformationMessage("Console output removed - check file logs instead");
     });
-    // Show SIP Ladder Diagram command
+    // @deprecated - TODO: Remove this command (not in package.json)
+    // Show ladder diagram command
     const showLadderDiagramCommand = vscode.commands.registerCommand("logScoutAnalyzer.showLadderDiagram", async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
@@ -1443,6 +1454,7 @@ function activate(context) {
         fileLogger?.logExport(fileName, results.length);
         vscode.window.showInformationMessage(`Exported ${results.length} results`);
     });
+    // @deprecated - TODO: Remove this command (not in package.json)
     // Analyze Directory command
     const analyzeDirectoryCommand = vscode.commands.registerCommand("logScoutAnalyzer.analyzeDirectory", async () => {
         const editor = vscode.window.activeTextEditor;
@@ -1477,6 +1489,7 @@ function activate(context) {
         fileLogger?.log(`Opened ${opened} files in directory for analysis (caching via event handler)`);
         vscode.window.showInformationMessage(`Opened ${opened} files. LSP analyzing and caching. Check Cached Files view.`);
     });
+    // @deprecated - TODO: Remove this command (not in package.json)
     // Analyze All Below command (recursive)
     const analyzeAllBelowCommand = vscode.commands.registerCommand("logScoutAnalyzer.analyzeAllBelow", async () => {
         const editor = vscode.window.activeTextEditor;
@@ -1511,6 +1524,7 @@ function activate(context) {
         fileLogger?.log(`Opened ${opened} files recursively for analysis (caching via event handler)`);
         vscode.window.showInformationMessage(`Opened ${opened} files. LSP analyzing and caching. Check Cached Files view.`);
     });
+    // @deprecated - TODO: Remove this command (not in package.json)
     // Open Scout Analyzer Panel command (deprecated but kept for backward compatibility)
     const openAnalyzerPanelCommand = vscode.commands.registerCommand("logScoutAnalyzer.openAnalyzerPanel", () => {
         vscode.window.showInformationMessage("Analyzer controls are in the left sidebar. Click the Scout icon in the activity bar.");
@@ -1531,14 +1545,17 @@ function activate(context) {
             scoutAnalyzerPanel_1.ScoutAnalyzerPanel.createOrShow(context.extensionUri, scenarioManager, patternOverrideManager);
         }
     });
+    // @deprecated - TODO: Remove this command (not in package.json)
     // Open Annotation Dashboard command
     const openAnnotationDashboardCommand = vscode.commands.registerCommand("logScoutAnalyzer.openAnnotationDashboard", () => {
         annotationDashboardPanel_1.AnnotationDashboardPanel.createOrShow(context.extensionUri);
     });
+    // @deprecated - TODO: Remove this command (not in package.json)
     // Toggle Console Location command (deprecated - does nothing now)
     const toggleConsoleLocationCommand = vscode.commands.registerCommand("logScoutAnalyzer.toggleConsoleLocation", () => {
         vscode.window.showInformationMessage("Console UI removed - check file logs at: " + fileLogger?.getLogPath());
     });
+    // @deprecated - TODO: Remove this command (not in package.json)
     // Set Timeframe Filter command
     const setTimeframeCommand = vscode.commands.registerCommand("logScoutAnalyzer.setTimeframe", (timeframe) => {
         analyzerTreeProvider?.setTimeframe(timeframe);
@@ -1622,6 +1639,7 @@ function activate(context) {
         // Filter results view based on enabled categories
         filterResultsByCategories();
     });
+    // @deprecated - TODO: Remove this command (not in package.json)
     // Toggle Filter command (unified - handles categories, files, etc.)
     const toggleFilterCommand = vscode.commands.registerCommand("logScoutAnalyzer.toggleFilter", (filterType, filterValue) => {
         if (filterType === "category") {
@@ -1666,6 +1684,7 @@ function activate(context) {
         }
         await vscode.commands.executeCommand("vscode.openFolder", editor.document.uri, true);
     });
+    // @deprecated - TODO: Remove this command (not in package.json)
     // Extract SIP Messages command
     const extractSipMessagesCommand = vscode.commands.registerCommand("logScoutAnalyzer.extractSipMessages", async () => {
         const editor = vscode.window.activeTextEditor;
@@ -1744,6 +1763,7 @@ function activate(context) {
         vscode.env.clipboard.writeText(text);
         vscode.window.showInformationMessage("Tooltip content copied to clipboard");
     });
+    // @deprecated - TODO: Remove this command (not in package.json)
     const copyDiagnosticAtCursorCommand = vscode.commands.registerCommand("logScoutAnalyzer.copyDiagnosticAtCursor", async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
@@ -1891,6 +1911,7 @@ function activate(context) {
         output.appendLine(JSON.stringify(jsonOutput, null, 2));
         output.show();
     });
+    // @deprecated - TODO: Remove this command (not in package.json)
     const showPatternByIdCommand = vscode.commands.registerCommand("logScoutAnalyzer.showPatternById", async (patternId) => {
         if (!patternId) {
             vscode.window.showErrorMessage("No pattern ID provided");
