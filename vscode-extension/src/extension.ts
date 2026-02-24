@@ -38,6 +38,15 @@ import { PatternOverrideTreeProvider } from "./patternOverrideTreeProvider";
 import { PatternOverrideCodeActionProvider } from "./patternOverrideCodeActions";
 import { BundleTreeProvider } from "./bundleTreeProvider";
 
+// Command modules
+import { registerDebugCommands } from "./commands/debugCommands";
+import { registerCacheCommands } from "./commands/cacheCommands";
+import { registerBundleCommands } from "./commands/bundleCommands";
+import { registerPatternCommands } from "./commands/patternCommands";
+import { registerResultsCommands } from "./commands/resultsCommands";
+import { registerNavigationCommands } from "./commands/navigationCommands";
+import { registerUtilityCommands } from "./commands/utilityCommands";
+
 let outputChannel: vscode.OutputChannel | undefined;
 let statusBarItem: vscode.StatusBarItem | undefined;
 let patternStatusBarItem: vscode.StatusBarItem | undefined;
@@ -1037,6 +1046,52 @@ export function activate(context: vscode.ExtensionContext) {
   patternStatusBarItem.tooltip = "Click to open pattern overrides";
   context.subscriptions.push(patternStatusBarItem);
   updatePatternStatusBar();
+
+  // ============================================================
+  // REGISTER COMMAND MODULES
+  // ============================================================
+
+  // Register all command modules after providers are initialized
+  registerDebugCommands(context, outputChannel, fileLogger);
+  registerCacheCommands(
+    context,
+    analysisCache,
+    cachedFilesTreeProvider,
+    resultsTreeProvider,
+    categoriesTreeProvider,
+    fileLogger,
+    outputChannel,
+    allResults,
+    updateStatusBar,
+    updateCachedFilesView,
+    debouncedSaveCache
+  );
+  registerBundleCommands(context, outputChannel, bundleTreeProvider);
+  registerPatternCommands(
+    context,
+    patternOverrideManager,
+    patternOverrideTreeProvider,
+    updatePatternStatusBar
+  );
+  registerResultsCommands(
+    context,
+    resultsTreeProvider,
+    categoriesTreeProvider,
+    fileLogger,
+    filterResultsByCategories
+  );
+  registerNavigationCommands(
+    context,
+    outputChannel,
+    highlightDecoration,
+    highlightTimeout,
+    scenarioManager,
+    patternOverrideManager,
+    isLogFile
+  );
+  registerUtilityCommands(context, outputChannel);
+
+  outputChannel.appendLine("✓ Command modules registered (49 commands)");
 
   // Shared function to analyze a document and update cache
   /**

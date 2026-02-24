@@ -47,6 +47,14 @@ const patternOverrideUI_1 = require("./patternOverrideUI");
 const patternOverrideTreeProvider_1 = require("./patternOverrideTreeProvider");
 const patternOverrideCodeActions_1 = require("./patternOverrideCodeActions");
 const bundleTreeProvider_1 = require("./bundleTreeProvider");
+// Command modules
+const debugCommands_1 = require("./commands/debugCommands");
+const cacheCommands_1 = require("./commands/cacheCommands");
+const bundleCommands_1 = require("./commands/bundleCommands");
+const patternCommands_1 = require("./commands/patternCommands");
+const resultsCommands_1 = require("./commands/resultsCommands");
+const navigationCommands_1 = require("./commands/navigationCommands");
+const utilityCommands_1 = require("./commands/utilityCommands");
 let outputChannel;
 let statusBarItem;
 let patternStatusBarItem;
@@ -771,6 +779,18 @@ function activate(context) {
     patternStatusBarItem.tooltip = "Click to open pattern overrides";
     context.subscriptions.push(patternStatusBarItem);
     updatePatternStatusBar();
+    // ============================================================
+    // REGISTER COMMAND MODULES
+    // ============================================================
+    // Register all command modules after providers are initialized
+    (0, debugCommands_1.registerDebugCommands)(context, outputChannel, fileLogger);
+    (0, cacheCommands_1.registerCacheCommands)(context, analysisCache, cachedFilesTreeProvider, resultsTreeProvider, categoriesTreeProvider, fileLogger, outputChannel, allResults, updateStatusBar, updateCachedFilesView, debouncedSaveCache);
+    (0, bundleCommands_1.registerBundleCommands)(context, outputChannel, bundleTreeProvider);
+    (0, patternCommands_1.registerPatternCommands)(context, patternOverrideManager, patternOverrideTreeProvider, updatePatternStatusBar);
+    (0, resultsCommands_1.registerResultsCommands)(context, resultsTreeProvider, categoriesTreeProvider, fileLogger, filterResultsByCategories);
+    (0, navigationCommands_1.registerNavigationCommands)(context, outputChannel, highlightDecoration, highlightTimeout, scenarioManager, patternOverrideManager, isLogFile);
+    (0, utilityCommands_1.registerUtilityCommands)(context, outputChannel);
+    outputChannel.appendLine("✓ Command modules registered (49 commands)");
     // Shared function to analyze a document and update cache
     /**
      * Analyze document manually (for analyze command)
