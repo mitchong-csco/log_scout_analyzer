@@ -411,31 +411,230 @@ This document describes **what users can do** with Log Scout Analyzer. Each scen
 
 ## 🟢 Future Scenarios (Planned)
 
-### Scenario 10: Pattern Override Workflow 📋
+### Scenario 10: Pattern Overlays - Quick Fix for Noisy Warnings 📋
 
 **User Story:**  
-*"As Sarah, I want to customize pattern severity. Some 'warnings' in my environment are actually critical."*
+*"As Sarah, I'm investigating case 700435046 and seeing hundreds of 'Jabber MRA timeout' warnings that are normal in my environment. I need to suppress these just for this case without affecting my base patterns."*
 
 **Target User Flow:**
-1. Sarah sees warning in Problems Panel
-2. Right-clicks warning → "Change Severity"
-3. Dialog shows: "Change 'Database connection slow' from Warning to Error?"
-4. Sarah confirms
-5. Pattern override saved to workspace
-6. Future occurrences show as Error
-7. Override shared with team via git
+1. Sarah opens RTMT bundle for case 700435046
+2. Problems Panel shows 847 warnings, 200 are "Jabber MRA timeout"
+3. Sarah right-clicks one → "Create Pattern Overlay" → "Suppress Pattern"
+4. Dialog appears:
+   - **Layer Name:** "Case 700435046 - Voicemail Investigation"
+   - **Scope:** "This bundle only" ✓ | "All bundles" | "Hostname: uc-cucm-pub1"
+   - **Action:** Suppress ✓ | Tag | Change Severity | Extract Fields
+   - **State:** Draft | **Staged** ✓ | Active
+5. Sarah saves → overlay layer created at priority 100
+6. Warnings disappear from Problems Panel (suppressed)
+7. Layer saved to `.vscode/scout-overlays/case-700435046.json`
+8. Sarah can share overlay with team or commit to git
+
+**Success Criteria:**
+- ✅ Warnings suppressed in current bundle
+- ✅ Base patterns unchanged
+- ✅ Other bundles unaffected
+- ✅ Can preview before activating
+- ✅ Can rollback easily
 
 **Implementation Status:** 📋 **Planned**
-- Pattern override system: ✅ Backend ready (pattern-loader crate)
+- Type definitions: ❌ Not started
+- Layer manager: ❌ Not started
 - UI integration: ❌ Not started
-- Workspace storage: ❌ Not started
-- Team sharing: ❌ Not started
+- Storage backend: ❌ Not started
 
-**Technical Foundation:**
-- Backend: `crates/pattern-loader/` has override system
-- Docs: `crates/pattern-loader/docs/PATTERN_OVERRIDE_QUICK_START.md`
+**Priority:** High (critical workflow)
 
-**Priority:** Medium (enhancement)
+---
+
+### Scenario 11: Pattern Overlays - Custom Tagging for Analysis 📋
+
+**User Story:**  
+*"As Sarah, I want to tag all voicemail-related errors with 'voicemail-issue' so I can filter and group them separately."*
+
+**Target User Flow:**
+1. Sarah creates new overlay: "Voicemail Tagging"
+2. Adds signature: `(?i)voicemail.*(error|fail|timeout)`
+3. Sets action: Tag with "voicemail-issue"
+4. Sets scope: Bundle 700435046
+5. Activates layer (draft → staged → active)
+6. All matching logs now tagged
+7. Sarah filters results by tag "voicemail-issue"
+8. Sees 47 tagged entries, exports to TAC case
+
+**Success Criteria:**
+- ✅ Custom tags applied dynamically
+- ✅ Tags visible in tree view
+- ✅ Can filter by custom tag
+- ✅ Tags don't modify original log files
+
+**Implementation Status:** 📋 **Planned**
+
+**Priority:** High
+
+---
+
+### Scenario 12: Pattern Overlays - Field Extraction for Metrics 📋
+
+**User Story:**  
+*"As Sarah, I want to extract response times from database logs to find the slowest queries."*
+
+**Target User Flow:**
+1. Sarah creates overlay: "Database Performance"
+2. Adds signature with capture groups:
+   ```
+   Database query completed in (?P<duration>\d+)ms for (?P<query_type>\w+)
+   ```
+3. Sets action: Extract → fields `{duration, query_type}`
+4. Activates layer
+5. Extension extracts fields from all matching logs
+6. Sarah views in Results tree grouped by `query_type`
+7. Sees `SELECT` queries averaging 450ms, `UPDATE` at 1200ms
+8. Identifies slow UPDATE queries for optimization
+
+**Success Criteria:**
+- ✅ Regex capture groups → structured fields
+- ✅ Fields available for grouping/filtering
+- ✅ Can aggregate metrics (avg, max, min)
+- ✅ Export fields to CSV
+
+**Implementation Status:** 📋 **Planned**
+
+**Priority:** Medium
+
+---
+
+### Scenario 13: Pattern Overlays - Gradual Rollout 📋
+
+**User Story:**  
+*"As a team lead, I want to test a new pattern overlay on 10% of our production bundles before rolling out to everyone."*
+
+**Target User Flow:**
+1. Team lead creates overlay: "New Database Timeout Detection"
+2. Sets scenario conditions:
+   ```json
+   {
+     "rolloutPercent": 10,
+     "sampleSet": "random",
+     "timeWindow": {"from": "2026-02-24", "to": "2026-03-03"}
+   }
+   ```
+3. Layer activates for 10% of users randomly
+4. Team monitors results for a week
+5. If successful, increases to 50%, then 100%
+6. If issues found, rolls back to 0%
+
+**Success Criteria:**
+- ✅ Percentage-based activation
+- ✅ Deterministic sampling (same users each time)
+- ✅ Time-window constraints
+- ✅ Easy rollback mechanism
+
+**Implementation Status:** 📋 **Planned**
+
+**Priority:** Low (enterprise feature)
+
+---
+
+### Scenario 14: Pattern Overlays - Hostname-Specific Rules 📋
+
+**User Story:**  
+*"As Sarah, our publisher server has unique error patterns that don't apply to subscriber servers. I need hostname-specific overlays."*
+
+**Target User Flow:**
+1. Sarah creates overlay: "Publisher DB Warnings"
+2. Sets scenario:
+   ```json
+   {
+     "hostnames": ["uc-cucm-pub1.mihomes.com"],
+     "deviceTypes": ["publisher"]
+   }
+   ```
+3. Adds signature for publisher-only errors
+4. Layer only activates when analyzing logs from publisher
+5. Subscriber logs unaffected
+
+**Success Criteria:**
+- ✅ Hostname-based activation
+- ✅ Device-type filtering
+- ✅ Multiple hostname patterns (wildcards)
+- ✅ Clear indication when layer is active
+
+**Implementation Status:** 📋 **Planned**
+
+**Priority:** Medium
+
+---
+
+### Scenario 15: Pattern Overlays - Layer Inheritance & Priority 📋
+
+**User Story:**  
+*"As a team, we have base patterns (priority 0), site-specific patterns (priority 50), and case-specific patterns (priority 100). Higher priority should override lower."*
+
+**Target User Flow:**
+1. Base layer (priority 0): "Jabber MRA timeout" = Warning
+2. Site layer (priority 50): "Jabber MRA timeout" = Info (less noisy at this site)
+3. Case layer (priority 100): "Jabber MRA timeout" = Suppress (not relevant to this case)
+4. System merges layers in order: base → site → case
+5. Final result: pattern suppressed
+6. Sarah can preview merged result before activating
+
+**Layer Types:**
+- **Base** (priority 0): Shipped with extension
+- **Organization** (priority 25): Company-wide rules
+- **Site** (priority 50): Data center / location specific
+- **Team** (priority 75): Team preferences
+- **Case** (priority 100): Investigation-specific
+- **User** (priority 125): Personal overrides
+
+**Success Criteria:**
+- ✅ Ordered layer application
+- ✅ Higher priority wins conflicts
+- ✅ Delta-only storage (only differences)
+- ✅ Preview merged result
+- ✅ Audit trail (who/when/why)
+
+**Implementation Status:** 📋 **Planned**
+
+**Priority:** High (core architecture)
+
+---
+
+### Scenario 16: Pattern Overlays - State Lifecycle 📋
+
+**User Story:**  
+*"As Sarah, I want to draft pattern changes, test them, then activate. If they cause issues, I need to quickly disable or rollback."*
+
+**State Lifecycle:**
+1. **Draft** → Working on it, not active
+2. **Staged** → Ready for testing, preview mode
+3. **Active** → Live and affecting results
+4. **Deprecated** → Marked for removal, warning shown
+5. **Archived** → Historical record, not loaded
+
+**Target User Flow:**
+1. Sarah creates overlay in **Draft** state
+2. Edits rules, tests locally
+3. Promotes to **Staged** → shows preview panel with before/after
+4. Reviews preview: "47 warnings → 12 warnings"
+5. Activates → state becomes **Active**
+6. After case closed, marks as **Deprecated** (30-day warning)
+7. After 30 days, archives automatically
+
+**Success Criteria:**
+- ✅ Clear state transitions
+- ✅ Preview before activation
+- ✅ Easy enable/disable toggle
+- ✅ Automatic archival
+- ✅ State history/audit log
+
+**Implementation Status:** 📋 **Planned**
+
+**Priority:** Medium
+
+---
+
+### Scenario 17: Theme Compatibility 📋
 
 ---
 
