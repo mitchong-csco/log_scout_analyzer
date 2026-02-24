@@ -9,9 +9,6 @@
  */
 
 import * as vscode from "vscode";
-import { ScoutAnalyzerPanel } from "../scoutAnalyzerPanel";
-import { ScenarioManager } from "../scenarioManager";
-import { PatternOverrideManager } from "../patternOverrideManager";
 import { getLSPClient } from "../lspClient";
 
 export function registerNavigationCommands(
@@ -19,8 +16,6 @@ export function registerNavigationCommands(
   outputChannel: vscode.OutputChannel | undefined,
   highlightDecoration: vscode.TextEditorDecorationType | undefined,
   highlightTimeout: NodeJS.Timeout | undefined,
-  scenarioManager: ScenarioManager | undefined,
-  patternOverrideManager: PatternOverrideManager | undefined,
   isLogFile: (document: vscode.TextDocument) => boolean
 ): { setHighlightTimeout: (timeout: NodeJS.Timeout | undefined) => void } {
   let currentHighlightTimeout = highlightTimeout;
@@ -96,18 +91,14 @@ export function registerNavigationCommands(
     )
   );
 
-  // Open Action Panel Command
+  // Open Action Panel Command (DISABLED - webview deprecated)
   context.subscriptions.push(
     vscode.commands.registerCommand(
       "logScoutAnalyzer.openActionPanel",
       () => {
-        if (scenarioManager && patternOverrideManager) {
-          ScoutAnalyzerPanel.createOrShow(
-            context.extensionUri,
-            scenarioManager,
-            patternOverrideManager
-          );
-        }
+        vscode.window.showInformationMessage(
+          "Action Panel has been deprecated. Use the Pattern Overrides view in the sidebar."
+        );
       }
     )
   );

@@ -19,9 +19,6 @@ import {
 } from "./lspClient";
 
 
-import { ScoutAnalyzerPanel } from "./scoutAnalyzerPanel";
-
-import { ScenarioManager } from "./scenarioManager";
 import { PatternOverrideManager } from "./patternOverrideManager";
 import {
   createOverrideQuickInput,
@@ -56,7 +53,6 @@ let filterTreeProvider: FilterTreeProvider | undefined;
 let fileLogger: FileLogger | undefined;
 let gutterDecorator: GutterDecorator | undefined;
 let annotationRenderer: any | undefined; // AnnotationRenderer | undefined;
-let scenarioManager: ScenarioManager | undefined;
 let patternOverrideManager: PatternOverrideManager | undefined;
 // Removed unused placeholder variables: _scoutInventorProvider, _caseManager, _casesTreeProvider
 let highlightDecoration: vscode.TextEditorDecorationType | undefined;
@@ -584,11 +580,6 @@ export function activate(context: vscode.ExtensionContext) {
       logChannel.appendLine("⚠ Using fallback patterns");
     });
 
-  // Initialize Scenario Manager
-  scenarioManager = new ScenarioManager(context);
-  outputChannel.appendLine("✓ Scenario Manager initialized");
-  fileLogger.log("Scenario Manager ready");
-
   // Initialize Pattern Override Manager
   patternOverrideManager = new PatternOverrideManager(context);
   const patternStats = patternOverrideManager.getStats();
@@ -925,9 +916,6 @@ export function activate(context: vscode.ExtensionContext) {
   });
   context.subscriptions.push(resultsTreeView);
 
-  // ✅ Connect results provider to Action Panel so it can access LSP data
-  ScoutAnalyzerPanel.setDataProvider(resultsTreeProvider);
-
   const categoriesTreeView = vscode.window.createTreeView("scoutCategories", {
     treeDataProvider: categoriesTreeProvider,
     showCollapseAll: true,
@@ -1042,8 +1030,6 @@ export function activate(context: vscode.ExtensionContext) {
     outputChannel,
     highlightDecoration,
     highlightTimeout,
-    scenarioManager,
-    patternOverrideManager,
     isLogFile
   );
   registerUtilityCommands(context, outputChannel);
