@@ -46,7 +46,7 @@ This document describes **what users can do** with Log Scout Analyzer. Each scen
 
 ## 🔴 Critical Scenarios (Must Work)
 
-### Scenario 1: Import & Analyze RTMT Bundle ✅
+### Scenario 1: Import & Analyze Log Bundle (QCSONE) ✅
 
 **User Story:**  
 *"As Sarah, I download logs from RTMT (QCSONE package), import them into VS Code, and find the root cause of a call quality issue."*

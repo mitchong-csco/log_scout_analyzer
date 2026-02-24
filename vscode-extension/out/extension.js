@@ -1179,7 +1179,13 @@ function activate(context) {
         });
     }));
     // Delete Bundle Command
-    context.subscriptions.push(vscode.commands.registerCommand("logScoutAnalyzer.bundle.delete", async (bundleId) => {
+    context.subscriptions.push(vscode.commands.registerCommand("logScoutAnalyzer.bundle.delete", async (item) => {
+        // Extract bundleId from tree item (context menu passes the whole object)
+        const bundleId = typeof item === 'string' ? item : item?.bundleId;
+        if (!bundleId) {
+            vscode.window.showErrorMessage("No bundle selected");
+            return;
+        }
         const confirm = await vscode.window.showWarningMessage("Delete this bundle? This action cannot be undone.", { modal: true }, "Delete");
         if (confirm === "Delete" && bundleTreeProvider) {
             const success = await bundleTreeProvider.deleteBundle(bundleId);

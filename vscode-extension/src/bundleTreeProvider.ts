@@ -324,11 +324,27 @@ export class BundleTreeProvider implements vscode.TreeDataProvider<BundleItem> {
     const bundlesPath = `${workspaceRoot}/.log-scout/bundles`;
 
     try {
-      // Delete the bundle directory
+      // Step 1: Remove workspace folder reference (if it exists)
+      const logsPath = `${bundlesPath}/${bundleId}/logs`;
+      const logsUri = vscode.Uri.file(logsPath);
+
+      const existingFolderIndex = vscode.workspace.workspaceFolders.findIndex(
+        (folder) => folder.uri.toString() === logsUri.toString()
+      );
+
+      if (existingFolderIndex >= 0) {
+        vscode.workspace.updateWorkspaceFolders(
+          existingFolderIndex, // Start index
+          1,                   // Remove 1 folder
+        );
+        console.log(`Removed workspace folder for bundle: ${bundleId}`);
+      }
+
+      // Step 2: Delete the bundle directory
       const bundleDir = vscode.Uri.file(`${bundlesPath}/${bundleId}`);
       await vscode.workspace.fs.delete(bundleDir, { recursive: true });
 
-      // Update index.json
+      // Step 3: Update index.json
       const indexPath = vscode.Uri.file(`${bundlesPath}/index.json`);
       const indexData = await vscode.workspace.fs.readFile(indexPath);
       const index = JSON.parse(Buffer.from(indexData).toString("utf8"));
@@ -343,6 +359,7 @@ export class BundleTreeProvider implements vscode.TreeDataProvider<BundleItem> {
         );
       }
 
+      // Step 4: Refresh tree view
       this.refresh();
       return true;
     } catch (error) {

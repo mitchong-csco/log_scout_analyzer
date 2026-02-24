@@ -1669,7 +1669,15 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand(
       "logScoutAnalyzer.bundle.delete",
-      async (bundleId: string) => {
+      async (item: any) => {
+        // Extract bundleId from tree item (context menu passes the whole object)
+        const bundleId = typeof item === 'string' ? item : item?.bundleId;
+
+        if (!bundleId) {
+          vscode.window.showErrorMessage("No bundle selected");
+          return;
+        }
+
         const confirm = await vscode.window.showWarningMessage(
           "Delete this bundle? This action cannot be undone.",
           { modal: true },

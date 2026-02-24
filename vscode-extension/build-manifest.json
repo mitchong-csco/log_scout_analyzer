@@ -1,0 +1,11 @@
+{
+  "version": "0.0.194",
+  "buildNumber": 1771946108459,
+  "buildTimestamp": "2026-02-24T15:15:08.458Z",
+  "gitCommit": "cd10c7e",
+  "fileHashes": {
+    "extension.ts": "0b8738b44564b06b",
+    "bundleTreeProvider.ts": "382f14103ba28c9d",
+    "buildInfo.ts": "cd8808b37f2f23d3"
+  }
+}

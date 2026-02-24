@@ -28,11 +28,11 @@
 **Time:** 2-3 minutes  
 **Documentation:** *To be created*  
 
-#### Scenario 4: Workspace Persistence
-**Status:** 🚧 Partially Implemented  
-**Description:** Work on case across multiple days  
-**Time:** N/A (automatic)  
-**Documentation:** *To be created*  
+#### [Scenario 4: Workspace Persistence & Bundle Deletion](SCENARIO_04_WORKSPACE_PERSISTENCE.md)
+**Status:** ✅ Fully Implemented  
+**Description:** Work on case across multiple days with automatic persistence and clean deletion  
+**Time:** N/A (automatic) + 30 seconds (deletion)  
+**Documentation:** ✅ Complete walkthrough with Kona Chong persona
 
 #### Scenario 5: Error Recovery
 **Status:** ✅ Fully Implemented  
@@ -56,11 +56,11 @@
 **Time:** 15-20 minutes  
 **Documentation:** *To be created*  
 
-#### Scenario 8: Filter & Search Results
-**Status:** 🚧 Partially Implemented  
-**Description:** Filter issues by pattern, severity, file  
-**Time:** 2-5 minutes  
-**Documentation:** *To be created*  
+#### [Scenario 8: Problems Panel Detail Levels](SCENARIO_08_PROBLEMS_PANEL_DETAIL_LEVELS.md)
+**Status:** 📋 Planned  
+**Description:** Progressive disclosure - control detail level in Problems Panel (errors only, +call flow, +insights)  
+**Time:** 30 seconds (one-time configuration)  
+**Documentation:** ✅ Complete scenario with Kona Chong and Marcus Lee personas
 
 #### Scenario 9: Large Bundle Performance
 **Status:** ✅ Fully Implemented  
@@ -181,24 +181,26 @@ Each scenario document includes:
 | 1. Import & Analyze | ✅ Complete | ❌ Todo | ❌ Todo | ❌ Todo |
 | 2. Multi-File | ❌ Todo | ❌ Todo | ❌ Todo | ❌ Todo |
 | 3. Export | ❌ Todo | ❌ Todo | ❌ Todo | ❌ Todo |
-| 4. Persistence | ❌ Todo | ❌ Todo | ❌ Todo | ❌ Todo |
+| 4. Persistence | ✅ Complete | ✅ Done | ❌ Todo | ❌ Todo |
 | 5. Error Recovery | ❌ Todo | ❌ Todo | ❌ Todo | ❌ Todo |
 | 6. Call Flow | ❌ Todo | ✅ Done | ❌ Todo | ❌ Todo |
 | 7. Multi-Bundle | ❌ Todo | ❌ Todo | ❌ Todo | ❌ Todo |
-| 8. Filtering | ❌ Todo | ❌ Todo | ❌ Todo | ❌ Todo |
+| 8. Detail Levels | ✅ Complete | ❌ Todo | ❌ Todo | ❌ Todo |
 | 9. Performance | ❌ Todo | ❌ Todo | ❌ Todo | ❌ Todo |
 | 10. Override | ❌ Todo | ❌ Todo | ❌ Todo | ❌ Todo |
 | 11. Theme | ❌ Todo | ❌ Todo | ❌ Todo | ❌ Todo |
 | 12. Keyboard | ❌ Todo | ❌ Todo | ❌ Todo | ❌ Todo |
 
-**Progress:** 1/12 scenarios documented (8%)  
-**Goal:** 100% documented by end of quarter  
+**Progress:** 3/12 scenarios documented (25%)
+**Goal:** 100% documented by end of quarter
 
 ---
 
 ## 🎬 Next Steps
 
 ### This Sprint:
+- [x] Document Scenario 4 (Workspace Persistence) ✅
+- [x] Document Scenario 8 (Problems Panel Detail Levels) ✅
 - [ ] Document Scenario 2 (Multi-File Investigation)
 - [ ] Document Scenario 3 (Export Results)
 - [ ] Create screenshots for Scenario 1
