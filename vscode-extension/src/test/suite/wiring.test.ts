@@ -407,5 +407,88 @@ suite("Extension Wiring Validation", () => {
     });
   });
 
+  suite("Bundle Analyze Command Wiring", () => {
+    test("Bundle analyze command should be registered in package.json", () => {
+      const commands = packageJson.contributes?.commands || [];
+      const analyzeCommand = commands.find(
+        (cmd: any) => cmd.command === "logScoutAnalyzer.bundle.analyze",
+      );
+
+      assert.ok(
+        analyzeCommand,
+        "logScoutAnalyzer.bundle.analyze should be registered in package.json",
+      );
+    });
+
+    test("Bundle analyze command should be registered in extension.ts", () => {
+      const hasRegistration =
+        extensionTs.includes('registerCommand(\n      "logScoutAnalyzer.bundle.analyze"') ||
+        extensionTs.includes("registerCommand(\n      'logScoutAnalyzer.bundle.analyze'") ||
+        extensionTs.includes('"logScoutAnalyzer.bundle.analyze"');
+
+      assert.ok(
+        hasRegistration,
+        "Bundle analyze command should be registered in extension.ts",
+      );
+    });
+
+    test("Bundle analyze should call bundleTreeProvider.analyzeBundle", () => {
+      assert.ok(
+        extensionTs.includes("bundleTreeProvider.analyzeBundle") ||
+          extensionTs.includes("analyzeBundle(bundleId)"),
+        "Bundle analyze command should call analyzeBundle method",
+      );
+    });
+
+    test("BundleTreeProvider should have analyzeBundle method", () => {
+      const bundleTreeProviderPath = path.join(
+        extensionRoot,
+        "src",
+        "bundleTreeProvider.ts",
+      );
+      const bundleTreeProviderTs = fs.readFileSync(
+        bundleTreeProviderPath,
+        "utf8",
+      );
+
+      assert.ok(
+        bundleTreeProviderTs.includes("async analyzeBundle(") ||
+          bundleTreeProviderTs.includes("async analyzeBundle ("),
+        "BundleTreeProvider should have analyzeBundle method",
+      );
+    });
+
+    test("analyzeBundle should use workspace/executeCommand", () => {
+      const bundleTreeProviderPath = path.join(
+        extensionRoot,
+        "src",
+        "bundleTreeProvider.ts",
+      );
+      const bundleTreeProviderTs = fs.readFileSync(
+        bundleTreeProviderPath,
+        "utf8",
+      );
+
+      assert.ok(
+        bundleTreeProviderTs.includes("workspace/executeCommand"),
+        "analyzeBundle should use workspace/executeCommand for LSP communication",
+      );
+
+      assert.ok(
+        bundleTreeProviderTs.includes("scout/bundle/analyze") ||
+          bundleTreeProviderTs.includes('"command": "scout/bundle/analyze"') ||
+          bundleTreeProviderTs.includes("command: 'scout/bundle/analyze'"),
+        "analyzeBundle should call scout/bundle/analyze command",
+      );
+    });
+
+    test("Bundle analyze should show progress notification", () => {
+      assert.ok(
+        extensionTs.includes("withProgress") &&
+          extensionTs.includes("Analyzing Bundle"),
+        "Bundle analyze should show progress notification to user",
+      );
+    });
+  });
 
 });
