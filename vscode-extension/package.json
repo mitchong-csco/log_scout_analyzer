@@ -2,7 +2,7 @@
   "name": "log-scout-analyzer",
   "displayName": "Log Scout Analyzer - DevTools Edition",
   "description": "Professional log analysis workbench with DevTools-style interface, pattern recognition, and real-time diagnostics",
-  "version": "0.0.192",
+  "version": "0.0.193",
   "publisher": "log-scout-team",
   "engines": {
     "vscode": "^1.75.0"
@@ -52,7 +52,7 @@
       "activitybar": [
         {
           "id": "scout-analyzer",
-          "title": "Scout Analyzer (v0.0.192 | LSP v0.1.44)",
+          "title": "Scout Analyzer (v0.0.193 | LSP v0.1.45)",
           "icon": "$(telescope)"
         }
       ]
