@@ -4,7 +4,7 @@
 
 ---
 
-## 🚀 30-Second Overview
+## 🚀 2-Minute Overview
 
 **Pattern Overlays** = Ordered layers that modify pattern behavior without changing base patterns
 
