@@ -18,6 +18,12 @@ async function main() {
     console.log('Extension Tests Path:', extensionTestsPath);
     console.log('Test Workspace:', testWorkspace);
 
+    // Detect headless environment (CI/CD)
+    const isCI = process.env.CI === 'true' || !process.env.DISPLAY;
+    if (isCI) {
+      console.log('🤖 Running in headless mode (CI detected)');
+    }
+
     // Download VS Code, unzip it and run the integration test
     await runTests({
       extensionDevelopmentPath,
@@ -26,6 +32,9 @@ async function main() {
         '--disable-extensions', // Disable other extensions for clean testing
         testWorkspace,          // Open test workspace
         '--disable-workspace-trust', // Skip workspace trust prompt in tests
+        '--disable-gpu',        // Disable GPU acceleration for headless
+        '--no-sandbox',         // Required for some CI environments
+        ...(isCI ? ['--headless'] : []), // Full headless mode in CI
       ],
     });
 

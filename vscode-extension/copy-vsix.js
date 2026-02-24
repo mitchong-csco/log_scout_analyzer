@@ -18,16 +18,21 @@ try {
     process.exit(1);
   }
 
-  // Build destination path
-  const sourceFile = path.join(__dirname, "log-scout-analyzer.vsix");
-  const destDir = path.join(userProfile, "Downloads", "vscode-extensions");
-  const destFile = path.join(destDir, "log-scout-analyzer.vsix");
+  // Find the VSIX file (may have version number)
+  const files = fs.readdirSync(__dirname);
+  const vsixFiles = files.filter(f => f.startsWith("log-scout-analyzer") && f.endsWith(".vsix"));
 
-  // Verify source file exists
-  if (!fs.existsSync(sourceFile)) {
-    console.error("❌ VSIX file not found:", sourceFile);
+  if (vsixFiles.length === 0) {
+    console.error("❌ No VSIX file found in:", __dirname);
     process.exit(1);
   }
+
+  // Use the most recently created VSIX file
+  const sourceFile = path.join(__dirname, vsixFiles.sort().pop());
+  const destDir = path.join(userProfile, "Downloads", "vscode-extensions");
+  const destFile = path.join(destDir, path.basename(sourceFile));
+
+  console.log("📦 Found VSIX file:", path.basename(sourceFile));
 
   // Create destination directory if needed
   if (!fs.existsSync(destDir)) {
@@ -44,7 +49,7 @@ try {
 
   console.log("");
   console.log("✅ VSIX package copied successfully!");
-  console.log(`   📦 File: log-scout-analyzer.vsix (${sizeKB} KB)`);
+  console.log(`   📦 File: ${path.basename(destFile)} (${sizeKB} KB)`);
   console.log(`   📂 Location: ${destDir}`);
   console.log("");
   console.log("To install in VS Code, run:");
