@@ -1,5 +1,3 @@
-import * as path from "path";
-import * as fs from "fs";
 import * as vscode from "vscode";
 import {
   LanguageClient,
@@ -8,6 +6,7 @@ import {
   TransportKind,
 } from "vscode-languageclient/node";
 import { FileLogger } from "./fileLogger";
+import { downloadLSPServer, checkLSPServer } from "./lspDownloader";
 
 let client: LanguageClient | undefined;
 let logger: FileLogger | undefined;
@@ -15,33 +14,15 @@ let logger: FileLogger | undefined;
 /**
  * Get the path to the LSP server binary
  */
-function getServerPath(context: vscode.ExtensionContext): string {
-  const platform = process.platform;
-  const binDir = path.join(context.extensionPath, "bin");
-
-  let serverExecutable: string;
-  if (platform === "win32") {
-    serverExecutable = path.join(binDir, "log-scout-lsp-server-win.exe");
-  } else if (platform === "linux") {
-    serverExecutable = path.join(binDir, "log-scout-lsp-server-linux");
-  } else if (platform === "darwin") {
-    serverExecutable = path.join(binDir, "log-scout-lsp-server-mac");
-  } else {
-    throw new Error(`Unsupported platform: ${platform}`);
+async function getServerPath(context: vscode.ExtensionContext, outputChannel: vscode.OutputChannel): Promise<string> {
+  // First check if binary exists locally
+  const existingBinary = await checkLSPServer(context, outputChannel);
+  if (existingBinary) {
+    return existingBinary;
   }
 
-  // Check if server binary exists
-  if (!fs.existsSync(serverExecutable)) {
-    throw new Error(
-      `LSP server binary not found: ${serverExecutable}\n\n` +
-        `Please build the LSP server:\n` +
-        `  cd lsp-server\n` +
-        `  cargo build --release\n` +
-        `Then copy the binary to: ${binDir}`,
-    );
-  }
-
-  return serverExecutable;
+  // Download the binary if it doesn't exist
+  return await downloadLSPServer(context, "latest", outputChannel);
 }
 
 /**
@@ -99,7 +80,7 @@ export async function startLSPClient(
       };
     } else {
       // Local server mode (embedded binary)
-      const serverPath = getServerPath(context);
+      const serverPath = await getServerPath(context, outputChannel);
       outputChannel.appendLine(`📦 Using local LSP server: ${serverPath}`);
       logger?.logLSPInitialization("local", serverPath);
 
