@@ -399,7 +399,7 @@
                 },
                 "logScoutAnalyzer.lsp.containerImage": {
                     "type": "string",
-                    "default": "containers.cisco.com/log-scout-lsp-server:latest",
+                    "default": "containers.cisco.com/mitchong/log-scout-lsp-server:latest",
                     "description": "Docker image for containerized LSP server"
                 },
                 "logScoutAnalyzer.lsp.serverHost": {
