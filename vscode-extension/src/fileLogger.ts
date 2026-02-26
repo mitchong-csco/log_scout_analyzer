@@ -127,7 +127,7 @@ export class FileLogger {
     return this.logFilePath;
   }
 
-  public logLSPInitialization(mode: "local" | "remote", details: string): void {
+  public logLSPInitialization(mode: "local" | "remote" | "container", details: string): void {
     this.logLSP(`Initializing LSP client in ${mode} mode: ${details}`, "info");
   }
 

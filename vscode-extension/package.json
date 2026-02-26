@@ -391,6 +391,36 @@
                     ],
                     "default": "time",
                     "description": "Default sort order for annotations"
+                },
+                "logScoutAnalyzer.lsp.useContainer": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Use Docker container for LSP server instead of local binary"
+                },
+                "logScoutAnalyzer.lsp.containerImage": {
+                    "type": "string",
+                    "default": "containers.cisco.com/log-scout-lsp-server:latest",
+                    "description": "Docker image for containerized LSP server"
+                },
+                "logScoutAnalyzer.lsp.serverHost": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Remote LSP server host (leave empty to use local/container)"
+                },
+                "logScoutAnalyzer.lsp.serverPort": {
+                    "type": "number",
+                    "default": 8080,
+                    "description": "Remote LSP server port"
+                },
+                "logScoutAnalyzer.lsp.trace": {
+                    "type": "string",
+                    "enum": [
+                        "off",
+                        "messages",
+                        "verbose"
+                    ],
+                    "default": "off",
+                    "description": "Trace level for LSP communication"
                 }
             }
         },
