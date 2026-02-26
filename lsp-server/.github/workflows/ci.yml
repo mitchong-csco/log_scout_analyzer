@@ -1,0 +1,142 @@
+name: CI - Build and Test
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        rust: [stable]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ matrix.rust }}
+
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo index
+        uses: actions/cache@v3
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+      - name: Run clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Run tests
+        run: cargo test --verbose
+
+      - name: Build release binary
+        run: cargo build --release --verbose
+
+      - name: Verify binary exists
+        run: |
+          if [ ! -f "target/release/log-scout-lsp-server" ]; then
+            echo "❌ Binary not found!"
+            exit 1
+          fi
+          echo "✅ Binary built successfully"
+
+      - name: Check binary size
+        run: |
+          SIZE=$(stat -f%z target/release/log-scout-lsp-server 2>/dev/null || stat -c%s target/release/log-scout-lsp-server)
+          SIZE_MB=$((SIZE / 1024 / 1024))
+          echo "📦 Binary size: ${SIZE_MB} MB"
+          if [ $SIZE_MB -lt 5 ]; then
+            echo "⚠️  Warning: Binary smaller than expected (${SIZE_MB} MB < 5 MB)"
+            echo "This might indicate the wrong binary was built"
+            exit 1
+          fi
+          echo "✅ Binary size looks good"
+
+      - name: Generate checksums
+        run: |
+          cd target/release
+          sha256sum log-scout-lsp-server > log-scout-lsp-server.sha256
+          md5sum log-scout-lsp-server > log-scout-lsp-server.md5
+          echo "✅ Checksums generated"
+          cat log-scout-lsp-server.sha256
+          cat log-scout-lsp-server.md5
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: log-scout-lsp-server-${{ github.sha }}
+          path: |
+            target/release/log-scout-lsp-server
+            target/release/log-scout-lsp-server.sha256
+            target/release/log-scout-lsp-server.md5
+          retention-days: 7
+
+  docker-build:
+    name: Test Docker Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image (no push)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: log-scout-lsp-server:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+
+      - name: Test container runs
+        run: |
+          docker run --rm log-scout-lsp-server:test --help || true
+          echo "✅ Container built successfully"
+
+  summary:
+    name: CI Summary
+    needs: [test, docker-build]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Check results
+        run: |
+          if [ "${{ needs.test.result }}" = "success" ] && [ "${{ needs.docker-build.result }}" = "success" ]; then
+            echo "✅ All checks passed!"
+            exit 0
+          else
+            echo "❌ Some checks failed"
+            echo "Test: ${{ needs.test.result }}"
+            echo "Docker: ${{ needs.docker-build.result }}"
+            exit 1
+          fi

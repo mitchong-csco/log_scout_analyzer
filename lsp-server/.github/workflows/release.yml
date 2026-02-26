@@ -1,0 +1,190 @@
+name: Release Container with Hash Verification
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/log-scout-lsp-server
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Building version: $VERSION"
+
+      - name: Update Cargo.toml with release version
+        run: |
+          sed -i "s/^version = .*/version = \"${{ steps.version.outputs.version }}\"/" Cargo.toml
+          echo "✅ Updated Cargo.toml to version ${{ steps.version.outputs.version }}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix={{branch}}-
+
+      - name: Build and push container image
+        id: docker_build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64
+          build-args: |
+            VERSION=${{ steps.version.outputs.version }}
+            BUILD_DATE=${{ github.event.repository.updated_at }}
+            VCS_REF=${{ github.sha }}
+
+      - name: Generate container image digest
+        id: digest
+        run: |
+          DIGEST="${{ steps.docker_build.outputs.digest }}"
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+          echo "🔐 Image Digest: $DIGEST"
+
+      - name: Create checksums file
+        run: |
+          cat > checksums.txt << EOF
+          # Log Scout LSP Server - Release ${{ steps.version.outputs.version }}
+
+          ## Container Image
+          Registry: ${{ env.REGISTRY }}
+          Image: ${{ env.IMAGE_NAME }}
+          Tag: ${{ steps.version.outputs.version }}
+
+          ## Verification
+          Image Digest (SHA256): ${{ steps.docker_build.outputs.digest }}
+
+          ## Build Information
+          Version: ${{ steps.version.outputs.version }}
+          Git Commit: ${{ github.sha }}
+          Built At: ${{ github.event.repository.updated_at }}
+          Built By: GitHub Actions
+          Workflow Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          ## Container Pull Commands
+          # Pull by version tag
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+
+          # Pull by digest (immutable)
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.docker_build.outputs.digest }}
+
+          ## Verification
+          # Verify image digest
+          docker inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} --format='{{.RepoDigests}}'
+
+          # Expected: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.docker_build.outputs.digest }}
+          EOF
+
+          echo "✅ Created checksums.txt"
+          cat checksums.txt
+
+      - name: Generate SBOM (Software Bill of Materials)
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.docker_build.outputs.digest }}
+          format: spdx-json
+          output-file: sbom-${{ steps.version.outputs.version }}.spdx.json
+
+      - name: Sign container image with Cosign
+        if: success()
+        continue-on-error: true
+        run: |
+          echo "🔏 Container image signing would happen here (cosign not configured)"
+          echo "To enable: Set up COSIGN_KEY in repository secrets"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release v${{ steps.version.outputs.version }}
+          body: |
+            ## 🚀 Log Scout LSP Server v${{ steps.version.outputs.version }}
+
+            ### 📦 Container Image
+            ```bash
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+            ```
+
+            ### 🔐 Verification
+            **Image Digest:** `${{ steps.docker_build.outputs.digest }}`
+
+            Verify the image:
+            ```bash
+            docker inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} \
+              --format='{{.RepoDigests}}'
+            ```
+
+            Expected: `${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.docker_build.outputs.digest }}`
+
+            ### 📋 Artifacts
+            - `checksums.txt` - Full verification details
+            - `sbom-${{ steps.version.outputs.version }}.spdx.json` - Software Bill of Materials
+
+            ### 🔗 Links
+            - [Container Registry](${{ env.REGISTRY }}/${{ env.IMAGE_NAME }})
+            - [Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - [Source Code](https://github.com/${{ github.repository }}/tree/${{ github.ref_name }})
+          files: |
+            checksums.txt
+            sbom-${{ steps.version.outputs.version }}.spdx.json
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          # ✅ Release v${{ steps.version.outputs.version }} Complete
+
+          ## 📦 Container Image
+          - **Registry:** \`${{ env.REGISTRY }}\`
+          - **Image:** \`${{ env.IMAGE_NAME }}\`
+          - **Tag:** \`${{ steps.version.outputs.version }}\`
+          - **Digest:** \`${{ steps.docker_build.outputs.digest }}\`
+
+          ## 🔐 Pull Command
+          \`\`\`bash
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+          \`\`\`
+
+          ## 🎯 Next Steps
+          1. Verify container runs: \`docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }} --version\`
+          2. Update VSCode extension to use this version
+          3. Test end-to-end with extension
+          EOF

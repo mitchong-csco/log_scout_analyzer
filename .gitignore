@@ -90,3 +90,4 @@ local.yaml
 *.local.yaml
 .env
 .env.local
+lsp-server/target/
